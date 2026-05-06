@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Watch Club — Win the Omega Speedmaster Moonwatch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* ── Accent palette (used sparingly) ── */
+      --gold:          #C5A065;
+      --gold-light:    #E8D5B0;
+      --gold-dark:     #A8854E;
+      --navy:          #0A1F44;
+      --navy-border:   #1A3A6E;
+
+      /* ── Surface / base (main page backgrounds) ── */
+      --bg-white:      #FFFFFF;
+      --bg-off-white:  #F8F7F5;
+      --bg-light:      #F2F1EE;
+      --bg-cream:      #EDE8DF;
+      --border-light:  #E4DED6;
+
+      /* ── Hero (intentionally dark, charcoal — not blue) ── */
+      --hero-bg:       #1B1B1F;
+      --hero-surface:  #232328;
+      --hero-border:   rgba(255,255,255,0.08);
+
+      /* ── Text ── */
+      --text-dark:     #1A1A2E;
+      --text-mid:      #444456;
+      --text-muted:    #7A7A8C;
+      --text-on-dark:  #F5F4F0;
+      --text-muted-dark: #9A9A90;
+
+      /* ── Status ── */
+      --green:         #27AE60;
+      --red:           #C0392B;
+
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body { background: var(--bg-white); color: var(--text-dark); font-family: var(--font-sans); font-size: 16px; line-height: 1.6; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 28px; }
+
+    /* ── Animations ── */
+    @keyframes blink   { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    @keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+    @keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    @keyframes fadeUp  { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:none} }
+    @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+    @keyframes pulse-glow { 0%,100%{opacity:0.5} 50%{opacity:1} }
+
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1); }
+    .reveal.in { opacity: 1; transform: none; }
+    .d1 { transition-delay: 0.1s; } .d2 { transition-delay: 0.2s; } .d3 { transition-delay: 0.3s; }
+
+    /* ════════════════════════════════
+       ANNOUNCEMENT BAR
+    ════════════════════════════════ */
+    #announce-bar {
+      background: var(--bg-cream);
+      border-bottom: 1px solid var(--border-light);
+      padding: 9px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+    }
+    .ab-left {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12px; color: var(--text-mid);
+    }
+    .ab-live-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+      animation: blink 2s ease-in-out infinite; flex-shrink: 0;
+    }
+    .ab-left strong { color: var(--text-dark); font-weight: 600; }
+    .ab-right {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: var(--text-muted);
+    }
+    .ab-tp-stars { display: flex; gap: 2px; }
+    .ab-tp-star { width: 13px; height: 13px; background: #00B67A; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+    .ab-tp-star svg { width: 8px; height: 8px; }
+    .ab-divider { width: 1px; height: 14px; background: var(--border-light); }
+    @media (max-width: 700px) { .ab-right { display: none; } }
+
+    /* ════════════════════════════════
+       NAV
+    ════════════════════════════════ */
+    #nav {
+      position: sticky; top: 0; z-index: 999;
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border-light);
+      box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 28px;
+      height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 11px; flex-shrink: 0;
+    }
+    .nav-logo-img {
+      height: 40px; width: 40px; border-radius: 3px; overflow: hidden; flex-shrink: 0;
+    }
+    .nav-logo-img img { width: 40px; height: 40px; object-fit: cover; border-radius: 3px; }
+    .nav-logo-name {
+      font-family: var(--font-serif); font-size: 13px; font-weight: 700;
+      color: var(--navy); letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.15;
+    }
+
+    .nav-links { display: flex; align-items: center; gap: 30px; list-style: none; }
+    .nav-links a {
+      font-size: 12px; font-weight: 500; color: var(--text-mid);
+      letter-spacing: 0.07em; text-transform: uppercase;
+      transition: color 0.18s; position: relative; padding-bottom: 3px;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 1.5px;
+      background: var(--gold); transform: scaleX(0); transition: transform 0.22s cubic-bezier(0.22,1,0.36,1);
+    }
+    .nav-links a:hover { color: var(--text-dark); }
+    .nav-links a:hover::after { transform: scaleX(1); }
+
+    .nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .btn-signin {
+      font-size: 12px; font-weight: 500; color: var(--text-mid);
+      padding: 8px 16px; border: 1px solid var(--border-light); border-radius: 3px;
+      letter-spacing: 0.05em; transition: border-color 0.18s, color 0.18s;
+    }
+    .btn-signin:hover { border-color: var(--gold); color: var(--text-dark); }
+    .btn-nav-enter {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+      background: var(--gold); color: var(--bg-white);
+      padding: 9px 22px; border-radius: 3px;
+      transition: background 0.18s, transform 0.15s;
+    }
+    .btn-nav-enter:hover { background: var(--gold-dark); transform: translateY(-1px); }
+
+    .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 6px; }
+    .hamburger span { display: block; width: 22px; height: 1.5px; background: var(--text-dark); border-radius: 2px; }
+
+    /* ════════════════════════════════
+       HERO  (WolfWatchClub layout)
+    ════════════════════════════════ */
+    #hero {
+      /* PWC branded hero background — dark blue/gold wave image */
+      background-image: url("assets/images/pwc-hero-background.png");
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      position: relative; overflow: hidden;
+      min-height: calc(100vh - 66px);
+      display: flex; flex-direction: column;
+    }
+
+    /* Left-side gradient overlay: ensures text stays readable while waves stay visible on the right */
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background: linear-gradient(
+        105deg,
+        rgba(4, 12, 40, 0.72) 0%,
+        rgba(4, 12, 40, 0.50) 45%,
+        rgba(4, 12, 40, 0.15) 68%,
+        transparent 85%
+      );
+    }
+    /* Gold top accent line */
+    .hero-topline {
+      position: absolute; top: 0; left: 0; right: 0; height: 2px; z-index: 10;
+      background: linear-gradient(90deg, transparent, var(--gold) 25%, var(--gold-light) 50%, var(--gold) 75%, transparent);
+    }
+    /* Subtle glow behind watch — amplifies the gold wave light on the right */
+    .hero-watch-glow {
+      position: absolute; top: 40%; right: 5%; transform: translateY(-50%);
+      width: 520px; height: 520px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(197,160,101,0.12) 0%, transparent 65%);
+      pointer-events: none; z-index: 2;
+      animation: pulse-glow 7s ease-in-out infinite;
+    }
+
+    .hero-main {
+      position: relative; z-index: 5;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 500px;
+      align-items: center;
+      max-width: 1200px; margin: 0 auto; padding: 0 28px;
+      width: 100%;
+      gap: 0;
+    }
+
+    /* ── Hero LEFT ── */
+    .hero-left {
+      padding: 56px 60px 56px 0;
+      display: flex; flex-direction: column;
+      gap: 0;
+    }
+
+    /* Row 1: countdown + progress side by side */
+    .hero-top-row {
+      display: flex; align-items: flex-start; gap: 40px;
+      margin-bottom: 32px;
+    }
+
+    .hero-countdown {
+      display: flex; align-items: flex-end; gap: 16px; flex-shrink: 0;
+    }
+    .hcd-unit {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+    }
+    .hcd-num {
+      font-family: var(--font-sans); font-size: 36px; font-weight: 700;
+      color: var(--gold); line-height: 1; font-variant-numeric: tabular-nums;
+    }
+    .hcd-sep {
+      font-size: 30px; font-weight: 300; color: rgba(197,160,101,0.35); line-height: 1;
+      padding-bottom: 4px; align-self: flex-end;
+    }
+    .hcd-lbl {
+      font-size: 9px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-muted-dark);
+    }
+
+    .hero-progress-col {
+      flex: 1; padding-top: 4px;
+    }
+    .hp-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--green); margin-bottom: 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .hp-track {
+      height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;
+    }
+    .hp-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, var(--green), #4ADE80);
+      transition: width 1.5s cubic-bezier(0.22,1,0.36,1);
+    }
+
+    /* Headline */
+    .hero-headline {
+      font-family: var(--font-serif);
+      font-size: clamp(38px, 4.8vw, 72px);
+      font-weight: 700; color: var(--text-on-dark);
+      line-height: 1.04; letter-spacing: -0.02em;
+      margin-bottom: 28px;
+      animation: fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.2s both;
+    }
+
+    /* CTA Button */
+    .hero-cta-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--gold); color: var(--hero-bg);
+      font-family: var(--font-sans); font-size: 14px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 15px 32px; border-radius: 4px;
+      transition: background 0.18s, transform 0.15s, box-shadow 0.15s;
+      margin-bottom: 16px; align-self: flex-start;
+      box-shadow: 0 4px 20px rgba(197,160,101,0.25);
+      animation: fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.3s both;
+    }
+    .hero-cta-btn:hover { background: #D4AE74; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(197,160,101,0.35); }
+    .hero-cta-btn svg { flex-shrink: 0; }
+
+    /* Price */
+    .hero-entry-price {
+      font-size: 14px; color: var(--text-muted-dark); margin-bottom: 20px;
+      animation: fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.4s both;
+    }
+    .hero-entry-price strong { color: var(--gold); font-weight: 600; }
+
+    /* Recent purchases */
+    .hero-recent {
+      font-size: 13px; color: rgba(197,160,101,0.65); font-style: italic;
+      margin-bottom: 24px; line-height: 1.5;
+      animation: fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.45s both;
+    }
+
+    /* Leaderboard */
+    .hero-leaderboard {
+      animation: fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) 0.5s both;
+    }
+    .hlb-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--text-muted-dark); margin-bottom: 10px;
+    }
+    .hlb-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px; color: var(--text-on-dark);
+    }
+    .hlb-item:last-child { border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .hlb-item-left { display: flex; align-items: center; gap: 8px; }
+    .hlb-crown { font-size: 14px; }
+    .hlb-name { font-weight: 500; }
+    .hlb-tickets { font-size: 12px; color: var(--text-muted-dark); }
+
+    /* ── Hero RIGHT: watch image ── */
+    .hero-right {
+      padding: 40px 0 40px 20px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .hero-watch-img-wrap {
+      position: relative; width: 100%; max-width: 460px;
+    }
+    .hero-watch-img-wrap img {
+      width: 100%;
+      animation: float 9s ease-in-out infinite;
+      filter:
+        drop-shadow(0 0 48px rgba(197,160,101,0.28))
+        drop-shadow(0 24px 64px rgba(0, 0, 0, 0.60))
+        drop-shadow(0 0 120px rgba(100,130,220,0.15));
+    }
+    /* RRP badge */
+    .hero-rrp-badge {
+      position: absolute; bottom: 8%; left: -6%;
+      background: rgba(5, 15, 45, 0.82);
+      border: 1px solid rgba(197,160,101,0.35);
+      border-radius: 4px; padding: 12px 18px;
+      backdrop-filter: blur(16px);
+    }
+    .hrb-label { font-size: 9px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 3px; }
+    .hrb-val   { font-family: var(--font-serif); font-size: 17px; font-weight: 700; color: var(--text-on-dark); line-height: 1.2; }
+    .hrb-sub   { font-size: 10px; color: var(--text-muted-dark); margin-top: 2px; }
+
+    /* ── Bottom strip ── */
+    .hero-strip {
+      position: relative; z-index: 6;
+      background: rgba(4, 12, 40, 0.55);
+      border-top: 1px solid rgba(197,160,101,0.15);
+      backdrop-filter: blur(6px);
+      padding: 12px 28px;
+      font-size: 12px; color: rgba(245,244,240,0.55);
+      text-align: center; letter-spacing: 0.05em;
+    }
+    .hero-strip span { color: var(--gold); font-weight: 600; }
+
+    /* ════════════════════════════════
+       STATS BAR
+    ════════════════════════════════ */
+    #stats-bar {
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border-light);
+      padding: 28px 0;
+    }
+    .stats-inner { display: flex; align-items: stretch; justify-content: space-between; }
+    .stat-item {
+      flex: 1; text-align: center; padding: 8px 20px;
+      border-right: 1px solid var(--border-light);
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-val { font-family: var(--font-serif); font-size: 26px; font-weight: 700; color: var(--navy); line-height: 1; }
+    .stat-lbl { font-size: 9.5px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); }
+
+    /* ════════════════════════════════
+       SECTION CHROME
+    ════════════════════════════════ */
+    .section-eyebrow {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 12px;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+    }
+    .section-eyebrow::before, .section-eyebrow::after {
+      content: ''; display: block; width: 28px; height: 1px;
+      background: var(--gold); opacity: 0.5;
+    }
+    .section-headline {
+      font-family: var(--font-serif); font-size: clamp(26px, 3.5vw, 42px);
+      font-weight: 700; color: var(--text-dark);
+      letter-spacing: -0.02em; line-height: 1.12; margin-bottom: 12px;
+    }
+    .section-sub {
+      font-size: 15px; color: var(--text-muted); max-width: 500px; margin: 0 auto; line-height: 1.78;
+    }
+    .section-header { text-align: center; margin-bottom: 52px; }
+
+    /* ════════════════════════════════
+       WINNERS / PROOF SECTION
+    ════════════════════════════════ */
+    #winners {
+      padding: 88px 0;
+      background: var(--bg-off-white);
+      border-top: 1px solid var(--border-light);
+    }
+    .winners-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+    .winner-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 6px; padding: 30px 26px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+      position: relative; overflow: hidden;
+      transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s;
+    }
+    .winner-card:hover { box-shadow: 0 10px 40px rgba(0,0,0,0.08); transform: translateY(-4px); border-color: var(--gold); }
+    .winner-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--navy), var(--gold)); }
+
+    .wc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .wc-stars { display: flex; gap: 3px; }
+    .wc-star { width: 13px; height: 13px; color: #F59E0B; fill: currentColor; }
+    .wc-prize-badge {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--gold-dark); background: rgba(197,160,101,0.1);
+      border: 1px solid rgba(197,160,101,0.3); border-radius: 2px; padding: 3px 8px;
+    }
+
+    .wc-quote {
+      font-family: var(--font-serif); font-size: 14.5px; line-height: 1.82;
+      color: var(--text-mid); font-style: italic; margin-bottom: 22px;
+      padding-left: 16px; border-left: 2px solid rgba(197,160,101,0.5);
+    }
+
+    .wc-meta { border-top: 1px solid var(--border-light); padding-top: 16px; display: flex; align-items: center; gap: 12px; }
+    .wc-avatar {
+      width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+      background: var(--navy); color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-serif); font-size: 13px; font-weight: 700;
+    }
+    .wc-name  { font-size: 13px; font-weight: 700; color: var(--text-dark); margin-bottom: 2px; }
+    .wc-prize { font-size: 11px; color: var(--text-muted); }
+
+    /* ════════════════════════════════
+       HOW IT WORKS
+    ════════════════════════════════ */
+    #how {
+      padding: 96px 0;
+      background: var(--bg-white);
+      border-top: 1px solid var(--border-light);
+    }
+    .steps-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; }
+    .steps-row::before {
+      content: ''; position: absolute;
+      top: 28px; left: 12.5%; right: 12.5%;
+      height: 1px; background: var(--border-light); z-index: 0;
+    }
+    .step { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 20px; position: relative; z-index: 1; }
+    .step-num {
+      width: 58px; height: 58px; border-radius: 50%;
+      background: var(--navy); color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-serif); font-size: 19px; font-weight: 700;
+      margin-bottom: 26px; flex-shrink: 0;
+      box-shadow: 0 6px 24px rgba(10,31,68,0.15), 0 0 0 6px rgba(197,160,101,0.1);
+      position: relative;
+    }
+    .step-num::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 1px solid rgba(197,160,101,0.2); }
+    .step-title { font-family: var(--font-serif); font-size: 17px; font-weight: 600; color: var(--text-dark); margin-bottom: 10px; }
+    .step-desc  { font-size: 13.5px; color: var(--text-muted); line-height: 1.75; max-width: 200px; margin: 0 auto; }
+
+    /* ════════════════════════════════
+       TRUST BAR
+    ════════════════════════════════ */
+    #trust-bar {
+      background: var(--bg-light);
+      border-top: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+      padding: 64px 0;
+    }
+    .trust-inner { display: flex; align-items: center; justify-content: space-between; gap: 48px; }
+    .trust-left { flex: 1; }
+    .trust-tagline {
+      font-family: var(--font-serif); font-size: clamp(20px, 2.5vw, 30px);
+      font-weight: 700; color: var(--text-dark); line-height: 1.25; margin-bottom: 10px;
+    }
+    .trust-tagline em { color: var(--navy); font-style: italic; }
+    .trust-sub { font-size: 14px; color: var(--text-muted); line-height: 1.75; max-width: 420px; }
+    .trust-right { display: flex; gap: 40px; flex-shrink: 0; }
+    .trust-stat { text-align: center; }
+    .trust-stat-val {
+      font-family: var(--font-serif); font-size: 34px; font-weight: 700;
+      color: var(--navy); line-height: 1;
+    }
+    .trust-stat-lbl { font-size: 9.5px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); margin-top: 6px; }
+
+    /* Trustpilot strip */
+    .trust-tp {
+      margin-top: 48px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+    }
+    .tp-badge { display: flex; align-items: center; gap: 8px; }
+    .tp-word { font-family: var(--font-serif); font-size: 15px; font-weight: 700; color: var(--text-dark); }
+    .tp-stars-row { display: flex; gap: 3px; }
+    .tp-star { width: 20px; height: 20px; background: #00B67A; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+    .tp-star svg { width: 11px; height: 11px; }
+    .tp-divider { width: 1px; height: 20px; background: var(--border-light); }
+    .tp-score { font-size: 13px; font-weight: 600; color: var(--text-dark); }
+    .tp-count  { font-size: 12px; color: var(--text-muted); }
+
+    /* ════════════════════════════════
+       JOURNAL
+    ════════════════════════════════ */
+    #journal {
+      padding: 88px 0;
+      background: var(--bg-white);
+      border-top: 1px solid var(--border-light);
+    }
+    .journal-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 24px; align-items: start; }
+    .journal-card {
+      background: var(--bg-white); border: 1px solid var(--border-light);
+      border-radius: 6px; overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s;
+      cursor: pointer;
+    }
+    .journal-card:hover { box-shadow: 0 8px 40px rgba(0,0,0,0.08); transform: translateY(-3px); border-color: var(--border-light); }
+    .jc-img { background: var(--bg-cream); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .jc-img.tall { height: 280px; } .jc-img.short { height: 180px; }
+    .jc-img img { width: 100%; height: 100%; object-fit: contain; padding: 20px; mix-blend-mode: multiply; transition: transform 0.4s cubic-bezier(0.22,1,0.36,1); }
+    .journal-card:hover .jc-img img { transform: scale(1.04); }
+    .jc-body { padding: 22px; }
+    .jc-cat   { font-size: 9.5px; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold-dark); margin-bottom: 8px; }
+    .jc-title { font-family: var(--font-serif); font-size: 16px; font-weight: 600; color: var(--text-dark); line-height: 1.35; margin-bottom: 8px; }
+    .jc-title.large { font-size: 20px; }
+    .jc-excerpt { font-size: 13px; color: var(--text-muted); line-height: 1.72; margin-bottom: 16px; }
+    .jc-link {
+      font-size: 10.5px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--navy); display: inline-flex; align-items: center; gap: 6px;
+      border-bottom: 1.5px solid var(--gold); padding-bottom: 1px;
+      transition: gap 0.18s;
+    }
+    .jc-link:hover { gap: 10px; }
+
+    /* ════════════════════════════════
+       CTA BANNER
+    ════════════════════════════════ */
+    #cta-banner {
+      background: var(--hero-bg);
+      padding: 88px 0; position: relative; overflow: hidden;
+    }
+    #cta-banner::before {
+      content: '';
+      position: absolute; top: -50%; right: -10%;
+      width: 600px; height: 600px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(197,160,101,0.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .cta-inner { position: relative; z-index: 2; text-align: center; }
+    .cta-eyebrow {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+    }
+    .cta-eyebrow::before, .cta-eyebrow::after { content: ''; display: block; width: 28px; height: 1px; background: var(--gold); opacity: 0.5; }
+    .cta-headline {
+      font-family: var(--font-serif); font-size: clamp(28px, 4vw, 52px);
+      font-weight: 700; color: var(--text-on-dark);
+      letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 16px;
+    }
+    .cta-headline em { color: var(--gold); font-style: italic; }
+    .cta-sub { font-size: 15px; color: var(--text-muted-dark); line-height: 1.7; max-width: 480px; margin: 0 auto 36px; }
+    .cta-actions { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+    .btn-cta-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--gold); color: var(--hero-bg);
+      font-family: var(--font-sans); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 15px 34px; border-radius: 4px; border: none; cursor: pointer;
+      transition: background 0.18s, transform 0.15s;
+      box-shadow: 0 4px 20px rgba(197,160,101,0.25);
+    }
+    .btn-cta-primary:hover { background: #D4AE74; transform: translateY(-2px); }
+    .btn-cta-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: transparent; color: var(--text-muted-dark);
+      border: 1px solid rgba(255,255,255,0.15);
+      font-size: 13px; font-weight: 500; letter-spacing: 0.06em;
+      padding: 14px 26px; border-radius: 4px;
+      transition: border-color 0.18s, color 0.18s;
+    }
+    .btn-cta-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+    .cta-urgency {
+      margin-top: 36px; display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(192,57,43,0.1); border: 1px solid rgba(192,57,43,0.25);
+      border-radius: 3px; padding: 9px 22px;
+      font-size: 12px; font-weight: 600; color: #E57373;
+    }
+    .cta-urgency .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); animation: blink 1.5s ease-in-out infinite; }
+
+    /* ════════════════════════════════
+       FOOTER
+    ════════════════════════════════ */
+    footer {
+      background: var(--navy);
+      border-top: 1px solid var(--navy-border);
+      padding: 60px 0 32px;
+    }
+    .footer-top { display: grid; grid-template-columns: 220px 1fr; gap: 56px; margin-bottom: 48px; }
+    .footer-logo { display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+    .footer-logo-img { width: 40px; height: 40px; border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+    .footer-logo-img img { width: 40px; height: 40px; object-fit: cover; border-radius: 3px; }
+    .footer-logo-name { font-family: var(--font-serif); font-size: 12px; font-weight: 700; color: var(--gold); letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.2; }
+    .footer-desc { font-size: 12px; color: rgba(245,244,240,0.35); line-height: 1.75; max-width: 190px; }
+    .footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+    .footer-col h4 { font-size: 9px; font-weight: 700; letter-spacing: 0.26em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+    .footer-col ul li a { font-size: 12px; color: rgba(245,244,240,0.4); transition: color 0.18s; }
+    .footer-col ul li a:hover { color: var(--text-on-dark); }
+
+    .footer-bottom {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding-top: 22px; border-top: 1px solid var(--navy-border);
+      gap: 24px; flex-wrap: wrap;
+    }
+    .footer-legal { font-size: 10px; color: rgba(245,244,240,0.28); line-height: 1.75; max-width: 580px; }
+    .social-row { display: flex; gap: 8px; }
+    .social-btn {
+      width: 34px; height: 34px; border: 1px solid var(--navy-border);
+      border-radius: 3px; display: flex; align-items: center; justify-content: center;
+      color: rgba(245,244,240,0.35);
+      transition: border-color 0.18s, color 0.18s;
+    }
+    .social-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ════════════════════════════════
+       RESPONSIVE
+    ════════════════════════════════ */
+    @media (max-width: 1100px) {
+      .hero-main { grid-template-columns: 1fr 380px; }
+      .journal-grid { grid-template-columns: 1fr 1fr; }
+      .journal-grid .journal-card:nth-child(3) { display: none; }
+    }
+    @media (max-width: 900px) {
+      .hero-main { grid-template-columns: 1fr; }
+      .hero-left { padding-right: 0; padding-bottom: 32px; }
+      .hero-right { padding: 0 0 40px; }
+      .hero-watch-img-wrap { max-width: 340px; margin: 0 auto; }
+      .hero-rrp-badge { left: 0; }
+      .winners-grid { grid-template-columns: 1fr 1fr; }
+      .steps-row { grid-template-columns: 1fr 1fr; gap: 32px; }
+      .steps-row::before { display: none; }
+      .trust-inner { flex-direction: column; gap: 36px; }
+      .journal-grid { grid-template-columns: 1fr; }
+      .journal-grid .journal-card:nth-child(3) { display: block; }
+      .footer-top { grid-template-columns: 1fr; gap: 32px; }
+      .footer-cols { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 700px) {
+      .hero-top-row { flex-direction: column; gap: 20px; }
+      .hero-countdown { gap: 12px; }
+      .hcd-num { font-size: 28px; }
+    }
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex; flex-direction: column; position: fixed;
+        top: 66px; left: 0; right: 0;
+        background: var(--bg-white);
+        padding: 20px 28px; border-bottom: 1px solid var(--border-light);
+        gap: 16px; z-index: 998;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      }
+      .nav-links.open a { color: var(--text-mid); }
+      .hamburger { display: flex; }
+      .winners-grid { grid-template-columns: 1fr; }
+      .steps-row { grid-template-columns: 1fr; }
+      .stats-inner { flex-wrap: wrap; }
+      .stat-item { min-width: 50%; border-right: none; border-bottom: 1px solid var(--border-light); padding: 14px 12px; }
+      .stat-item:last-child { border-bottom: none; }
+      .cta-actions { flex-direction: column; }
+      .btn-cta-primary, .btn-cta-secondary { width: 100%; justify-content: center; }
+      .footer-cols { grid-template-columns: 1fr 1fr; }
+      .trust-right { flex-wrap: wrap; gap: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ ANNOUNCEMENT BAR ══════════ -->
+<div id="announce-bar">
+  <div class="ab-left">
+    <div class="ab-live-dot"></div>
+    <span><strong>Live Now:</strong> Omega Speedmaster Moonwatch — <strong>£5.95</strong> per entry · 399 tickets remaining · Draw closes 30 May 2026</span>
+  </div>
+  <div class="ab-right">
+    <div class="ab-tp-stars">
+      <div class="ab-tp-star"><svg viewBox="0 0 20 20" fill="white"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></div>
+      <div class="ab-tp-star"><svg viewBox="0 0 20 20" fill="white"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></div>
+      <div class="ab-tp-star"><svg viewBox="0 0 20 20" fill="white"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></div>
+      <div class="ab-tp-star"><svg viewBox="0 0 20 20" fill="white"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></div>
+      <div class="ab-tp-star"><svg viewBox="0 0 20 20" fill="white"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></div>
+    </div>
+    <div class="ab-divider"></div>
+    <span>4.8/5 · Trustpilot</span>
+  </div>
+</div>
+
+<!-- ══════════ NAV ══════════ -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">
+      <div class="nav-logo-img">
+        <img src="Brand_assets/WhatsApp Image 2026-04-21 at 18.26.41.jpeg" alt="Premium Watch Club logo">
+      </div>
+      <span class="nav-logo-name">Premium Watch Club</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/competitions/omega-speedmaster-moonwatch">Competition</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#winners">Winners</a></li>
+      <li><a href="#journal">Journal</a></li>
+      <li><a href="/faq">FAQ</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="/account/signin" class="btn-signin">Sign In</a>
+      <a href="/competitions/omega-speedmaster-moonwatch" class="btn-nav-enter">Enter Now</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════ HERO ══════════ -->
+<section id="hero">
+  <div class="hero-topline"></div>
+  <div class="hero-watch-glow"></div>
+
+  <div class="hero-main">
+
+    <!-- LEFT: competition info -->
+    <div class="hero-left">
+
+      <!-- Countdown + Progress row -->
+      <div class="hero-top-row">
+        <div class="hero-countdown">
+          <div class="hcd-unit">
+            <span class="hcd-num" id="cdD">26</span>
+            <span class="hcd-lbl">Day(s)</span>
+          </div>
+          <span class="hcd-sep">·</span>
+          <div class="hcd-unit">
+            <span class="hcd-num" id="cdH">05</span>
+            <span class="hcd-lbl">HR</span>
+          </div>
+          <span class="hcd-sep">·</span>
+          <div class="hcd-unit">
+            <span class="hcd-num" id="cdM">39</span>
+            <span class="hcd-lbl">MIN</span>
+          </div>
+          <span class="hcd-sep">·</span>
+          <div class="hcd-unit">
+            <span class="hcd-num" id="cdS">19</span>
+            <span class="hcd-lbl">SEC</span>
+          </div>
+        </div>
+
+        <div class="hero-progress-col">
+          <div class="hp-label">20% SOLD — 399 TICKETS LEFT</div>
+          <div class="hp-track">
+            <div class="hp-fill" id="heroProgressFill" style="width: 20.2%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="hero-headline">Omega Speedmaster<br>Moonwatch</h1>
+
+      <!-- CTA -->
+      <a href="/competitions/omega-speedmaster-moonwatch" class="hero-cta-btn">
+        Enter Now To Win
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+
+      <!-- Price -->
+      <p class="hero-entry-price"><strong>£5.95</strong> per entry</p>
+
+      <!-- Recent purchases -->
+      <p class="hero-recent">3 recent purchases from London, Amsterdam and Edinburgh.</p>
+
+      <!-- Leaderboard -->
+      <div class="hero-leaderboard">
+        <div class="hlb-title">Leaderboard</div>
+        <div class="hlb-item">
+          <div class="hlb-item-left">
+            <span class="hlb-crown">&#x1F451;</span>
+            <span class="hlb-name">J.T. from London</span>
+          </div>
+          <span class="hlb-tickets">10 tickets</span>
+        </div>
+        <div class="hlb-item">
+          <div class="hlb-item-left">
+            <span class="hlb-crown">&#x1F451;</span>
+            <span class="hlb-name">S.M. from Edinburgh</span>
+          </div>
+          <span class="hlb-tickets">10 tickets</span>
+        </div>
+        <div class="hlb-item">
+          <div class="hlb-item-left">
+            <span class="hlb-crown">&#x1F451;</span>
+            <span class="hlb-name">M.H. from Manchester</span>
+          </div>
+          <span class="hlb-tickets">10 tickets</span>
+        </div>
+      </div>
+
+    </div><!-- /hero-left -->
+
+    <!-- RIGHT: Watch image -->
+    <div class="hero-right">
+      <div class="hero-watch-img-wrap">
+        <img id="heroWatchImg" src="assets/images/omega-speedmaster-hero.png" alt="Omega Speedmaster Moonwatch Professional Ref. 310.30.42.50.01.001" crossorigin="anonymous">
+        <div class="hero-rrp-badge">
+          <div class="hrb-label">Reference</div>
+          <div class="hrb-val">310.30.42.50.01.001</div>
+          <div class="hrb-sub">Hesalite Crystal · Calibre 3861</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /hero-main -->
+
+  <!-- Bottom strip -->
+  <div class="hero-strip">
+    Competition <span>#1</span> · 500 tickets total · <span>20.2%</span> sold · Max 20 tickets per member · Publicly streamed live draw
+  </div>
+
+</section>
+
+<!-- ══════════ STATS BAR ══════════ -->
+<section id="stats-bar">
+  <div class="container">
+    <div class="stats-inner">
+      <div class="stat-item reveal">
+        <div class="stat-val">£2.58M</div>
+        <div class="stat-lbl">In Prizes Awarded</div>
+      </div>
+      <div class="stat-item reveal d1">
+        <div class="stat-val">12,847</div>
+        <div class="stat-lbl">Club Members</div>
+      </div>
+      <div class="stat-item reveal d2">
+        <div class="stat-val">347</div>
+        <div class="stat-lbl">Verified Winners</div>
+      </div>
+      <div class="stat-item reveal d3">
+        <div class="stat-val">4.8 ★</div>
+        <div class="stat-lbl">Trustpilot Score</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ WINNERS ══════════ -->
+<section id="winners">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">Hall of Honour</div>
+      <h2 class="section-headline">What our winners say</h2>
+      <p class="section-sub">Every draw is live. Every winner is verified. Every watch is real — sourced from authorised dealers.</p>
+    </div>
+
+    <div class="winners-grid">
+
+      <div class="winner-card reveal">
+        <div class="wc-top">
+          <div class="wc-stars">
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          </div>
+          <div class="wc-prize-badge">Rolex Submariner</div>
+        </div>
+        <p class="wc-quote">I never believed I'd own a Rolex. Premium Watch Club changed that entirely. The draw was live, the prize real — the whole experience was extraordinary.</p>
+        <div class="wc-meta">
+          <div class="wc-avatar">JT</div>
+          <div>
+            <div class="wc-name">James T. — London</div>
+            <div class="wc-prize">Won March 2026 · Rolex Submariner Date</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="winner-card reveal d1">
+        <div class="wc-top">
+          <div class="wc-stars">
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          </div>
+          <div class="wc-prize-badge">Patek Philippe</div>
+        </div>
+        <p class="wc-quote">As a collector for twenty years, winning the Patek was surreal. Impeccably run — professional, transparent, and genuinely thrilling from start to finish.</p>
+        <div class="wc-meta">
+          <div class="wc-avatar">SM</div>
+          <div>
+            <div class="wc-name">Sophie M. — Edinburgh</div>
+            <div class="wc-prize">Won January 2026 · Patek Philippe Aquanaut</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="winner-card reveal d2">
+        <div class="wc-top">
+          <div class="wc-stars">
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="wc-star" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          </div>
+          <div class="wc-prize-badge">Audemars Piguet</div>
+        </div>
+        <p class="wc-quote">I acquired a piece of horological history for under £10. Arrived fully insured the next morning. The most transparent competition I've entered. The real deal.</p>
+        <div class="wc-meta">
+          <div class="wc-avatar">MD</div>
+          <div>
+            <div class="wc-name">Marcus D. — Amsterdam</div>
+            <div class="wc-prize">Won December 2025 · Audemars Piguet Royal Oak</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ HOW IT WORKS ══════════ -->
+<section id="how">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">The Process</div>
+      <h2 class="section-headline">Four steps to your dream watch</h2>
+      <p class="section-sub">A skill-based competition — not a lottery. Answer a question on horology and take home the prize.</p>
+    </div>
+    <div class="steps-row">
+      <div class="step reveal">
+        <div class="step-num">01</div>
+        <div class="step-title">Select Your Entry</div>
+        <p class="step-desc">Choose 1 to 20 entries at £5.95 each. Greater commitment, greater odds — you decide your level.</p>
+      </div>
+      <div class="step reveal d1">
+        <div class="step-num">02</div>
+        <div class="step-title">Answer the Question</div>
+        <p class="step-desc">A focused question on watchmaking or horology. This is what makes PWC a competition — entirely legal in the UK and EU.</p>
+      </div>
+      <div class="step reveal d2">
+        <div class="step-num">03</div>
+        <div class="step-title">Secure Checkout</div>
+        <p class="step-desc">Pay safely via card or PayPal. Your entry numbers are confirmed immediately and held exclusively in your name.</p>
+      </div>
+      <div class="step reveal d3">
+        <div class="step-num">04</div>
+        <div class="step-title">Watch the Live Draw</div>
+        <p class="step-desc">Every draw is streamed live, independently verified and recorded. Winners are notified within the hour.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ TRUST BAR ══════════ -->
+<section id="trust-bar">
+  <div class="container">
+    <div class="trust-inner reveal">
+      <div class="trust-left">
+        <div class="trust-tagline">Built on <em>transparency</em><br>and trust</div>
+        <p class="trust-sub">Every watch sourced from authorised dealers. Every draw publicly streamed and independently verified. Every winner photographed and documented.</p>
+      </div>
+      <div class="trust-right">
+        <div class="trust-stat">
+          <div class="trust-stat-val">347</div>
+          <div class="trust-stat-lbl">Winners to Date</div>
+        </div>
+        <div class="trust-stat">
+          <div class="trust-stat-val">100%</div>
+          <div class="trust-stat-lbl">Draws Verified</div>
+        </div>
+        <div class="trust-stat">
+          <div class="trust-stat-val">£0</div>
+          <div class="trust-stat-lbl">Unclaimed Prizes</div>
+        </div>
+      </div>
+    </div>
+    <div class="trust-tp reveal">
+      <div class="tp-badge">
+        <div class="tp-word">Excellent</div>
+        <div class="tp-stars-row">
+          <div class="tp-star"><svg viewBox="0 0 20 20" fill="white"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></div>
+          <div class="tp-star"><svg viewBox="0 0 20 20" fill="white"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></div>
+          <div class="tp-star"><svg viewBox="0 0 20 20" fill="white"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></div>
+          <div class="tp-star"><svg viewBox="0 0 20 20" fill="white"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></div>
+          <div class="tp-star"><svg viewBox="0 0 20 20" fill="white"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></div>
+        </div>
+      </div>
+      <div class="tp-divider"></div>
+      <div class="tp-score">4.8 / 5</div>
+      <div class="tp-divider"></div>
+      <div class="tp-count">Based on 1,247 verified reviews</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ JOURNAL ══════════ -->
+<section id="journal">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">Journal</div>
+      <h2 class="section-headline">Stories, guides &amp; watch culture</h2>
+      <p class="section-sub">Expert guides, winner stories and watch collecting advice from the PWC editorial team.</p>
+    </div>
+    <div class="journal-grid">
+      <div class="journal-card reveal">
+        <div class="jc-img tall">
+          <img src="temporary screenshots/31032425001001-.jpg" alt="Omega Speedmaster">
+        </div>
+        <div class="jc-body">
+          <div class="jc-cat">Guide</div>
+          <div class="jc-title large">The Omega Speedmaster: why the Moonwatch endures</div>
+          <p class="jc-excerpt">From the Apollo programme to present day — why the Speedmaster Professional remains the definitive tool watch and the most coveted chronograph of our generation.</p>
+          <a href="/journal/omega-speedmaster-guide" class="jc-link">Read the full story
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5h7M5.5 2l3 3-3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:24px;">
+        <div class="journal-card reveal d1">
+          <div class="jc-img short" style="background:#EAE6DC;">
+            <svg width="90" height="90" viewBox="0 0 120 120" fill="none" opacity="0.6">
+              <circle cx="60" cy="60" r="52" stroke="#0A1F44" stroke-width="1.5"/>
+              <circle cx="60" cy="60" r="40" stroke="#C5A065" stroke-width="0.8" fill="none"/>
+              <rect x="57" y="12" width="6" height="14" rx="1.5" fill="#C5A065"/>
+              <rect x="57" y="94" width="6" height="14" rx="1.5" fill="#C5A065"/>
+              <rect x="12" y="57" width="14" height="6" rx="1.5" fill="#C5A065"/>
+              <rect x="94" y="57" width="14" height="6" rx="1.5" fill="#C5A065"/>
+              <rect x="58" y="30" width="4" height="32" rx="2" fill="#0A1F44" transform="rotate(-28 60 60)"/>
+              <rect x="59" y="24" width="2.5" height="40" rx="1.2" fill="#0A1F44" transform="rotate(22 60 60)"/>
+              <circle cx="60" cy="60" r="5" fill="#C5A065"/>
+            </svg>
+          </div>
+          <div class="jc-body">
+            <div class="jc-cat">Heritage</div>
+            <div class="jc-title">The Rolex Submariner: 70 years of depth</div>
+            <p class="jc-excerpt">How the world's most recognised watch became a cultural icon and a precision instrument.</p>
+            <a href="/journal/rolex-submariner-history" class="jc-link">Read more
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5h7M5.5 2l3 3-3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>
+        </div>
+        <div class="journal-card reveal d2">
+          <div class="jc-img short" style="background:#EEF0F5;">
+            <svg width="90" height="70" viewBox="0 0 130 100" fill="none" opacity="0.55">
+              <circle cx="36" cy="50" r="30" stroke="#0A1F44" stroke-width="1.5"/>
+              <circle cx="36" cy="50" r="20" fill="white" stroke="#C5A065" stroke-width="0.8"/>
+              <circle cx="94" cy="50" r="30" stroke="#0A1F44" stroke-width="1.5"/>
+              <circle cx="94" cy="50" r="20" fill="white" stroke="#C5A065" stroke-width="0.8"/>
+              <rect x="34.5" y="34" width="3" height="18" rx="1.5" fill="#0A1F44" transform="rotate(-20 36 50)"/>
+              <rect x="35" y="28" width="2" height="24" rx="1" fill="#0A1F44" transform="rotate(30 36 50)"/>
+              <rect x="92.5" y="34" width="3" height="18" rx="1.5" fill="#0A1F44" transform="rotate(10 94 50)"/>
+              <rect x="93" y="28" width="2" height="24" rx="1" fill="#0A1F44" transform="rotate(-25 94 50)"/>
+            </svg>
+          </div>
+          <div class="jc-body">
+            <div class="jc-cat">Collecting</div>
+            <div class="jc-title">Building your first collection on a budget</div>
+            <p class="jc-excerpt">Where to start, what to prioritise, and how competitions can land you an iconic piece.</p>
+            <a href="/journal/first-watch-collection" class="jc-link">Read more
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1.5 5h7M5.5 2l3 3-3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ CTA BANNER ══════════ -->
+<section id="cta-banner">
+  <div class="container">
+    <div class="cta-inner reveal">
+      <div class="cta-eyebrow">Current Draw · Closing Soon</div>
+      <h2 class="cta-headline">
+        399 tickets remain for the<br>
+        <em>Omega Speedmaster</em>
+      </h2>
+      <p class="cta-sub">One competition. One watch. 500 entries only. This is your chance to own the watch worn on the Moon — for just £5.95.</p>
+      <div class="cta-actions">
+        <a href="/competitions/omega-speedmaster-moonwatch" class="btn-cta-primary">
+          Secure Your Entry
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7h9M7.5 3.5l3.5 3.5-3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#how" class="btn-cta-secondary">How It Works</a>
+      </div>
+      <div class="cta-urgency">
+        <div class="dot"></div>
+        101 of 500 tickets claimed — 399 entries still available
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="footer-logo-img">
+            <img src="Brand_assets/WhatsApp Image 2026-04-21 at 18.26.41.jpeg" alt="PWC Logo">
+          </div>
+          <span class="footer-logo-name">Premium Watch Club</span>
+        </div>
+        <p class="footer-desc">A curated destination for watch collectors. One competition at a time — done properly.</p>
+      </div>
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Competition</h4>
+          <ul>
+            <li><a href="/competitions/omega-speedmaster-moonwatch">Current Draw</a></li>
+            <li><a href="#how">How It Works</a></li>
+            <li><a href="#winners">Past Winners</a></li>
+            <li><a href="/competitions/closed">Closed Draws</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Information</h4>
+          <ul>
+            <li><a href="/terms">Competition Terms</a></li>
+            <li><a href="/faq">FAQs</a></li>
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li><a href="/contact">Contact Us</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Editorial</h4>
+          <ul>
+            <li><a href="#journal">Journal</a></li>
+            <li><a href="/journal/guides">Watch Guides</a></li>
+            <li><a href="/journal/heritage">Brand Heritage</a></li>
+            <li><a href="/journal/collecting">Collecting Advice</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Follow</h4>
+          <ul>
+            <li><a href="#">Instagram</a></li>
+            <li><a href="#">Facebook</a></li>
+            <li><a href="#">YouTube</a></li>
+            <li><a href="#">X / Twitter</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-legal">Premium Watch Club is a skill-based competition platform. Promoter: PWC Ltd, registered in England &amp; Wales. A correct answer to a skill question is required to win. All competitions are subject to full terms and conditions available on request. 18+ only. Please compete responsibly.</p>
+      <div class="social-row">
+        <a href="#" class="social-btn" aria-label="Instagram">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.5"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor"/></svg>
+        </a>
+        <a href="#" class="social-btn" aria-label="Facebook">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3V2z" stroke="currentColor" stroke-width="1.5"/></svg>
+        </a>
+        <a href="#" class="social-btn" aria-label="YouTube">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="4" stroke="currentColor" stroke-width="1.5"/><path d="M10 9l6 3-6 3V9z" fill="currentColor"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* ── Central competition data ── */
+  const COMPETITION = {
+    id:              'comp-001',
+    slug:            'omega-speedmaster-moonwatch',
+    brand:           'Omega',
+    model:           'Speedmaster Professional Moonwatch',
+    shortName:       'Omega Speedmaster Moonwatch',
+    reference:       '310.30.42.50.01.001',
+    detail:          'Hesalite Crystal · Calibre 3861',
+    image:           'temporary screenshots/31032425001001-.jpg',
+    rrp:             '£6,200',
+    entryPrice:      5.95,
+    totalTickets:    500,
+    ticketsSold:     101,
+    ticketsLeft:     399,
+    soldPercentage:  20.2,
+    drawDate:        new Date('2026-05-30T23:59:00'),
+    recentPurchases: ['London', 'Amsterdam', 'Edinburgh'],
+    leaderboard: [
+      { name: 'J.T.', location: 'London',     tickets: 10 },
+      { name: 'S.M.', location: 'Edinburgh',  tickets: 10 },
+      { name: 'M.H.', location: 'Manchester', tickets: 10 },
+    ],
+    ctaLink:              '/competitions/omega-speedmaster-moonwatch',
+    maxTicketsPerPurchase: 20,
+  };
+
+  /* ── Hamburger ── */
+  document.getElementById('hamburger').addEventListener('click', function() {
+    document.getElementById('navLinks').classList.toggle('open');
+  });
+
+  /* ── Countdown ── */
+  const pad = n => String(n).padStart(2, '0');
+  function tickCountdown() {
+    const diff = COMPETITION.drawDate - Date.now();
+    if (diff <= 0) {
+      ['cdD','cdH','cdM','cdS'].forEach(id => document.getElementById(id).textContent = '00');
+      return;
+    }
+    document.getElementById('cdD').textContent = pad(Math.floor(diff / 86400000));
+    document.getElementById('cdH').textContent = pad(Math.floor(diff % 86400000 / 3600000));
+    document.getElementById('cdM').textContent = pad(Math.floor(diff % 3600000 / 60000));
+    document.getElementById('cdS').textContent = pad(Math.floor(diff % 60000 / 1000));
+  }
+  tickCountdown();
+  setInterval(tickCountdown, 1000);
+
+  /* ── Scroll reveal ── */
+  const revealObserver = new IntersectionObserver(
+    entries => entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); revealObserver.unobserve(e.target); }
+    }),
+    { threshold: 0.08 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  /* ── Watch image: strip white/near-white & checkered pixels via Canvas ── */
+  function removeWatchBackground(img) {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx    = canvas.getContext('2d');
+      canvas.width  = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      ctx.drawImage(img, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imageData.data;
+
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i+1], b = d[i+2], a = d[i+3];
+        // Fully transparent already → keep at 0
+        if (a < 20) { d[i+3] = 0; continue; }
+        // Near-white: all channels bright → make transparent
+        if (r > 220 && g > 220 && b > 220) { d[i+3] = 0; continue; }
+        // Light checkered gray pixels (alternating ~204/~255) → transparent
+        if (r > 190 && g > 190 && b > 190 && Math.abs(r - g) < 20 && Math.abs(g - b) < 20) {
+          d[i+3] = 0;
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+      img.src = canvas.toDataURL('image/png');
+    } catch(e) {
+      // Canvas tainted (CORS) — fall back to CSS blend
+      img.style.mixBlendMode = 'multiply';
+    }
+  }
+
+  const watchImg = document.getElementById('heroWatchImg');
+  if (watchImg) {
+    if (watchImg.complete && watchImg.naturalWidth) {
+      removeWatchBackground(watchImg);
+    } else {
+      watchImg.addEventListener('load', () => removeWatchBackground(watchImg));
+    }
+  }
+</script>
+
+</body>
+</html>

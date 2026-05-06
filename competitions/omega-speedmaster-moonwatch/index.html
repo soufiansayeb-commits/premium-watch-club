@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Win the Omega Speedmaster Moonwatch — Premium Watch Club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold:          #C5A065;
+      --gold-light:    #E8D5B0;
+      --gold-dark:     #A8854E;
+      --gold-bg:       #FAF6EF;
+      --navy:          #0A1F44;
+      --navy-border:   #1A3A6E;
+      --bg-white:      #FFFFFF;
+      --bg-off-white:  #F8F7F5;
+      --bg-light:      #F2F1EE;
+      --bg-cream:      #EDE8DF;
+      --border-light:  #E4DED6;
+      --border-mid:    #D4CEC6;
+      --text-dark:     #1A1A2E;
+      --text-mid:      #444456;
+      --text-muted:    #7A7A8C;
+      --green:         #27AE60;
+      --red:           #C0392B;
+      --font-serif: 'Lora', Georgia, serif;
+      --font-sans:  'DM Sans', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body {
+      background: var(--bg-white);
+      color: var(--text-dark);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 28px; }
+
+    /* ════════════════════════════
+       ANNOUNCEMENT BAR
+    ════════════════════════════ */
+    #announce-bar {
+      background: var(--bg-cream);
+      border-bottom: 1px solid var(--border-light);
+      padding: 9px 28px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .ab-left {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 12px; color: var(--text-mid);
+    }
+    .ab-live-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+      animation: blink 2s ease-in-out infinite; flex-shrink: 0;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+    .ab-left strong { color: var(--text-dark); font-weight: 600; }
+    .ab-right {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; color: var(--text-muted);
+    }
+    .ab-tp-stars { display: flex; gap: 2px; }
+    .ab-tp-star { width: 13px; height: 13px; background: #00B67A; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
+    .ab-tp-star svg { width: 8px; height: 8px; }
+    .ab-divider { width: 1px; height: 14px; background: var(--border-light); }
+    @media (max-width: 700px) { .ab-right { display: none; } }
+
+    /* ════════════════════════════
+       NAV
+    ════════════════════════════ */
+    #nav {
+      position: sticky; top: 0; z-index: 999;
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border-light);
+      box-shadow: 0 1px 12px rgba(0,0,0,0.06);
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 28px;
+      height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 11px; flex-shrink: 0;
+    }
+    .nav-logo-emblem {
+      width: 38px; height: 38px; border-radius: 3px;
+      background: var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .nav-logo-emblem svg { width: 20px; height: 20px; }
+    .nav-logo-name {
+      font-family: var(--font-serif); font-size: 13px; font-weight: 700;
+      color: var(--navy); letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.15;
+    }
+    .nav-links { display: flex; align-items: center; gap: 30px; list-style: none; }
+    .nav-links a {
+      font-size: 12px; font-weight: 500; color: var(--text-mid);
+      letter-spacing: 0.07em; text-transform: uppercase;
+      transition: color 0.18s; position: relative; padding-bottom: 3px;
+    }
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 1.5px;
+      background: var(--gold); transform: scaleX(0); transition: transform 0.22s cubic-bezier(0.22,1,0.36,1);
+    }
+    .nav-links a:hover { color: var(--text-dark); }
+    .nav-links a:hover::after, .nav-links a.active::after { transform: scaleX(1); }
+    .nav-links a.active { color: var(--text-dark); }
+    .nav-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .btn-signin {
+      font-size: 12px; font-weight: 500; color: var(--text-mid);
+      padding: 8px 16px; border: 1px solid var(--border-light); border-radius: 3px;
+      letter-spacing: 0.05em; transition: border-color 0.18s, color 0.18s;
+    }
+    .btn-signin:hover { border-color: var(--gold); color: var(--text-dark); }
+    .btn-nav-enter {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+      background: var(--gold); color: var(--bg-white);
+      padding: 9px 22px; border-radius: 3px;
+      transition: background 0.18s, transform 0.15s;
+    }
+    .btn-nav-enter:hover { background: var(--gold-dark); transform: translateY(-1px); }
+    .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 6px; }
+    .hamburger span { display: block; width: 22px; height: 1.5px; background: var(--text-dark); border-radius: 2px; }
+
+    /* ════════════════════════════
+       PROGRESS STEPS
+    ════════════════════════════ */
+    #progress-bar {
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border-light);
+      padding: 0 28px;
+    }
+    .progress-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: stretch;
+    }
+    .progress-step {
+      flex: 1; display: flex; align-items: center; gap: 12px;
+      padding: 18px 24px;
+      position: relative;
+      border-right: 1px solid var(--border-light);
+      cursor: default;
+      transition: background 0.18s;
+    }
+    .progress-step:last-child { border-right: none; }
+    .progress-step::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: transparent; transition: background 0.2s;
+    }
+    .progress-step.active::after { background: var(--gold); }
+    .progress-step.done::after { background: var(--green); }
+
+    .ps-num {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+      border: 1.5px solid var(--border-mid);
+      background: var(--bg-off-white); color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .progress-step.active .ps-num {
+      background: var(--gold); border-color: var(--gold); color: white;
+    }
+    .progress-step.done .ps-num {
+      background: var(--green); border-color: var(--green); color: white;
+    }
+    .ps-label {
+      font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+      color: var(--text-muted); text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .progress-step.active .ps-label { color: var(--text-dark); }
+    .progress-step.done .ps-label { color: var(--text-mid); }
+    .ps-connector {
+      font-size: 11px; color: var(--border-mid); margin: 0 4px;
+    }
+
+    @media (max-width: 680px) {
+      .ps-label { display: none; }
+      .progress-step { padding: 16px; justify-content: center; }
+    }
+
+    /* ════════════════════════════
+       MAIN ENTRY LAYOUT
+    ════════════════════════════ */
+    #entry-main {
+      background: var(--bg-off-white);
+      min-height: calc(100vh - 66px - 62px);
+      padding: 48px 28px 80px;
+    }
+    .entry-grid {
+      max-width: 1100px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 520px;
+      gap: 40px;
+      align-items: start;
+    }
+
+    /* ════════════════════════════
+       LEFT COLUMN — Watch Visual
+    ════════════════════════════ */
+    .entry-left { position: sticky; top: 90px; }
+
+    .watch-image-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .watch-image-wrap {
+      aspect-ratio: 1 / 1;
+      background: linear-gradient(145deg, #F8F7F5 0%, #EDEBE7 100%);
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px;
+      position: relative;
+    }
+    .watch-image-wrap img {
+      width: 100%; max-width: 320px; margin: 0 auto;
+      filter: drop-shadow(0 20px 48px rgba(0,0,0,0.18));
+    }
+    /* Placeholder when no image is loaded */
+    .watch-placeholder {
+      width: 240px; height: 240px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 16px; color: var(--text-muted);
+    }
+    .watch-placeholder svg { width: 80px; height: 80px; opacity: 0.2; }
+    .watch-placeholder span { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.4; }
+
+    .watch-image-badge {
+      position: absolute; top: 16px; left: 16px;
+      background: var(--navy); color: white;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 5px 10px; border-radius: 3px;
+    }
+    .watch-image-caption {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .wic-title {
+      font-family: var(--font-serif); font-size: 14px; font-weight: 600;
+      color: var(--text-dark); line-height: 1.3;
+    }
+    .wic-ref { font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em; }
+
+    .watch-info-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      padding: 20px;
+    }
+    .wic-section-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 14px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border-light);
+    }
+    .wi-row {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 7px 0; border-bottom: 1px solid var(--bg-light);
+      gap: 12px;
+    }
+    .wi-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .wi-key {
+      font-size: 12px; color: var(--text-muted); flex-shrink: 0;
+    }
+    .wi-val {
+      font-size: 12px; font-weight: 500; color: var(--text-dark); text-align: right;
+    }
+    .wi-val.green { color: var(--green); }
+    .wi-val.gold { color: var(--gold-dark); font-weight: 600; }
+
+    /* ════════════════════════════
+       STEPS (right column panels)
+    ════════════════════════════ */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    /* ── STEP 1: Ticket Selection ── */
+    .entry-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .entry-card-header {
+      padding: 28px 32px 22px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .ech-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--gold-dark); margin-bottom: 8px;
+    }
+    .ech-title {
+      font-family: var(--font-serif); font-size: 22px; font-weight: 700;
+      color: var(--text-dark); line-height: 1.2; margin-bottom: 6px;
+    }
+    .ech-price-line {
+      font-size: 13px; color: var(--text-muted);
+    }
+    .ech-price-line strong { color: var(--text-dark); font-weight: 600; }
+
+    .entry-card-body { padding: 28px 32px; }
+
+    .tickets-label {
+      font-size: 13px; font-weight: 600; color: var(--text-mid);
+      margin-bottom: 16px;
+    }
+
+    /* Ticket grid */
+    .ticket-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .ticket-option {
+      border: 1.5px solid var(--border-light);
+      border-radius: 5px;
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.16s, background 0.16s, transform 0.12s;
+      background: var(--bg-white);
+      position: relative;
+      user-select: none;
+    }
+    .ticket-option:hover {
+      border-color: var(--gold-light);
+      background: var(--gold-bg);
+      transform: translateY(-1px);
+    }
+    .ticket-option.selected {
+      border-color: var(--gold);
+      background: var(--gold-bg);
+      box-shadow: 0 0 0 3px rgba(197,160,101,0.12);
+    }
+    .to-qty {
+      font-size: 20px; font-weight: 700; color: var(--text-dark);
+      line-height: 1; margin-bottom: 4px;
+    }
+    .ticket-option.selected .to-qty { color: var(--gold-dark); }
+    .to-label {
+      font-size: 11px; font-weight: 500; color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+    .to-subtotal {
+      font-size: 11px; color: var(--text-muted); margin-top: 5px;
+    }
+    .to-badge {
+      position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+      background: var(--navy); color: white;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 3px 7px; border-radius: 20px; white-space: nowrap;
+    }
+
+    /* Custom quantity */
+    .custom-qty-row {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 28px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border-light);
+      border-radius: 5px;
+      background: var(--bg-off-white);
+    }
+    .cq-label {
+      font-size: 13px; color: var(--text-mid); flex: 1;
+    }
+    .cq-stepper {
+      display: flex; align-items: center; gap: 0;
+      border: 1.5px solid var(--border-mid); border-radius: 4px; overflow: hidden;
+    }
+    .cq-btn {
+      width: 36px; height: 36px; background: var(--bg-white); border: none;
+      cursor: pointer; font-size: 18px; color: var(--text-mid);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.14s, color 0.14s;
+    }
+    .cq-btn:hover { background: var(--bg-light); color: var(--text-dark); }
+    .cq-val {
+      width: 50px; text-align: center; font-size: 15px; font-weight: 600;
+      color: var(--text-dark); border: none; outline: none;
+      border-left: 1px solid var(--border-light); border-right: 1px solid var(--border-light);
+      background: var(--bg-white); padding: 0 4px;
+    }
+    /* remove number input arrows */
+    .cq-val::-webkit-outer-spin-button, .cq-val::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .cq-val[type=number] { -moz-appearance: textfield; }
+
+    /* Divider */
+    .entry-divider {
+      height: 1px; background: var(--border-light); margin: 0 0 24px;
+    }
+
+    /* Subtotal */
+    .subtotal-row {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 20px; padding: 16px 18px;
+      background: var(--bg-off-white); border: 1px solid var(--border-light); border-radius: 5px;
+    }
+    .sr-left { font-size: 13px; color: var(--text-mid); }
+    .sr-left span { color: var(--text-muted); font-size: 12px; }
+    .sr-amount {
+      font-family: var(--font-serif); font-size: 24px; font-weight: 700;
+      color: var(--text-dark);
+    }
+    .sr-per { font-size: 12px; color: var(--text-muted); margin-top: 2px; text-align: right; }
+
+    /* Continue button */
+    .btn-continue {
+      width: 100%; padding: 16px 24px;
+      background: var(--gold); color: var(--bg-white);
+      border: none; border-radius: 5px; cursor: pointer;
+      font-family: var(--font-sans); font-size: 14px; font-weight: 700;
+      letter-spacing: 0.09em; text-transform: uppercase;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: background 0.18s, transform 0.14s, box-shadow 0.14s;
+      box-shadow: 0 4px 16px rgba(197,160,101,0.22);
+    }
+    .btn-continue:hover {
+      background: var(--gold-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(197,160,101,0.32);
+    }
+    .btn-continue:active { transform: translateY(0); }
+    .btn-continue svg { flex-shrink: 0; }
+
+    .entry-card-footer {
+      padding: 16px 32px;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-off-white);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ecf-text {
+      font-size: 11px; color: var(--text-muted); line-height: 1.5;
+    }
+    .ecf-text a { color: var(--gold-dark); text-decoration: underline; }
+
+    /* ── STEP 2: Skill Challenge ── */
+    .skill-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .skill-card-header {
+      padding: 28px 32px 22px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .sch-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--gold-dark); margin-bottom: 8px;
+    }
+    .sch-title {
+      font-family: var(--font-serif); font-size: 22px; font-weight: 700;
+      color: var(--text-dark); margin-bottom: 6px;
+    }
+    .sch-sub {
+      font-size: 13px; color: var(--text-muted); line-height: 1.55;
+    }
+    .skill-card-body { padding: 28px 32px; }
+
+    .skill-question {
+      font-size: 16px; font-weight: 600; color: var(--text-dark);
+      line-height: 1.45; margin-bottom: 24px;
+      padding: 20px; background: var(--bg-off-white);
+      border: 1px solid var(--border-light); border-radius: 5px;
+      border-left: 3px solid var(--gold);
+    }
+
+    .skill-answers {
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 28px;
+    }
+    .skill-answer {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px;
+      border: 1.5px solid var(--border-light); border-radius: 5px;
+      cursor: pointer; transition: border-color 0.16s, background 0.16s;
+      background: var(--bg-white);
+      user-select: none;
+    }
+    .skill-answer:hover {
+      border-color: var(--gold-light); background: var(--gold-bg);
+    }
+    .skill-answer.selected {
+      border-color: var(--gold); background: var(--gold-bg);
+      box-shadow: 0 0 0 3px rgba(197,160,101,0.1);
+    }
+    .sa-radio {
+      width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+      border: 2px solid var(--border-mid);
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.16s;
+    }
+    .skill-answer.selected .sa-radio {
+      border-color: var(--gold); background: var(--gold);
+    }
+    .sa-radio::after {
+      content: ''; width: 8px; height: 8px; border-radius: 50%;
+      background: white; opacity: 0; transition: opacity 0.14s;
+    }
+    .skill-answer.selected .sa-radio::after { opacity: 1; }
+    .sa-label { font-size: 15px; font-weight: 500; color: var(--text-dark); }
+    .skill-answer.selected .sa-label { color: var(--gold-dark); font-weight: 600; }
+
+    .skill-notice {
+      font-size: 12px; color: var(--text-muted); margin-bottom: 24px;
+      padding: 10px 14px; background: var(--bg-off-white); border-radius: 4px;
+      border-left: 2px solid var(--navy);
+    }
+
+    .btn-back {
+      background: none; border: 1.5px solid var(--border-mid); border-radius: 5px;
+      cursor: pointer; font-family: var(--font-sans); font-size: 13px; font-weight: 600;
+      color: var(--text-mid); padding: 12px 20px;
+      display: flex; align-items: center; gap: 8px;
+      transition: border-color 0.16s, color 0.16s;
+    }
+    .btn-back:hover { border-color: var(--text-mid); color: var(--text-dark); }
+
+    .skill-actions {
+      display: flex; gap: 12px; align-items: center;
+    }
+    .skill-actions .btn-continue { flex: 1; }
+    .skill-actions .btn-continue:disabled {
+      opacity: 0.45; cursor: not-allowed; transform: none;
+    }
+
+    /* ── STEP 3: Checkout ── */
+    .checkout-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .checkout-header {
+      padding: 28px 32px 22px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .chk-eyebrow {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--gold-dark); margin-bottom: 8px;
+    }
+    .chk-title {
+      font-family: var(--font-serif); font-size: 22px; font-weight: 700;
+      color: var(--text-dark);
+    }
+    .checkout-body { padding: 28px 32px; }
+
+    .order-summary {
+      background: var(--bg-off-white); border: 1px solid var(--border-light);
+      border-radius: 5px; padding: 20px; margin-bottom: 24px;
+    }
+    .os-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 14px;
+    }
+    .os-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid var(--border-light);
+      font-size: 14px;
+    }
+    .os-row:last-child { border-bottom: none; }
+    .os-row .label { color: var(--text-mid); }
+    .os-row .value { font-weight: 600; color: var(--text-dark); }
+    .os-row.total .label { font-weight: 700; color: var(--text-dark); font-size: 15px; }
+    .os-row.total .value { font-size: 18px; color: var(--gold-dark); font-weight: 700; }
+
+    .customer-form-placeholder {
+      border: 1.5px dashed var(--border-mid); border-radius: 5px;
+      padding: 36px; text-align: center; margin-bottom: 24px;
+      background: var(--bg-off-white);
+    }
+    .cfp-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+    .cfp-title { font-size: 14px; font-weight: 600; color: var(--text-mid); margin-bottom: 6px; }
+    .cfp-sub { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .cfp-badge {
+      display: inline-block; margin-top: 12px;
+      background: var(--navy); color: white;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 5px 12px; border-radius: 3px;
+    }
+
+    .checkout-security {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; background: var(--bg-off-white);
+      border: 1px solid var(--border-light); border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .cs-icon { flex-shrink: 0; color: var(--green); }
+    .cs-text { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+
+    .checkout-actions { display: flex; gap: 12px; }
+    .checkout-actions .btn-back { flex-shrink: 0; }
+    .btn-pay {
+      flex: 1; padding: 16px 24px;
+      background: var(--navy); color: white;
+      border: none; border-radius: 5px; cursor: pointer;
+      font-family: var(--font-sans); font-size: 14px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: background 0.18s, transform 0.14s;
+    }
+    .btn-pay:hover { background: var(--navy-border); transform: translateY(-1px); }
+
+    /* ════════════════════════════
+       TRUSTPILOT STRIP
+    ════════════════════════════ */
+    .tp-strip {
+      background: var(--bg-white); border-top: 1px solid var(--border-light);
+      border-bottom: 1px solid var(--border-light);
+      padding: 14px 28px; margin-top: 32px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .tp-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+    .tp-stars-row { display: flex; gap: 3px; }
+    .tp-star {
+      width: 18px; height: 18px; background: #00B67A; border-radius: 2px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .tp-star svg { width: 11px; height: 11px; }
+    .tp-score { font-size: 13px; font-weight: 700; color: var(--text-dark); }
+
+    /* ════════════════════════════
+       FOOTER
+    ════════════════════════════ */
+    #footer {
+      background: var(--navy);
+      padding: 40px 28px 28px;
+      color: rgba(255,255,255,0.55);
+    }
+    .footer-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 24px;
+    }
+    .footer-top {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 20px;
+      padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .footer-logo-name {
+      font-family: var(--font-serif); font-size: 13px; font-weight: 700;
+      color: white; letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .footer-links {
+      display: flex; gap: 24px; flex-wrap: wrap;
+    }
+    .footer-links a {
+      font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase;
+      color: rgba(255,255,255,0.45); transition: color 0.18s;
+    }
+    .footer-links a:hover { color: white; }
+    .footer-legal {
+      font-size: 11px; line-height: 1.65; color: rgba(255,255,255,0.35); text-align: center;
+    }
+
+    /* ════════════════════════════
+       RESPONSIVE
+    ════════════════════════════ */
+    @media (max-width: 900px) {
+      .entry-grid {
+        grid-template-columns: 1fr;
+      }
+      .entry-left { position: static; }
+      .watch-image-wrap { aspect-ratio: 16 / 9; }
+    }
+    @media (max-width: 620px) {
+      .ticket-grid { grid-template-columns: repeat(3, 1fr); }
+      .entry-card-header, .entry-card-body, .entry-card-footer { padding-left: 20px; padding-right: 20px; }
+      .skill-card-header, .skill-card-body { padding-left: 20px; padding-right: 20px; }
+      .checkout-header, .checkout-body { padding-left: 20px; padding-right: 20px; }
+      #entry-main { padding: 28px 16px 60px; }
+    }
+    @media (max-width: 480px) {
+      .ticket-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ ANNOUNCEMENT BAR ══════════ -->
+<div id="announce-bar">
+  <div class="ab-left">
+    <div class="ab-live-dot"></div>
+    <span><strong>Competition Live</strong> — 423 entries placed · Closes in 6 days, 14 hours</span>
+  </div>
+  <div class="ab-right">
+    <div class="ab-tp-stars">
+      <div class="ab-tp-star"><svg viewBox="0 0 10 10" fill="white"><path d="M5 1l1.2 2.4L9 3.8 7 5.7l.5 2.8L5 7.1 2.5 8.5 3 5.7 1 3.8l2.8-.4z"/></svg></div>
+      <div class="ab-tp-star"><svg viewBox="0 0 10 10" fill="white"><path d="M5 1l1.2 2.4L9 3.8 7 5.7l.5 2.8L5 7.1 2.5 8.5 3 5.7 1 3.8l2.8-.4z"/></svg></div>
+      <div class="ab-tp-star"><svg viewBox="0 0 10 10" fill="white"><path d="M5 1l1.2 2.4L9 3.8 7 5.7l.5 2.8L5 7.1 2.5 8.5 3 5.7 1 3.8l2.8-.4z"/></svg></div>
+      <div class="ab-tp-star"><svg viewBox="0 0 10 10" fill="white"><path d="M5 1l1.2 2.4L9 3.8 7 5.7l.5 2.8L5 7.1 2.5 8.5 3 5.7 1 3.8l2.8-.4z"/></svg></div>
+      <div class="ab-tp-star"><svg viewBox="0 0 10 10" fill="white"><path d="M5 1l1.2 2.4L9 3.8 7 5.7l.5 2.8L5 7.1 2.5 8.5 3 5.7 1 3.8l2.8-.4z"/></svg></div>
+    </div>
+    <span>Excellent · Trustpilot</span>
+    <div class="ab-divider"></div>
+    <span>Free UK delivery · Fully insured</span>
+  </div>
+</div>
+
+<!-- ══════════ NAV ══════════ -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="../../" class="nav-logo">
+      <div class="nav-logo-emblem">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="9" stroke="#C5A065" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="5" stroke="#C5A065" stroke-width="1" opacity="0.5"/>
+          <line x1="12" y1="6" x2="12" y2="3" stroke="#C5A065" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12" y1="12" x2="15" y2="9" stroke="#C5A065" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="12" y1="12" x2="10" y2="15" stroke="#C5A065" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="nav-logo-name">Premium<br>Watch Club</div>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="." class="active">Competition</a></li>
+      <li><a href="../../#how">How It Works</a></li>
+      <li><a href="../../#winners">Winners</a></li>
+      <li><a href="../../#journal">Journal</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="/account/signin" class="btn-signin">Sign In</a>
+      <a href="." class="btn-nav-enter">Enter Now</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════ PROGRESS STEPS ══════════ -->
+<div id="progress-bar">
+  <div class="progress-inner">
+    <div class="progress-step active" id="step-nav-1">
+      <div class="ps-num">1</div>
+      <div class="ps-label">Select Your Tickets</div>
+    </div>
+    <div class="progress-step" id="step-nav-2">
+      <div class="ps-num">2</div>
+      <div class="ps-label">Skill Based Challenge</div>
+    </div>
+    <div class="progress-step" id="step-nav-3">
+      <div class="ps-num">3</div>
+      <div class="ps-label">Checkout</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ ENTRY MAIN ══════════ -->
+<main id="entry-main">
+  <div class="entry-grid">
+
+    <!-- ── LEFT: Watch Visual + Info ── -->
+    <div class="entry-left">
+      <div class="watch-image-card">
+        <div class="watch-image-wrap">
+          <div class="watch-image-badge">Current Prize</div>
+          <!--
+            Replace src with the actual watch image.
+            WooCommerce: echo get_the_post_thumbnail_url($competition->ID, 'full');
+          -->
+          <img
+            src="../../assets/images/omega-speedmaster-moonwatch.png"
+            alt="Omega Speedmaster Moonwatch"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+          >
+          <div class="watch-placeholder" style="display:none;">
+            <svg viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="34" stroke="currentColor" stroke-width="2"/><circle cx="40" cy="40" r="20" stroke="currentColor" stroke-width="1.5" opacity="0.5"/><line x1="40" y1="24" x2="40" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="40" y1="40" x2="52" y2="30" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span>Watch image</span>
+          </div>
+        </div>
+        <div class="watch-image-caption">
+          <div>
+            <div class="wic-title">Omega Speedmaster Moonwatch</div>
+            <div class="wic-ref">Ref. 310.30.42.50.01.001</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="watch-info-card">
+        <div class="wic-section-title">Watch &amp; Competition Information</div>
+        <div class="wi-row">
+          <div class="wi-key">Retail Value</div>
+          <div class="wi-val gold">£6,100</div>
+        </div>
+        <div class="wi-row">
+          <div class="wi-key">Entry Price</div>
+          <div class="wi-val">From £5.95</div>
+        </div>
+        <div class="wi-row">
+          <div class="wi-key">Total Entries</div>
+          <div class="wi-val">500 max</div>
+        </div>
+        <div class="wi-row">
+          <div class="wi-key">Entries Remaining</div>
+          <div class="wi-val green" id="info-remaining">77 left</div>
+        </div>
+        <div class="wi-row">
+          <div class="wi-key">Condition</div>
+          <div class="wi-val">Brand New · Full Box &amp; Papers</div>
+        </div>
+        <div class="wi-row">
+          <div class="wi-key">Draw Date</div>
+          <div class="wi-val">11 May 2026, 20:00 BST</div>
+        </div>
+        <div class="wi-row">
+          <div class="wi-key">Cash Alternative</div>
+          <div class="wi-val">£5,000</div>
+        </div>
+        <div class="wi-row">
+          <div class="wi-key">Delivery</div>
+          <div class="wi-val">Free · Fully Insured</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Steps ── -->
+    <div class="entry-right">
+
+      <!-- ══ STEP 1: Select Your Tickets ══ -->
+      <div class="step-panel active" id="panel-step-1">
+        <div class="entry-card">
+          <div class="entry-card-header">
+            <div class="ech-eyebrow">Win the Prize</div>
+            <div class="ech-title">Omega Speedmaster<br>Moonwatch</div>
+            <div class="ech-price-line"><strong>£5.95</strong> per entry &nbsp;·&nbsp; How many tickets would you like?</div>
+          </div>
+          <div class="entry-card-body">
+
+            <div class="tickets-label">Select a ticket bundle:</div>
+
+            <!-- Ticket options grid -->
+            <div class="ticket-grid" id="ticket-grid">
+              <!-- Dynamically rendered by JS from COMPETITION.ticketOptions -->
+            </div>
+
+            <!-- Custom quantity stepper -->
+            <div class="custom-qty-row">
+              <div class="cq-label">Or choose a custom amount:</div>
+              <div class="cq-stepper">
+                <button class="cq-btn" id="cq-minus" aria-label="Decrease">−</button>
+                <input class="cq-val" type="number" id="cq-input" min="1" max="100" value="1">
+                <button class="cq-btn" id="cq-plus" aria-label="Increase">+</button>
+              </div>
+            </div>
+
+            <div class="entry-divider"></div>
+
+            <!-- Subtotal -->
+            <div class="subtotal-row">
+              <div>
+                <div class="sr-left">Order Total <span id="qty-summary">(1 ticket)</span></div>
+                <div class="sr-per" id="sr-per">£5.95 × 1</div>
+              </div>
+              <div class="sr-amount" id="subtotal-display">£5.95</div>
+            </div>
+
+            <!-- Continue -->
+            <button class="btn-continue" id="btn-step1-continue">
+              Continue
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+          </div>
+          <div class="entry-card-footer">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;opacity:0.5">
+              <rect x="2" y="5" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M5 5V4a2 2 0 014 0v1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+            <div class="ecf-text">
+              Secure checkout · A correct skill-based answer is required to win.
+              This is a skill competition — <a href="#">view full terms</a>.
+              18+ only.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ STEP 2: Skill Based Challenge ══ -->
+      <div class="step-panel" id="panel-step-2">
+        <div class="skill-card">
+          <div class="skill-card-header">
+            <div class="sch-eyebrow">Step 2 of 3 — Required to Enter</div>
+            <div class="sch-title">Skill Based Challenge</div>
+            <div class="sch-sub">Answer the question below correctly to qualify your entry. This is what makes Premium Watch Club a legal skill competition — not a lottery.</div>
+          </div>
+          <div class="skill-card-body">
+
+            <!-- Question -->
+            <div class="skill-question" id="skill-question-text">
+              <!-- Rendered by JS -->
+            </div>
+
+            <!-- Answer options -->
+            <div class="skill-answers" id="skill-answers-list">
+              <!-- Rendered by JS -->
+            </div>
+
+            <div class="skill-notice">
+              You must select an answer to proceed. All entries with a correct answer are entered into the final draw.
+            </div>
+
+            <div class="skill-actions">
+              <button class="btn-back" id="btn-step2-back">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M11 7H3M7 11L3 7l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Back
+              </button>
+              <button class="btn-continue" id="btn-step2-continue" disabled>
+                Continue to Checkout
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ STEP 3: Checkout ══ -->
+      <div class="step-panel" id="panel-step-3">
+        <div class="checkout-card">
+          <div class="checkout-header">
+            <div class="chk-eyebrow">Final Step</div>
+            <div class="chk-title">Review &amp; Pay</div>
+          </div>
+          <div class="checkout-body">
+
+            <!-- Order Summary -->
+            <div class="order-summary">
+              <div class="os-title">Order Summary</div>
+              <div class="os-row">
+                <span class="label">Competition</span>
+                <span class="value">Omega Speedmaster Moonwatch</span>
+              </div>
+              <div class="os-row">
+                <span class="label">Tickets</span>
+                <span class="value" id="chk-qty">—</span>
+              </div>
+              <div class="os-row">
+                <span class="label">Price per ticket</span>
+                <span class="value">£5.95</span>
+              </div>
+              <div class="os-row">
+                <span class="label">Skill answer</span>
+                <span class="value" id="chk-answer" style="color:var(--green)">—</span>
+              </div>
+              <div class="os-row total">
+                <span class="label">Total</span>
+                <span class="value" id="chk-total">—</span>
+              </div>
+            </div>
+
+            <!--
+              CHECKOUT FORM PLACEHOLDER
+              ══════════════════════════════════════════════════
+              TODO: Connect to WooCommerce checkout.
+              - Product ID maps to COMPETITION.wooProductId
+              - Quantity = selectedTicketQuantity
+              - Skill answer = selectedSkillAnswer
+              - Redirect to: COMPETITION.checkoutUrl with ?qty=N&answer=X
+              - Payment: WooCommerce Stripe / PayPal gateway
+              ══════════════════════════════════════════════════
+            -->
+            <div class="customer-form-placeholder">
+              <div class="cfp-icon">🛒</div>
+              <div class="cfp-title">WooCommerce Checkout</div>
+              <div class="cfp-sub">
+                Customer details, payment, and order processing will be handled<br>
+                via WooCommerce. This section will be wired up in the next phase.
+              </div>
+              <div class="cfp-badge">Coming Soon — WooCommerce Integration</div>
+            </div>
+
+            <!-- Security note -->
+            <div class="checkout-security">
+              <div class="cs-icon">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M9 2L3 5v4c0 3.31 2.58 6.41 6 7.17C12.42 15.41 15 12.31 15 9V5L9 2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+                  <path d="M6.5 9l1.5 1.5 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="cs-text">
+                Payments are processed securely via Stripe. Your card details are never stored on our servers. All entries are recorded and timestamped.
+              </div>
+            </div>
+
+            <div class="checkout-actions">
+              <button class="btn-back" id="btn-step3-back">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M11 7H3M7 11L3 7l4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Back
+              </button>
+              <button class="btn-pay" id="btn-pay">
+                Complete Entry
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /entry-right -->
+  </div><!-- /entry-grid -->
+
+  <!-- Trustpilot strip -->
+  <div class="tp-strip">
+    <div class="tp-label">Rated Excellent</div>
+    <div class="tp-stars-row">
+      <div class="tp-star"><svg viewBox="0 0 10 10" fill="white"><path d="M5 1l1.2 2.4L9 3.8 7 5.7l.5 2.8L5 7.1 2.5 8.5 3 5.7 1 3.8l2.8-.4z"/></svg></div>
+      <div class="tp-star"><svg viewBox="0 0 10 10" fill="white"><path d="M5 1l1.2 2.4L9 3.8 7 5.7l.5 2.8L5 7.1 2.5 8.5 3 5.7 1 3.8l2.8-.4z"/></svg></div>
+      <div class="tp-star"><svg viewBox="0 0 10 10" fill="white"><path d="M5 1l1.2 2.4L9 3.8 7 5.7l.5 2.8L5 7.1 2.5 8.5 3 5.7 1 3.8l2.8-.4z"/></svg></div>
+      <div class="tp-star"><svg viewBox="0 0 10 10" fill="white"><path d="M5 1l1.2 2.4L9 3.8 7 5.7l.5 2.8L5 7.1 2.5 8.5 3 5.7 1 3.8l2.8-.4z"/></svg></div>
+      <div class="tp-star"><svg viewBox="0 0 10 10" fill="white"><path d="M5 1l1.2 2.4L9 3.8 7 5.7l.5 2.8L5 7.1 2.5 8.5 3 5.7 1 3.8l2.8-.4z"/></svg></div>
+    </div>
+    <div class="tp-score">4.9 · 3,000+ reviews</div>
+    <div style="width:1px;height:16px;background:var(--border-light)"></div>
+    <div class="tp-label">Verified by Trustpilot</div>
+  </div>
+</main>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer id="footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-logo-name">Premium Watch Club</div>
+      <nav class="footer-links">
+        <a href="../../">Home</a>
+        <a href="../../#how">How It Works</a>
+        <a href="../../#winners">Winners</a>
+        <a href="#">Terms</a>
+        <a href="#">Privacy</a>
+        <a href="#">Contact</a>
+      </nav>
+    </div>
+    <p class="footer-legal">
+      Premium Watch Club is a skill-based competition platform. A correct answer to a skill question is required to win.
+      All competitions are subject to full terms and conditions available on request. 18+ only. Please compete responsibly.
+      Promoter: PWC Ltd, registered in England &amp; Wales.
+    </p>
+  </div>
+</footer>
+
+<script>
+  /* ════════════════════════════════════════════════
+     COMPETITION DATA
+     Structure mirrors future WooCommerce data shape.
+     Replace hardcoded values with API/REST calls later.
+  ════════════════════════════════════════════════ */
+  const COMPETITION = {
+    id:                     'comp-001',
+    wooProductId:           856,              // WooCommerce product ID (future)
+    title:                  'Omega Speedmaster Moonwatch',
+    slug:                   'omega-speedmaster-moonwatch',
+    image:                  '../../assets/images/omega-speedmaster-moonwatch.png',
+    retailValue:            6100,
+    entryPrice:             5.95,             // GBP
+    currency:               '£',
+    maxEntries:             500,
+    entriesRemaining:       77,
+    drawDate:               '11 May 2026, 20:00 BST',
+    cashAlternative:        5000,
+    ticketOptions: [
+      { qty: 1,   popular: false },
+      { qty: 3,   popular: false },
+      { qty: 5,   popular: false },
+      { qty: 10,  popular: true  },
+      { qty: 25,  popular: false },
+      { qty: 50,  popular: false },
+    ],
+    maxTicketsPerPurchase:  100,
+    skillQuestion:          'Which Swiss manufacturer produces the Speedmaster Moonwatch?',
+    skillAnswers:           ['Omega', 'Rolex', 'Breitling', 'TAG Heuer'],
+    correctAnswer:          'Omega',          // Used for validation — move server-side before launch
+    checkoutUrl:            '/checkout',      // WooCommerce checkout URL (future)
+  };
+
+  /* ════════════════════════════════════════════════
+     STATE
+  ════════════════════════════════════════════════ */
+  let state = {
+    currentStep:              1,
+    selectedTicketQty:        1,
+    selectedSkillAnswer:      null,
+  };
+
+  /* ════════════════════════════════════════════════
+     HELPERS
+  ════════════════════════════════════════════════ */
+  function formatPrice(amount) {
+    return COMPETITION.currency + amount.toFixed(2);
+  }
+  function calcSubtotal(qty) {
+    return qty * COMPETITION.entryPrice;
+  }
+
+  /* ════════════════════════════════════════════════
+     STEP NAVIGATION
+  ════════════════════════════════════════════════ */
+  function goToStep(n) {
+    state.currentStep = n;
+
+    // Update panels
+    document.querySelectorAll('.step-panel').forEach((p, i) => {
+      p.classList.toggle('active', i + 1 === n);
+    });
+
+    // Update progress nav
+    document.querySelectorAll('.progress-step').forEach((s, i) => {
+      const stepNum = i + 1;
+      s.classList.remove('active', 'done');
+      if (stepNum < n)  s.classList.add('done');
+      if (stepNum === n) s.classList.add('active');
+    });
+
+    // Update step-num icons (checkmark for done)
+    document.querySelectorAll('.ps-num').forEach((el, i) => {
+      const stepNum = i + 1;
+      if (stepNum < n) {
+        el.innerHTML = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      } else {
+        el.textContent = stepNum;
+      }
+    });
+
+    // Scroll to top of steps area
+    document.getElementById('progress-bar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ════════════════════════════════════════════════
+     STEP 1 — TICKET SELECTION
+  ════════════════════════════════════════════════ */
+  function renderTicketGrid() {
+    const grid = document.getElementById('ticket-grid');
+    grid.innerHTML = '';
+    COMPETITION.ticketOptions.forEach(opt => {
+      const el = document.createElement('div');
+      el.className = 'ticket-option' + (opt.qty === state.selectedTicketQty ? ' selected' : '');
+      el.dataset.qty = opt.qty;
+      el.innerHTML = `
+        ${opt.popular ? '<div class="to-badge">Most Popular</div>' : ''}
+        <div class="to-qty">${opt.qty}</div>
+        <div class="to-label">${opt.qty === 1 ? 'Ticket' : 'Tickets'}</div>
+        <div class="to-subtotal">${formatPrice(calcSubtotal(opt.qty))}</div>
+      `;
+      el.addEventListener('click', () => selectTicketQty(opt.qty));
+      grid.appendChild(el);
+    });
+  }
+
+  function selectTicketQty(qty) {
+    state.selectedTicketQty = qty;
+    // Update grid selection
+    document.querySelectorAll('.ticket-option').forEach(el => {
+      el.classList.toggle('selected', parseInt(el.dataset.qty) === qty);
+    });
+    // Sync stepper
+    document.getElementById('cq-input').value = qty;
+    updateSubtotal();
+  }
+
+  function updateSubtotal() {
+    const qty = state.selectedTicketQty;
+    const subtotal = calcSubtotal(qty);
+    document.getElementById('subtotal-display').textContent = formatPrice(subtotal);
+    document.getElementById('qty-summary').textContent = `(${qty} ${qty === 1 ? 'ticket' : 'tickets'})`;
+    document.getElementById('sr-per').textContent = `${formatPrice(COMPETITION.entryPrice)} × ${qty}`;
+  }
+
+  // Custom stepper
+  function initStepper() {
+    const input = document.getElementById('cq-input');
+    const minus = document.getElementById('cq-minus');
+    const plus  = document.getElementById('cq-plus');
+    const max   = COMPETITION.maxTicketsPerPurchase;
+
+    minus.addEventListener('click', () => {
+      const v = Math.max(1, (parseInt(input.value) || 1) - 1);
+      input.value = v;
+      state.selectedTicketQty = v;
+      // Deselect grid buttons
+      document.querySelectorAll('.ticket-option').forEach(el => {
+        el.classList.toggle('selected', parseInt(el.dataset.qty) === v);
+      });
+      updateSubtotal();
+    });
+
+    plus.addEventListener('click', () => {
+      const v = Math.min(max, (parseInt(input.value) || 1) + 1);
+      input.value = v;
+      state.selectedTicketQty = v;
+      document.querySelectorAll('.ticket-option').forEach(el => {
+        el.classList.toggle('selected', parseInt(el.dataset.qty) === v);
+      });
+      updateSubtotal();
+    });
+
+    input.addEventListener('change', () => {
+      let v = parseInt(input.value) || 1;
+      v = Math.max(1, Math.min(max, v));
+      input.value = v;
+      state.selectedTicketQty = v;
+      document.querySelectorAll('.ticket-option').forEach(el => {
+        el.classList.toggle('selected', parseInt(el.dataset.qty) === v);
+      });
+      updateSubtotal();
+    });
+  }
+
+  document.getElementById('btn-step1-continue').addEventListener('click', () => {
+    goToStep(2);
+  });
+
+  /* ════════════════════════════════════════════════
+     STEP 2 — SKILL CHALLENGE
+  ════════════════════════════════════════════════ */
+  function renderSkillChallenge() {
+    document.getElementById('skill-question-text').textContent = COMPETITION.skillQuestion;
+
+    const list = document.getElementById('skill-answers-list');
+    list.innerHTML = '';
+    COMPETITION.skillAnswers.forEach(answer => {
+      const el = document.createElement('div');
+      el.className = 'skill-answer' + (answer === state.selectedSkillAnswer ? ' selected' : '');
+      el.innerHTML = `
+        <div class="sa-radio"></div>
+        <div class="sa-label">${answer}</div>
+      `;
+      el.addEventListener('click', () => selectSkillAnswer(answer));
+      list.appendChild(el);
+    });
+  }
+
+  function selectSkillAnswer(answer) {
+    state.selectedSkillAnswer = answer;
+    document.querySelectorAll('.skill-answer').forEach(el => {
+      el.classList.toggle('selected', el.querySelector('.sa-label').textContent === answer);
+    });
+    document.getElementById('btn-step2-continue').disabled = false;
+  }
+
+  document.getElementById('btn-step2-back').addEventListener('click', () => goToStep(1));
+
+  document.getElementById('btn-step2-continue').addEventListener('click', () => {
+    if (!state.selectedSkillAnswer) return;
+    populateCheckout();
+    goToStep(3);
+  });
+
+  /* ════════════════════════════════════════════════
+     STEP 3 — CHECKOUT
+  ════════════════════════════════════════════════ */
+  function populateCheckout() {
+    const qty = state.selectedTicketQty;
+    document.getElementById('chk-qty').textContent      = `${qty} ${qty === 1 ? 'ticket' : 'tickets'}`;
+    document.getElementById('chk-answer').textContent   = state.selectedSkillAnswer;
+    document.getElementById('chk-total').textContent    = formatPrice(calcSubtotal(qty));
+  }
+
+  document.getElementById('btn-step3-back').addEventListener('click', () => goToStep(2));
+
+  document.getElementById('btn-pay').addEventListener('click', () => {
+    /*
+      TODO: WooCommerce integration.
+      Build the WooCommerce cart URL or POST to REST API:
+        POST /wp-json/wc/v3/cart/add-item
+          { product_id: COMPETITION.wooProductId, quantity: state.selectedTicketQty }
+      Then redirect to: COMPETITION.checkoutUrl
+      Pass skill answer via order meta: state.selectedSkillAnswer
+    */
+    alert('Payment integration coming soon. This will redirect to WooCommerce checkout.');
+  });
+
+  /* ════════════════════════════════════════════════
+     INIT
+  ════════════════════════════════════════════════ */
+  function init() {
+    renderTicketGrid();
+    initStepper();
+    renderSkillChallenge();
+    updateSubtotal();
+  }
+
+  init();
+</script>
+</body>
+</html>
