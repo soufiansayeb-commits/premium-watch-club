@@ -696,7 +696,7 @@
 <div id="announce-bar">
   <div class="ab-left">
     <div class="ab-live-dot"></div>
-    <span><strong>Competition Live</strong> — 423 entries placed · Closes in 6 days, 14 hours</span>
+    <span><strong>Competition Live</strong> — <span id="ab-entries-placed">—</span> entries placed · Closes in <span id="ab-closes-in">—</span></span>
   </div>
   <div class="ab-right">
     <div class="ab-tp-stars">
@@ -796,19 +796,19 @@
         <div class="wic-section-title">Watch &amp; Competition Information</div>
         <div class="wi-row">
           <div class="wi-key">Retail Value</div>
-          <div class="wi-val gold">£6,100</div>
+          <div class="wi-val gold" id="info-retail-value">—</div>
         </div>
         <div class="wi-row">
           <div class="wi-key">Entry Price</div>
-          <div class="wi-val">From £5.95</div>
+          <div class="wi-val" id="info-entry-price">—</div>
         </div>
         <div class="wi-row">
           <div class="wi-key">Total Entries</div>
-          <div class="wi-val">500 max</div>
+          <div class="wi-val" id="info-total-entries">—</div>
         </div>
         <div class="wi-row">
           <div class="wi-key">Entries Remaining</div>
-          <div class="wi-val green" id="info-remaining">77 left</div>
+          <div class="wi-val green" id="info-remaining">—</div>
         </div>
         <div class="wi-row">
           <div class="wi-key">Condition</div>
@@ -816,11 +816,11 @@
         </div>
         <div class="wi-row">
           <div class="wi-key">Draw Date</div>
-          <div class="wi-val">11 May 2026, 20:00 BST</div>
+          <div class="wi-val" id="info-draw-date">—</div>
         </div>
         <div class="wi-row">
           <div class="wi-key">Cash Alternative</div>
-          <div class="wi-val">£5,000</div>
+          <div class="wi-val" id="info-cash-alt">—</div>
         </div>
         <div class="wi-row">
           <div class="wi-key">Delivery</div>
@@ -837,8 +837,8 @@
         <div class="entry-card">
           <div class="entry-card-header">
             <div class="ech-eyebrow">Win the Prize</div>
-            <div class="ech-title">Omega Speedmaster<br>Moonwatch</div>
-            <div class="ech-price-line"><strong>£5.95</strong> per entry &nbsp;·&nbsp; How many tickets would you like?</div>
+            <div class="ech-title" id="ech-title-text">—</div>
+            <div class="ech-price-line"><strong id="ech-price-amount">—</strong> per entry &nbsp;·&nbsp; How many tickets would you like?</div>
           </div>
           <div class="entry-card-body">
 
@@ -958,7 +958,7 @@
               </div>
               <div class="os-row">
                 <span class="label">Price per ticket</span>
-                <span class="value">£5.95</span>
+                <span class="value" id="chk-price-per">—</span>
               </div>
               <div class="os-row">
                 <span class="label">Skill answer</span>
@@ -1070,18 +1070,25 @@
      Structure mirrors future WooCommerce data shape.
      Replace hardcoded values with API/REST calls later.
   ════════════════════════════════════════════════ */
+  /*
+   * COMPETITION DATA — single source of truth for this page.
+   * Replace with WooCommerce REST API call once backend is live:
+   *   GET https://backend.premiumwatchclub.com/wp-json/wc/v3/products/{id}
+   *   via server-side lib/woocommerce.js — never call the API directly from here.
+   */
   const COMPETITION = {
     id:                     'comp-001',
-    wooProductId:           856,              // WooCommerce product ID (future)
+    wooProductId:           856,              // WooCommerce product ID
     title:                  'Omega Speedmaster Moonwatch',
     slug:                   'omega-speedmaster-moonwatch',
     image:                  '../../assets/images/omega-speedmaster-moonwatch.png',
     retailValue:            6100,
-    entryPrice:             5.95,             // GBP
+    entryPrice:             5.95,
     currency:               '£',
     maxEntries:             500,
     entriesRemaining:       77,
-    drawDate:               '11 May 2026, 20:00 BST',
+    drawDate:               new Date('2026-05-11T20:00:00+01:00'),
+    drawDateDisplay:        '11 May 2026, 20:00 BST',
     cashAlternative:        5000,
     ticketOptions: [
       { qty: 1,   popular: false },
@@ -1094,9 +1101,51 @@
     maxTicketsPerPurchase:  100,
     skillQuestion:          'Which Swiss manufacturer produces the Speedmaster Moonwatch?',
     skillAnswers:           ['Omega', 'Rolex', 'Breitling', 'TAG Heuer'],
-    correctAnswer:          'Omega',          // Used for validation — move server-side before launch
-    checkoutUrl:            '/checkout',      // WooCommerce checkout URL (future)
+    /*
+     * SECURITY WARNING: correctAnswer is visible in browser DevTools.
+     * This is intentional for the demo phase only.
+     * Before launch: remove this field and validate the answer server-side
+     * (e.g. via a WooCommerce order meta check or a Next.js API route).
+     */
+    correctAnswer:          'Omega',
+    checkoutUrl:            '/checkout',      // Replace with WooCommerce checkout URL
   };
+
+  /* ════════════════════════════════════════════════
+     POPULATE STATIC CONTENT FROM COMPETITION OBJECT
+     Single function — replace with API data later.
+  ════════════════════════════════════════════════ */
+  function populateStaticContent() {
+    const c = COMPETITION;
+    const fmt = (n) => c.currency + n.toFixed(2);
+
+    // Announcement bar
+    const entriesSold = c.maxEntries - c.entriesRemaining;
+    const msLeft = c.drawDate - Date.now();
+    let closesIn = '—';
+    if (msLeft > 0) {
+      const days = Math.floor(msLeft / 86400000);
+      const hours = Math.floor(msLeft % 86400000 / 3600000);
+      closesIn = days > 0 ? `${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}` : `${hours} hour${hours !== 1 ? 's' : ''}`;
+    }
+    document.getElementById('ab-entries-placed').textContent = entriesSold;
+    document.getElementById('ab-closes-in').textContent      = closesIn;
+
+    // Watch info card
+    document.getElementById('info-retail-value').textContent  = c.currency + c.retailValue.toLocaleString();
+    document.getElementById('info-entry-price').textContent   = 'From ' + fmt(c.entryPrice);
+    document.getElementById('info-total-entries').textContent = c.maxEntries + ' max';
+    document.getElementById('info-remaining').textContent     = c.entriesRemaining + ' left';
+    document.getElementById('info-draw-date').textContent     = c.drawDateDisplay;
+    document.getElementById('info-cash-alt').textContent      = c.currency + c.cashAlternative.toLocaleString();
+
+    // Entry card header
+    document.getElementById('ech-title-text').textContent  = c.title;
+    document.getElementById('ech-price-amount').textContent = fmt(c.entryPrice);
+
+    // Checkout summary price per ticket
+    document.getElementById('chk-price-per').textContent = fmt(c.entryPrice);
+  }
 
   /* ════════════════════════════════════════════════
      STATE
@@ -1298,6 +1347,7 @@
      INIT
   ════════════════════════════════════════════════ */
   function init() {
+    populateStaticContent();
     renderTicketGrid();
     initStepper();
     renderSkillChallenge();

@@ -759,9 +759,9 @@
         </div>
 
         <div class="hero-progress-col">
-          <div class="hp-label">20% SOLD — 399 TICKETS LEFT</div>
+          <div class="hp-label" id="hp-label-text">— SOLD</div>
           <div class="hp-track">
-            <div class="hp-fill" id="heroProgressFill" style="width: 20.2%"></div>
+            <div class="hp-fill" id="heroProgressFill" style="width: 0%"></div>
           </div>
         </div>
       </div>
@@ -778,7 +778,7 @@
       </a>
 
       <!-- Price -->
-      <p class="hero-entry-price"><strong>£5.95</strong> per entry</p>
+      <p class="hero-entry-price"><strong id="hero-price-amount">—</strong> per entry</p>
 
       <!-- Recent purchases -->
       <p class="hero-recent">3 recent purchases from London, Amsterdam and Edinburgh.</p>
@@ -827,7 +827,7 @@
 
   <!-- Bottom strip -->
   <div class="hero-strip">
-    Competition <span>#1</span> · 500 tickets total · <span>20.2%</span> sold · Max 20 tickets per member · Publicly streamed live draw
+    Competition <span>#1</span> · <span id="strip-total">500</span> tickets total · <span id="strip-pct">—</span> sold · Max <span id="strip-max">—</span> tickets per member · Publicly streamed live draw
   </div>
 
 </section>
@@ -1101,7 +1101,7 @@
       </div>
       <div class="cta-urgency">
         <div class="dot"></div>
-        101 of 500 tickets claimed — 399 entries still available
+        <span id="cta-urgency-text">— tickets claimed</span>
       </div>
     </div>
   </div>
@@ -1203,6 +1203,19 @@
     ctaLink:              '/competitions/omega-speedmaster-moonwatch',
     maxTicketsPerPurchase: 20,
   };
+
+  /* ── Populate page from COMPETITION object ── */
+  function populatePage() {
+    const c = COMPETITION;
+    document.getElementById('hero-price-amount').textContent  = '£' + c.entryPrice.toFixed(2);
+    document.getElementById('hp-label-text').textContent      = c.soldPercentage + '% SOLD — ' + c.ticketsLeft + ' TICKETS LEFT';
+    document.getElementById('heroProgressFill').style.width   = c.soldPercentage + '%';
+    document.getElementById('strip-total').textContent        = c.totalTickets;
+    document.getElementById('strip-pct').textContent          = c.soldPercentage + '%';
+    document.getElementById('strip-max').textContent          = c.maxTicketsPerPurchase;
+    document.getElementById('cta-urgency-text').textContent   = c.ticketsSold + ' of ' + c.totalTickets + ' tickets claimed — ' + c.ticketsLeft + ' entries still available';
+  }
+  populatePage();
 
   /* ── Hamburger ── */
   document.getElementById('hamburger').addEventListener('click', function() {
