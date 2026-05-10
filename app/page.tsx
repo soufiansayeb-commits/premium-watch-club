@@ -8,6 +8,7 @@ import HowItWorks from '@/components/HowItWorks'
 import TrustBar from '@/components/TrustBar'
 import JournalPreview from '@/components/JournalPreview'
 import CtaBanner from '@/components/CtaBanner'
+import NewsletterSection from '@/components/NewsletterSection'
 import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
 
@@ -26,6 +27,7 @@ export default function HomePage() {
       <TrustBar />
       <JournalPreview />
       <CtaBanner competition={competition} />
+      <NewsletterSection />
       <Footer />
       <ScrollReveal />
     </>

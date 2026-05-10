@@ -1,5 +1,7 @@
+import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import FaqAccordion from '@/components/FaqAccordion'
 
 export const metadata = {
   title: 'Frequently Asked Questions — Premium Watch Club',
@@ -24,7 +26,7 @@ const faqs = [
   },
   {
     question: 'How will I know if I win?',
-    answer: 'If you are the winner, we will contact you directly via the email address you provided at the time of entry within 48 hours of the live draw. We will also publish the winner\'s first name, surname initial, and location on our website and social channels. We recommend watching the live draw stream so you know the outcome in real time.',
+    answer: "If you are the winner, we will contact you directly via the email address you provided at the time of entry within 48 hours of the live draw. We will also publish the winner's first name, surname initial, and location on our website and social channels. We recommend watching the live draw stream so you know the outcome in real time.",
   },
   {
     question: 'Are the watches authentic?',
@@ -32,7 +34,7 @@ const faqs = [
   },
   {
     question: 'Do you offer a cash alternative?',
-    answer: 'A cash alternative may be offered at PWC\'s discretion. Where available, the cash value will be no less than 90% of the watch\'s stated retail value. If offered, the winner must elect the cash alternative within 7 days of being notified. Please refer to our full competition terms for details.',
+    answer: "A cash alternative may be offered at PWC's discretion. Where available, the cash value will be no less than 90% of the watch's stated retail value. If offered, the winner must elect the cash alternative within 7 days of being notified. Please refer to our full competition terms for details.",
   },
   {
     question: 'Can I enter by post for free?',
@@ -53,31 +55,46 @@ export default function FAQPage() {
     <>
       <Header />
 
-      <div className="page-hero">
+      <div className="faq-page-hero">
         <div className="container">
-          <div className="section-eyebrow">Support</div>
-          <h1 className="page-hero-headline">Frequently Asked Questions</h1>
-          <p className="page-hero-sub">Clear answers to the questions we hear most. For anything not covered here, contact our support team.</p>
+          <div className="faq-hero-eyebrow">
+            <span className="faq-hero-eyebrow-line" />
+            <span className="faq-hero-eyebrow-text">Support Centre</span>
+            <span className="faq-hero-eyebrow-line" />
+          </div>
+          <h1 className="faq-hero-headline">Frequently Asked Questions</h1>
+          <p className="faq-hero-sub">
+            Clear answers to the questions we hear most. For anything not covered here, our support team is ready to assist.
+          </p>
         </div>
       </div>
 
-      <main className="page-content-wrap">
-        <div className="page-content">
-          <div className="faq-list">
-            {faqs.map((faq, i) => (
-              <div key={i} className="faq-card">
-                <div className="faq-question">{faq.question}</div>
-                <div className="faq-answer">{faq.answer}</div>
+      <main className="faq-content-wrap">
+        <div className="faq-content">
+
+          <FaqAccordion items={faqs} />
+
+          <div className="faq-support-cta">
+            <div className="faq-support-cta-inner">
+              <div className="faq-support-cta-icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="6" width="22" height="16" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M3 9l11 7.5L25 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
               </div>
-            ))}
+              <h3 className="faq-support-cta-title">Still have questions?</h3>
+              <p className="faq-support-cta-sub">
+                Our support team usually responds within 24–48 business hours.
+              </p>
+              <Link href="/contact" className="faq-support-btn">
+                Contact Support
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </Link>
+            </div>
           </div>
 
-          <div className="faq-contact-prompt">
-            <p>Still have a question? Our support team responds within 24–48 business hours.</p>
-            <a href="mailto:support@premiumwatchclub.com" className="faq-contact-link">
-              support@premiumwatchclub.com
-            </a>
-          </div>
         </div>
       </main>
 
