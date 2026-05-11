@@ -15,7 +15,7 @@ export default function CtaBanner({ competition: c }: Props) {
           <div className="cta-eyebrow">Current Draw · Closing Soon</div>
           <h2 className="cta-headline">
             {c.ticketsLeft} tickets remain for the<br />
-            <em>Omega Speedmaster</em>
+            <em>{c.title}</em>
           </h2>
           <p className="cta-sub">One competition. One watch. 500 entries only. This is your chance to own the watch worn on the Moon — for just £{c.entryPrice.toFixed(2)}.</p>
           <div className="cta-actions">

@@ -1,5 +1,5 @@
 import { getAllCompetitions } from '@/lib/competition-data'
-import AnnouncementBar from '@/components/AnnouncementBar'
+import { fetchWooProducts } from '@/lib/woocommerce'
 import Header from '@/components/Header'
 import HomepageHero from '@/components/HomepageHero'
 import StatsBar from '@/components/StatsBar'
@@ -12,21 +12,25 @@ import NewsletterSection from '@/components/NewsletterSection'
 import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
 
-export default function HomePage() {
+export default async function HomePage() {
   const competitions = getAllCompetitions()
   const competition  = competitions[0]
 
+  // TEMPORARY WooCommerce title test — replace with full data mapping later
+  const { products } = await fetchWooProducts()
+  const displayTitle = products[0]?.name || competition.title
+  const competitionWithWooTitle = { ...competition, title: displayTitle }
+
   return (
     <>
-      <AnnouncementBar competition={competition} />
       <Header />
-      <HomepageHero competition={competition} />
+      <HomepageHero competition={competitionWithWooTitle} />
       <StatsBar />
       <WinnersSection />
       <HowItWorks />
       <TrustBar />
       <JournalPreview />
-      <CtaBanner competition={competition} />
+      <CtaBanner competition={competitionWithWooTitle} />
       <NewsletterSection />
       <Footer />
       <ScrollReveal />

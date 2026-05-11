@@ -85,7 +85,7 @@ export default function HomepageHero({ competition }: Props) {
 
           {/* Headline */}
           <h1 className="hero-headline">
-            Omega Speedmaster<br />Moonwatch
+            {c.title}
           </h1>
 
           {/* CTA */}

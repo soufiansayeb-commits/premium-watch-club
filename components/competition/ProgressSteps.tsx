@@ -10,9 +10,9 @@ const CheckSvg = () => (
 
 export default function ProgressSteps({ currentStep }: Props) {
   const steps = [
-    { num: 1, label: 'Select Your Tickets' },
-    { num: 2, label: 'Skill Based Challenge' },
-    { num: 3, label: 'Checkout' },
+    { num: 1, label: 'Select Your Tickets', shortLabel: 'Select Entries' },
+    { num: 2, label: 'Skill Based Challenge', shortLabel: 'Skill Question' },
+    { num: 3, label: 'Checkout', shortLabel: 'Checkout' },
   ]
 
   return (
@@ -28,7 +28,8 @@ export default function ProgressSteps({ currentStep }: Props) {
               <div className="ps-num">
                 {isDone ? <CheckSvg /> : step.num}
               </div>
-              <div className="ps-label">{step.label}</div>
+              <div className="ps-label ps-label-full">{step.label}</div>
+              <div className="ps-label ps-label-short">{step.shortLabel}</div>
             </div>
           )
         })}
