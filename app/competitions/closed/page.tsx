@@ -1,5 +1,6 @@
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import Image from 'next/image'
 
 export const metadata = {
   title: 'Closed Draws — Premium Watch Club',
@@ -13,6 +14,7 @@ const closedDraws = [
     drawDate: '15 March 2026',
     winner: 'J.T. — London',
     tickets: '500/500',
+    image: '/assets/images/winners/alexander.png',
   },
   {
     title: 'Cartier Santos Medium',
@@ -21,6 +23,7 @@ const closedDraws = [
     drawDate: '28 February 2026',
     winner: 'M.R. — Edinburgh',
     tickets: '500/500',
+    image: '/assets/images/winners/patrick.png',
   },
   {
     title: 'Omega Seamaster 300M',
@@ -29,6 +32,7 @@ const closedDraws = [
     drawDate: '10 January 2026',
     winner: 'S.K. — Amsterdam',
     tickets: '500/500',
+    image: '/assets/images/winners/dan.png',
   },
 ]
 
@@ -55,18 +59,15 @@ export default function ClosedDrawsPage() {
                   <div className="cdc-badge">SOLD OUT</div>
                   <div className="cdc-date">Draw: {draw.drawDate}</div>
                 </div>
-                <div className="cdc-watch-placeholder">
-                  <svg width="64" height="64" viewBox="0 0 120 120" fill="none" opacity="0.25">
-                    <circle cx="60" cy="60" r="52" stroke="currentColor" strokeWidth="1.5"/>
-                    <circle cx="60" cy="60" r="40" stroke="currentColor" strokeWidth="0.8" fill="none"/>
-                    <rect x="57" y="12" width="6" height="14" rx="1.5" fill="currentColor"/>
-                    <rect x="57" y="94" width="6" height="14" rx="1.5" fill="currentColor"/>
-                    <rect x="12" y="57" width="14" height="6" rx="1.5" fill="currentColor"/>
-                    <rect x="94" y="57" width="14" height="6" rx="1.5" fill="currentColor"/>
-                    <rect x="58" y="30" width="4" height="32" rx="2" fill="currentColor" transform="rotate(-28 60 60)"/>
-                    <rect x="59" y="24" width="2.5" height="40" rx="1.2" fill="currentColor" transform="rotate(22 60 60)"/>
-                    <circle cx="60" cy="60" r="5" fill="currentColor"/>
-                  </svg>
+                <div className="cdc-winner-photo">
+                  <Image
+                    src={draw.image}
+                    alt={`${draw.winner} — winner of the ${draw.title}`}
+                    width={480}
+                    height={320}
+                    className="cdc-winner-img"
+                  />
+                  <div className="cdc-photo-overlay" />
                 </div>
                 <div className="cdc-body">
                   <h3 className="cdc-title">{draw.title}</h3>

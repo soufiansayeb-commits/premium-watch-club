@@ -14,11 +14,12 @@ export default function Header() {
     <nav id="nav">
       <div className="nav-inner">
         <Link href="/" className="nav-logo" onClick={closeMenu}>
-          <div className="nav-logo-img">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand-assets/WhatsApp Image 2026-04-21 at 18.26.41.jpeg" alt="Premium Watch Club logo" />
-          </div>
-          <span className="nav-logo-name">Premium Watch Club</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand-assets/pwc-logo-nav.png"
+            alt="Premium Watch Club"
+            className="nav-logo-img"
+          />
         </Link>
 
         <ul className={`nav-links${menuOpen ? ' open' : ''}`} id="navLinks">

@@ -3,6 +3,10 @@ import { fetchWooProducts } from '@/lib/woocommerce'
 import { notFound } from 'next/navigation'
 import Header from '@/components/Header'
 import CompetitionEntryFlow from '@/components/competition/CompetitionEntryFlow'
+import WinnersSection from '@/components/WinnersSection'
+import ProductEditorial from '@/components/competition/ProductEditorial'
+import NewsletterSection from '@/components/NewsletterSection'
+import ScrollReveal from '@/components/ScrollReveal'
 import CompetitionFooter from '@/components/CompetitionFooter'
 
 interface Props {
@@ -22,6 +26,10 @@ export default async function CompetitionPage({ params }: Props) {
     <>
       <Header />
       <CompetitionEntryFlow competition={competitionWithWooTitle} />
+      <WinnersSection />
+      <ProductEditorial />
+      <NewsletterSection />
+      <ScrollReveal />
       <CompetitionFooter />
     </>
   )

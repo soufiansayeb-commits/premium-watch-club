@@ -4,3 +4,23 @@ node_modules/
 .env.local
 .env*.local
 .DS_Store
+
+# Claude Code internal files
+.claude/
+
+# Build artifacts
+tsconfig.tsbuildinfo
+
+# Dev/test scripts
+screenshot.js
+screenshot2.js
+screenshot3.js
+serve.js
+test-nav.js
+
+# Unused draft assets (not referenced in code)
+second bacground section 1/
+winnaars images/
+
+# Claude instruction files
+CLAUDE*.md

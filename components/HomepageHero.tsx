@@ -15,21 +15,20 @@ function pad(n: number) {
 export default function HomepageHero({ competition }: Props) {
   const c = competition
   const drawTimestamp = useMemo(() => new Date(c.drawDate).getTime(), [c.drawDate])
+  const maxOdds = `1:${c.totalTickets}`
 
-  const [time, setTime] = useState({ d: '00', h: '00', m: '00', s: '00' })
+  const [time, setTime]           = useState({ d: '00', h: '00', m: '00', s: '00' })
+  const [progVisible, setProgVisible] = useState(false)
 
   useEffect(() => {
     function tick() {
       const diff = drawTimestamp - Date.now()
-      if (diff <= 0) {
-        setTime({ d: '00', h: '00', m: '00', s: '00' })
-        return
-      }
+      if (diff <= 0) { setTime({ d: '00', h: '00', m: '00', s: '00' }); return }
       setTime({
         d: pad(Math.floor(diff / 86400000)),
-        h: pad(Math.floor(diff % 86400000 / 3600000)),
-        m: pad(Math.floor(diff % 3600000 / 60000)),
-        s: pad(Math.floor(diff % 60000 / 1000)),
+        h: pad(Math.floor((diff % 86400000) / 3600000)),
+        m: pad(Math.floor((diff % 3600000) / 60000)),
+        s: pad(Math.floor((diff % 60000) / 1000)),
       })
     }
     tick()
@@ -37,110 +36,171 @@ export default function HomepageHero({ competition }: Props) {
     return () => clearInterval(id)
   }, [drawTimestamp])
 
+  useEffect(() => {
+    const t = setTimeout(() => setProgVisible(true), 500)
+    return () => clearTimeout(t)
+  }, [])
+
   return (
     <section id="hero">
-      <div className="hero-topline"></div>
-      <div className="hero-watch-glow"></div>
+      {/* Layered cinematic backgrounds */}
+      <div className="h2-bg-gradient" />
+      <div className="h2-bg-vignette" />
+      <div className="h2-topline" />
+      <div className="h2-watch-ambient" />
 
-      <div className="hero-main">
-        {/* LEFT: competition info */}
-        <div className="hero-left">
+      <div className="h2-inner">
 
-          {/* Countdown + Progress row */}
-          <div className="hero-top-row">
-            <div className="hero-countdown">
-              <div className="hcd-unit">
-                <span className="hcd-num">{time.d}</span>
-                <span className="hcd-lbl">Day(s)</span>
-              </div>
-              <span className="hcd-sep">·</span>
-              <div className="hcd-unit">
-                <span className="hcd-num">{time.h}</span>
-                <span className="hcd-lbl">HR</span>
-              </div>
-              <span className="hcd-sep">·</span>
-              <div className="hcd-unit">
-                <span className="hcd-num">{time.m}</span>
-                <span className="hcd-lbl">MIN</span>
-              </div>
-              <span className="hcd-sep">·</span>
-              <div className="hcd-unit">
-                <span className="hcd-num">{time.s}</span>
-                <span className="hcd-lbl">SEC</span>
-              </div>
+        {/* ── COL 1: LEFT — all text content ── */}
+        <div className="h2-left">
+
+          <div className="h2-eyebrow">
+            <span className="h2-pulse-dot" />
+            <span>LIVE DRAW</span>
+            <span className="h2-eyebrow-sep">·</span>
+            <span>CLOSING SOON</span>
+          </div>
+
+          <div className="h2-countdown">
+            <div className="h2-cd-block">
+              <span className="h2-cd-num">{time.d}</span>
+              <span className="h2-cd-lbl">DAYS</span>
             </div>
-
-            <div className="hero-progress-col">
-              <div className="hp-label">
-                {c.soldPercentage}% SOLD — {c.ticketsLeft} TICKETS LEFT
-              </div>
-              <div className="hp-track">
-                <div
-                  className="hp-fill"
-                  style={{ width: `${c.soldPercentage}%` }}
-                ></div>
-              </div>
+            <span className="h2-cd-sep" aria-hidden="true">:</span>
+            <div className="h2-cd-block">
+              <span className="h2-cd-num">{time.h}</span>
+              <span className="h2-cd-lbl">HRS</span>
+            </div>
+            <span className="h2-cd-sep" aria-hidden="true">:</span>
+            <div className="h2-cd-block">
+              <span className="h2-cd-num">{time.m}</span>
+              <span className="h2-cd-lbl">MIN</span>
+            </div>
+            <span className="h2-cd-sep" aria-hidden="true">:</span>
+            <div className="h2-cd-block">
+              <span className="h2-cd-num">{time.s}</span>
+              <span className="h2-cd-lbl">SEC</span>
             </div>
           </div>
 
-          {/* Headline */}
-          <h1 className="hero-headline">
-            {c.title}
-          </h1>
+          <div className="h2-progress">
+            <div className="h2-prog-meta">
+              <div className="h2-prog-live">
+                <span className="h2-prog-live-dot" />
+                <span className="h2-prog-label">
+                  {c.soldPercentage}% SOLD — {c.ticketsLeft} TICKETS LEFT
+                </span>
+              </div>
+            </div>
+            <div className="h2-prog-track">
+              <div
+                className="h2-prog-fill"
+                style={{ width: progVisible ? `${c.soldPercentage}%` : '0%' }}
+              />
+            </div>
+          </div>
 
-          {/* CTA */}
-          <Link href={c.ctaLink} className="hero-cta-btn">
-            Enter Now To Win
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <h1 className="h2-headline">{c.title}</h1>
+
+          <Link href={c.ctaLink} className="h2-cta-btn">
+            <span>SECURE YOUR ENTRY</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </Link>
 
-          {/* Price */}
-          <p className="hero-entry-price">
-            <strong>{c.currency}{c.entryPrice.toFixed(2)}</strong> per entry
-          </p>
+          <div className="h2-meta-row">
+            <span className="h2-price">
+              <strong>{c.currency}{c.entryPrice.toFixed(2)}</strong> per entry
+            </span>
+            <span className="h2-meta-sep" aria-hidden="true" />
+            <span className="h2-social-proof">
+              3 recent purchases from {c.recentPurchases.join(', ')}
+            </span>
+          </div>
 
-          {/* Recent purchases */}
-          <p className="hero-recent">
-            3 recent purchases from {c.recentPurchases.join(', ')}.
-          </p>
-
-          {/* Leaderboard */}
-          <div className="hero-leaderboard">
-            <div className="hlb-title">Leaderboard</div>
+          <div className="h2-leaderboard">
+            <div className="h2-lb-header">
+              <span className="h2-lb-live-dot" />
+              <span className="h2-lb-title">LIVE LEADERBOARD</span>
+            </div>
             {c.leaderboard.map((entry, i) => (
-              <div className="hlb-item" key={i}>
-                <div className="hlb-item-left">
-                  <span className="hlb-crown">&#x1F451;</span>
-                  <span className="hlb-name">{entry.name} from {entry.location}</span>
+              <div className="h2-lb-row" key={i}>
+                <div className="h2-lb-left">
+                  <span className="h2-lb-rank">#{i + 1}</span>
+                  <span className="h2-lb-name">{entry.name} from {entry.location}</span>
                 </div>
-                <span className="hlb-tickets">{entry.tickets} tickets</span>
+                <span className="h2-lb-tickets">{entry.tickets} tickets</span>
               </div>
             ))}
           </div>
 
         </div>
 
-        {/* RIGHT: Watch image */}
-        <div className="hero-right">
-          <div className="hero-watch-img-wrap">
+        {/* ── COL 2: CENTER — watch only, completely clean ── */}
+        <div className="h2-center">
+          <div className="h2-watch-stage">
+            <div className="h2-watch-glow" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={c.heroImage}
-              alt="Omega Speedmaster Moonwatch Professional Ref. 310.30.42.50.01.001"
+              alt={c.title}
+              className="h2-watch-img"
+              draggable={false}
             />
-            <div className="hero-rrp-badge">
-              <div className="hrb-label">Reference</div>
-              <div className="hrb-val">{c.reference}</div>
-              <div className="hrb-sub">{c.detail}</div>
-            </div>
           </div>
         </div>
+
+        {/* ── COL 3: RIGHT — cards, never overlapping the watch ── */}
+        <div className="h2-cards-col">
+
+          {/* Reference card */}
+          <div className="h2-ref-card">
+            <div className="h2-ref-eyebrow">REFERENCE</div>
+            <div className="h2-ref-val">{c.reference}</div>
+            <div className="h2-ref-sub">{c.detail}</div>
+          </div>
+
+          {/* Competition details card */}
+          <div className="h2-details-card">
+            <div className="h2-card-eyebrow">COMPETITION DETAILS</div>
+            <div className="h2-card-rows">
+              <div className="h2-card-row">
+                <span className="h2-card-label">Entry Price</span>
+                <span className="h2-card-val">{c.currency}{c.entryPrice.toFixed(2)}</span>
+              </div>
+              <div className="h2-card-divider" />
+              <div className="h2-card-row">
+                <span className="h2-card-label">Total Entries</span>
+                <span className="h2-card-val">{c.totalTickets}</span>
+              </div>
+              <div className="h2-card-divider" />
+              <div className="h2-card-row">
+                <span className="h2-card-label">Remaining</span>
+                <span className="h2-card-val h2-card-gold">{c.ticketsLeft}</span>
+              </div>
+              <div className="h2-card-divider" />
+              <div className="h2-card-row">
+                <span className="h2-card-label">Max Odds</span>
+                <span className="h2-card-val">{maxOdds}</span>
+              </div>
+              <div className="h2-card-divider" />
+              <div className="h2-card-row">
+                <span className="h2-card-label">Draw Date</span>
+                <span className="h2-card-val">{c.drawDateDisplay.split(',')[0]}</span>
+              </div>
+            </div>
+            <Link href={c.ctaLink} className="h2-card-cta">
+              ENTER NOW
+            </Link>
+          </div>
+
+        </div>
+
       </div>
 
-      {/* Bottom strip */}
-      <div className="hero-strip">
+      {/* Bottom data strip */}
+      <div className="h2-strip">
         Competition <span>#1</span> · <span>{c.totalTickets}</span> tickets total ·{' '}
         <span>{c.soldPercentage}%</span> sold · Max <span>{c.maxTicketsPerPurchase}</span> tickets per member · Publicly streamed live draw
       </div>
