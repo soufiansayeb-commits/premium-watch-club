@@ -119,7 +119,8 @@ export default function HomepageHero({ competition }: Props) {
             </span>
           </div>
 
-          <div className="h2-leaderboard">
+          {/* Desktop-only leaderboard — hidden on mobile */}
+          <div className="h2-leaderboard h2-lb-desktop">
             <div className="h2-lb-header">
               <span className="h2-lb-live-dot" />
               <span className="h2-lb-title">LIVE LEADERBOARD</span>
@@ -151,15 +152,8 @@ export default function HomepageHero({ competition }: Props) {
           </div>
         </div>
 
-        {/* ── COL 3: RIGHT — cards, never overlapping the watch ── */}
+        {/* ── COL 3: RIGHT — details card only (reference removed) ── */}
         <div className="h2-cards-col">
-
-          {/* Reference card */}
-          <div className="h2-ref-card">
-            <div className="h2-ref-eyebrow">REFERENCE</div>
-            <div className="h2-ref-val">{c.reference}</div>
-            <div className="h2-ref-sub">{c.detail}</div>
-          </div>
 
           {/* Competition details card */}
           <div className="h2-details-card">

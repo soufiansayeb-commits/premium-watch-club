@@ -85,8 +85,8 @@ function CompCard({ competition: c, label, badgeClass, ctaHref }: CardData) {
           </div>
           <div className="cgc-stat-divider" />
           <div className="cgc-stat">
-            <span className="cgc-stat-label">Watch Value</span>
-            <span className="cgc-stat-val">{c.currency}{c.retailValue.toLocaleString()}</span>
+            <span className="cgc-stat-label">Total Entries</span>
+            <span className="cgc-stat-val">{c.totalTickets}</span>
           </div>
         </div>
 

@@ -23,7 +23,7 @@ export default function Header() {
         </Link>
 
         <ul className={`nav-links${menuOpen ? ' open' : ''}`} id="navLinks">
-          <li><Link href="/competitions/omega-speedmaster-moonwatch" onClick={closeMenu}>Competition</Link></li>
+          <li><Link href="/#competitions-grid" onClick={closeMenu}>Competitions</Link></li>
           <li><Link href="/#how" onClick={closeMenu}>How It Works</Link></li>
           <li><Link href="/#winners" onClick={closeMenu}>Winners</Link></li>
           <li><Link href="/#journal" onClick={closeMenu}>Journal</Link></li>

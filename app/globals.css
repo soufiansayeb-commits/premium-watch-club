@@ -424,6 +424,9 @@ img { max-width: 100%; display: block; }
 .h2-lb-name { font-size: 13px; font-weight: 500; color: var(--text-on-dark); }
 .h2-lb-tickets { font-size: 11px; font-weight: 500; color: var(--text-muted-dark); }
 
+/* Hide leaderboard on mobile */
+.h2-lb-desktop { display: block; }
+
 /* ── COL 2: CENTRE — watch only, zero obstruction ── */
 .h2-center {
   display: flex; align-items: center; justify-content: center;
@@ -572,10 +575,10 @@ img { max-width: 100%; display: block; }
     gap: 0;
   }
   .h2-left   { padding: 36px 0 20px; }
-  .h2-center { padding: 4px 0 16px; }
+  .h2-center { padding: 4px 0 12px; }
   .h2-cards-col {
     flex-direction: column;
-    padding: 0 0 36px;
+    padding: 0 0 20px;
   }
   .h2-watch-stage { max-width: 320px; margin: 0 auto; }
   .h2-countdown { gap: 7px; }
@@ -584,6 +587,13 @@ img { max-width: 100%; display: block; }
   .h2-cd-sep { font-size: 18px; margin-bottom: 8px; }
   .h2-meta-row { flex-direction: column; align-items: flex-start; gap: 6px; }
   .h2-meta-sep { display: none; }
+  /* Swap leaderboard: hide inside left col, show below watch */
+  .h2-lb-desktop { display: none; }
+  .h2-lb-mobile  {
+    display: block;
+    padding: 0 0 32px;
+    margin: 0;
+  }
 }
 
 @media (max-width: 420px) {
@@ -1003,6 +1013,7 @@ img { max-width: 100%; display: block; }
 }
 
 @media (max-width: 680px) {
+  /* Watch first — matches paid comp mobile visual hierarchy */
   .fc-inner {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -1011,18 +1022,24 @@ img { max-width: 100%; display: block; }
       "cards";
     gap: 0;
   }
-  .fc-left       { padding: 32px 0 16px; }
-  .fc-center     { padding: 4px 0 16px; }
-  .fc-cards-col  { flex-direction: column; padding: 0 0 32px; }
-  .fc-watch-stage { max-width: 300px; margin: 0 auto; }
-  .fc-countdown { gap: 5px; }
-  .fc-cd-block { padding: 8px 9px; min-width: 50px; }
-  .fc-cd-num { font-size: 22px; }
-  .fc-cd-sep { font-size: 16px; margin-bottom: 8px; }
-  .fc-headline { font-size: 32px; }
-  .fc-stats-row { flex-direction: column; }
-  .fc-stat-divider { width: auto; height: 1px; }
-  .fc-cta-group { flex-direction: column; align-items: flex-start; }
+  .fc-center     { grid-area: center; padding: 24px 0 8px; }
+  .fc-cards-col  { grid-area: cards; flex-direction: column; padding: 0 0 8px; }
+  .fc-left       { grid-area: left; padding: 24px 0 32px; }
+  .fc-watch-stage { max-width: 320px; margin: 0 auto; }
+  /* Restore live elements — they appear below the card on mobile */
+  .fc-eyebrow    { display: inline-flex; margin-bottom: 14px; }
+  .fc-countdown  { display: flex; margin-bottom: 14px; }
+  .fc-progress   { display: block; margin-bottom: 14px; }
+  .fc-secondary-btn { display: none; }
+  /* Compact headline and CTA */
+  .fc-headline { font-size: 32px; margin-bottom: 16px; }
+  .fc-stats-row { display: none; }
+  .fc-cta-group { flex-direction: column; align-items: stretch; }
+  .fc-cta-btn { justify-content: center; }
+  /* Countdown sizing on mobile */
+  .fc-cd-block { padding: 9px 11px; min-width: 54px; }
+  .fc-cd-num { font-size: 24px; }
+  .fc-cd-sep { font-size: 18px; margin-bottom: 8px; }
 }
 
 @media (max-width: 420px) {
@@ -2250,7 +2267,7 @@ img { max-width: 100%; display: block; }
 #competitions-grid {
   position: relative;
   overflow: hidden;
-  padding: 96px 0 104px;
+  padding: 72px 0 80px;
   isolation: isolate;
 }
 
@@ -2292,7 +2309,7 @@ img { max-width: 100%; display: block; }
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 32px;
-  margin-bottom: 56px;
+  margin-bottom: 40px;
 }
 .cgc-header-rule {
   height: 1px;
@@ -2366,7 +2383,7 @@ img { max-width: 100%; display: block; }
 /* image wrapper */
 .cgc-img-wrap {
   position: relative;
-  height: 270px;
+  height: 220px;
   background: linear-gradient(145deg, #0d1825 0%, #111d2e 100%);
   overflow: hidden;
   flex-shrink: 0;
@@ -2421,8 +2438,8 @@ img { max-width: 100%; display: block; }
 
 /* card body */
 .cgc-body {
-  padding: 24px 26px 26px;
-  display: flex; flex-direction: column; gap: 20px;
+  padding: 20px 24px 22px;
+  display: flex; flex-direction: column; gap: 16px;
   flex: 1;
 }
 .cgc-comp-name {
@@ -2529,18 +2546,18 @@ img { max-width: 100%; display: block; }
 
 /* responsive */
 @media (max-width: 860px) {
-  #competitions-grid { padding: 72px 0 80px; }
+  #competitions-grid { padding: 56px 0 64px; }
   .cgc-container { padding: 0 24px; }
   .cgc-header { grid-template-columns: 1fr; gap: 16px; }
   .cgc-header-rule { display: none; }
-  .cgc-header { margin-bottom: 40px; }
+  .cgc-header { margin-bottom: 32px; }
   .cgc-heading { white-space: normal; }
-  .cgc-grid { grid-template-columns: 1fr; gap: 24px; }
-  .cgc-img-wrap { height: 240px; }
+  .cgc-grid { grid-template-columns: 1fr; gap: 20px; }
+  .cgc-img-wrap { height: 200px; }
 }
 @media (max-width: 480px) {
-  .cgc-img-wrap { height: 210px; }
-  .cgc-body { padding: 20px; gap: 16px; }
+  .cgc-img-wrap { height: 180px; }
+  .cgc-body { padding: 18px; gap: 14px; }
   .cgc-cd-block { min-width: 44px; padding: 7px 9px; }
   .cgc-cd-num { font-size: 18px; }
   .cgc-stats { flex-direction: column; }

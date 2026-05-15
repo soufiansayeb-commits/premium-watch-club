@@ -125,8 +125,8 @@ export default function FreeCompHero({ competition }: Props) {
               </div>
               <div className="fc-stat-divider" />
               <div className="fc-stat">
-                <span className="fc-stat-label">WATCH VALUE</span>
-                <span className="fc-stat-val">{c.currency}{c.retailValue.toLocaleString()}</span>
+                <span className="fc-stat-label">TOTAL ENTRIES</span>
+                <span className="fc-stat-val">{c.totalTickets}</span>
               </div>
             </div>
 
@@ -161,13 +161,6 @@ export default function FreeCompHero({ competition }: Props) {
 
           {/* ── COL 3: RIGHT — details card ── */}
           <div className="fc-cards-col">
-
-            {/* Reference card */}
-            <div className="fc-ref-card">
-              <div className="fc-ref-eyebrow">REFERENCE</div>
-              <div className="fc-ref-val">{c.reference}</div>
-              <div className="fc-ref-sub">{c.detail}</div>
-            </div>
 
             {/* Competition details card */}
             <div className="fc-details-card">
