@@ -27,8 +27,9 @@ export default function FreeCompHero({ competition }: Props) {
 
   useEffect(() => {
     if (drawTimestamp === null) return // no valid draw date — leave timer at default 00:00
+    const ts = drawTimestamp
     function tick() {
-      const diff = drawTimestamp - Date.now()
+      const diff = ts - Date.now()
       if (diff <= 0) {
         setClosed(true)
         setTime({ d: '00', h: '00', m: '00', s: '00' })

@@ -3,6 +3,7 @@
 // Never use NEXT_PUBLIC_ prefix for WOOCOMMERCE_CONSUMER_KEY or WOOCOMMERCE_CONSUMER_SECRET.
 
 import { competitions, getCompetitionBySlug } from './competition-data'
+import type { Competition } from './competition-data'
 export type { Competition } from './competition-data'
 
 // ── Safe product shape returned by fetchWooProducts / fetchWooProductBySlug ──
