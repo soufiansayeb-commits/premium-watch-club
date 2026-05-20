@@ -15,7 +15,7 @@ export default function WatchInfoPanel({ competition: c }: Props) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={c.image}
-            alt="Omega Speedmaster Moonwatch"
+            alt={c.title}
           />
         </div>
         <div className="watch-image-caption">
@@ -34,7 +34,12 @@ export default function WatchInfoPanel({ competition: c }: Props) {
         </div>
         <div className="wi-row">
           <div className="wi-key">Entry Price</div>
-          <div className="wi-val">From {c.currency}{c.entryPrice.toFixed(2)}</div>
+          <div className="wi-val">
+            {c.isFree || c.entryPrice === 0
+              ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>FREE</span>
+              : `From ${c.currency}${c.entryPrice.toFixed(2)}`
+            }
+          </div>
         </div>
         <div className="wi-row">
           <div className="wi-key">Total Entries</div>

@@ -38,8 +38,17 @@ export interface Competition {
    * SECURITY WARNING: correctAnswer is visible in client bundle.
    * For launch: remove this field and validate server-side via
    * a Next.js API route or WooCommerce order meta.
+   * @deprecated Use skillChallengeId + /api/skill-challenge/validate instead.
    */
   correctAnswer: string;
+  /**
+   * ID of the visual skill challenge (from lib/skill-challenge-config.ts).
+   * When set, SkillChallenge renders the visual watch-identification UI.
+   * The correct answer is kept server-side in lib/skill-challenge-answers.ts.
+   */
+  skillChallengeId?: string;
+  /** Stock quantity from WooCommerce — populated at page render time. */
+  wooStockQuantity?: number | null;
   checkoutUrl: string;
   ctaLink: string;
   recentPurchases: string[];
@@ -49,7 +58,7 @@ export interface Competition {
 export const competitions: Competition[] = [
   {
     id: 'comp-001',
-    wooProductId: 856,
+    wooProductId: 20, // WooCommerce product ID — paid competition (Rolex Cosmograph Daytona)
     slug: 'omega-speedmaster-moonwatch',
     title: 'Omega Speedmaster Moonwatch',
     brand: 'Omega',
@@ -80,6 +89,7 @@ export const competitions: Competition[] = [
     skillQuestion: 'Which Swiss manufacturer produces the Speedmaster Moonwatch?',
     skillAnswers: ['Omega', 'Rolex', 'Breitling', 'TAG Heuer'],
     correctAnswer: 'Omega',
+    skillChallengeId: 'wc-id-001',
     checkoutUrl: '/checkout',
     ctaLink: '/competitions/omega-speedmaster-moonwatch',
     recentPurchases: ['London', 'Amsterdam', 'Edinburgh'],
@@ -91,7 +101,7 @@ export const competitions: Competition[] = [
   },
   {
     id: 'comp-002',
-    wooProductId: 0, // connect to WooCommerce free product ID when live
+    wooProductId: 13, // WooCommerce product ID — free competition (AP X SWATCH ROYAL POPP)
     slug: 'free-omega-speedmaster-moonwatch',
     title: 'Omega Speedmaster Moonwatch',
     brand: 'Omega',
@@ -99,7 +109,7 @@ export const competitions: Competition[] = [
     shortName: 'Omega Speedmaster Moonwatch',
     reference: '310.30.42.50.01.001',
     detail: 'Hesalite Crystal · Calibre 3861',
-    description: 'One competition. One watch. 500 entries only. Secure your chance to own the Speedmaster Professional Moonwatch — for free.',
+    description: 'One competition. One watch. Limited entries only. Secure your chance to own the Speedmaster Professional Moonwatch — for free.',
     image: '/assets/images/omega-speedmaster-correct.avif',
     heroImage: '/assets/images/omega-speedmaster-correct.avif',
     retailValue: 6100,
@@ -114,12 +124,17 @@ export const competitions: Competition[] = [
     drawDateDisplay: '30 May 2026, 23:59 BST',
     cashAlternative: 5000,
     ticketOptions: [
-      { qty: 1,  popular: true },
+      { qty: 1,  popular: false },
+      { qty: 3,  popular: false },
+      { qty: 5,  popular: false },
+      { qty: 10, popular: true  },
+      { qty: 20, popular: false },
     ],
-    maxTicketsPerPurchase: 1, // one free entry per member
+    maxTicketsPerPurchase: 165, // capped to 1 by mergeWooData when price=0
     skillQuestion: 'Which Swiss manufacturer produces the Speedmaster Moonwatch?',
     skillAnswers: ['Omega', 'Rolex', 'Breitling', 'TAG Heuer'],
     correctAnswer: 'Omega',
+    skillChallengeId: 'wc-id-001',
     checkoutUrl: '/checkout',
     ctaLink: '/competitions/free-omega-speedmaster-moonwatch',
     recentPurchases: ['London', 'Amsterdam', 'Edinburgh'],

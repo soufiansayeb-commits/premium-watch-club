@@ -11,9 +11,14 @@ export interface WooProduct {
   name: string
   slug: string
   price: string
+  regular_price: string
   stock_quantity: number | null
+  stock_status: string
   status: string
   permalink: string
+  images: Array<{ src: string; alt: string }>
+  /** ACF custom field: draw/closing date for this competition. Extracted from meta_data. */
+  draw_date?: string
 }
 
 // ── Internal config check ────────────────────────────────────────────────────
@@ -78,16 +83,111 @@ async function wcFetch(endpoint: string): Promise<unknown> {
   return res.json()
 }
 
+// ── draw_date helpers ────────────────────────────────────────────────────────
+
+/**
+ * Normalise any ACF draw_date value to a valid UTC ISO string.
+ *
+ * ACF returns dates in different formats depending on the field type and
+ * return-format setting. We handle the most common ones:
+ *
+ *   "20260530"              ACF Date field (default Ymd format)     → "2026-05-30T00:00:00Z"
+ *   "2026-05-30 23:59:00"   ACF Date/Time field (Y-m-d H:i:s)      → "2026-05-30T23:59:00Z"
+ *   "2026-05-30T23:59:00"   ISO without timezone                    → "2026-05-30T23:59:00Z"
+ *   "2026-05-30T23:59:00Z"  Full ISO — returned as-is
+ *   1748649540              Unix timestamp (10 digits)               → ISO via Date
+ *
+ * Timezone assumption: values without timezone info are treated as UTC so
+ * all visitors worldwide see the same remaining time. If your WordPress site
+ * is set to a non-UTC timezone (e.g. Europe/London), switch ACF to a
+ * Date/Time field and append the UTC offset in the value, or set WP to UTC.
+ *
+ * Returns empty string if the value cannot be normalised to a valid date.
+ */
+function parseWooDrawDate(raw: string): string {
+  if (!raw || raw === 'null' || raw === 'false' || raw === '0') return ''
+  const trimmed = raw.trim()
+  if (!trimmed) return ''
+
+  // Unix timestamp — 10 digits (seconds) or 13 digits (milliseconds)
+  if (/^\d{10,13}$/.test(trimmed)) {
+    const ms = trimmed.length === 13 ? Number(trimmed) : Number(trimmed) * 1000
+    const d = new Date(ms)
+    return isNaN(d.getTime()) ? '' : d.toISOString()
+  }
+
+  // ACF Date field default: "YYYYMMDD" (8 digits, no separators)
+  // e.g. "20260530" → "2026-05-30T00:00:00Z"
+  // NOTE: This format has no time component — the draw will close at midnight UTC.
+  // To specify an exact closing time, switch to an ACF Date/Time picker field.
+  if (/^\d{8}$/.test(trimmed)) {
+    const y = trimmed.slice(0, 4)
+    const m = trimmed.slice(4, 6)
+    const d = trimmed.slice(6, 8)
+    const iso = `${y}-${m}-${d}T00:00:00Z`
+    return isNaN(new Date(iso).getTime()) ? '' : iso
+  }
+
+  // Already has timezone info — validate and return as-is
+  if (/Z$|[+-]\d{2}:?\d{2}$/.test(trimmed)) {
+    return isNaN(new Date(trimmed).getTime()) ? '' : trimmed
+  }
+
+  // "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DDTHH:MM:SS" — treat as UTC
+  const normalised = trimmed.replace(' ', 'T') + 'Z'
+  return isNaN(new Date(normalised).getTime()) ? '' : normalised
+}
+
+/**
+ * Format a valid ISO draw date as a human-readable string.
+ * Returns a safe fallback if the date is missing or cannot be parsed.
+ */
+function formatDrawDateDisplay(iso: string): string {
+  if (!iso) return 'Draw date coming soon'
+  try {
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return 'Draw date coming soon'
+    const datePart = d.toLocaleDateString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+    })
+    const timePart = d.toLocaleTimeString('en-GB', {
+      hour: '2-digit', minute: '2-digit', timeZone: 'UTC',
+    })
+    return `${datePart}, ${timePart} UTC`
+  } catch {
+    return 'Draw date coming soon'
+  }
+}
+
 // ── Safe field filter — never expose raw WooCommerce response ────────────────
 function toSafeProduct(raw: Record<string, unknown>): WooProduct {
+  const rawImages = Array.isArray(raw.images) ? raw.images as Record<string, unknown>[] : []
+
+  // ACF custom fields are stored in meta_data as [{key, value}] pairs.
+  // We extract draw_date here; other ACF fields can be added the same way.
+  const metaData = Array.isArray(raw.meta_data) ? raw.meta_data as Record<string, unknown>[] : []
+  const drawDateMeta = metaData.find(m => m.key === 'draw_date')
+  // Guard: value may be null/false/0 — only stringify if it's a non-empty string or number
+  const drawDateVal = drawDateMeta?.value
+  const drawDateRaw = (drawDateVal !== null && drawDateVal !== undefined && drawDateVal !== false)
+    ? String(drawDateVal).trim()
+    : ''
+
   return {
     id:             Number(raw.id)             || 0,
     name:           String(raw.name            ?? ''),
     slug:           String(raw.slug            ?? ''),
     price:          String(raw.price           ?? ''),
+    regular_price:  String(raw.regular_price   ?? ''),
     stock_quantity: raw.stock_quantity != null ? Number(raw.stock_quantity) : null,
+    stock_status:   String(raw.stock_status    ?? ''),
     status:         String(raw.status          ?? ''),
     permalink:      String(raw.permalink       ?? ''),
+    images:         rawImages.map(img => ({
+      src: String(img.src ?? ''),
+      alt: String(img.alt ?? ''),
+    })),
+    draw_date:      drawDateRaw || undefined,
   }
 }
 
@@ -111,6 +211,23 @@ export async function fetchWooProducts(): Promise<{ products: WooProduct[]; erro
 }
 
 /**
+ * Fetch a single WooCommerce product by ID.
+ * Returns only safe, non-sensitive fields.
+ * Server-side only.
+ */
+export async function fetchWooProductById(id: number): Promise<{ product: WooProduct | null; error?: string }> {
+  try {
+    const data = await wcFetch(`products/${id}`)
+    if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+      return { product: null, error: 'Unexpected response shape from WooCommerce API.' }
+    }
+    return { product: toSafeProduct(data as Record<string, unknown>) }
+  } catch (err) {
+    return { product: null, error: (err as Error).message }
+  }
+}
+
+/**
  * Fetch a single WooCommerce product by slug.
  * Returns only safe, non-sensitive fields.
  * Server-side only.
@@ -126,6 +243,70 @@ export async function fetchWooProductBySlug(slug: string): Promise<{ product: Wo
   } catch (err) {
     return { product: null, error: (err as Error).message }
   }
+}
+
+/**
+ * Merge live WooCommerce product data into a Competition object.
+ * Only overrides fields that WooCommerce provides; everything else keeps its
+ * original value so fallback content and non-product fields are unaffected.
+ * Server-side only.
+ */
+export function mergeWooData(
+  competition: Competition,
+  wooProduct: WooProduct,
+): Competition {
+  const merged: Competition = { ...competition }
+
+  if (wooProduct.name) {
+    merged.title = wooProduct.name
+    merged.shortName = wooProduct.name
+  }
+
+  const firstImage = wooProduct.images[0]?.src
+  if (firstImage) {
+    merged.image = firstImage
+    merged.heroImage = firstImage
+  }
+
+  const parsedPrice = parseFloat(wooProduct.price)
+  if (!isNaN(parsedPrice)) {
+    merged.entryPrice = parsedPrice
+    // Always derive isFree from WooCommerce price — overrides any static fallback
+    merged.isFree = parsedPrice === 0
+    // When free, enforce 1 entry per member; when paid, restore competition default
+    merged.maxTicketsPerPurchase = parsedPrice === 0 ? 1 : competition.maxTicketsPerPurchase
+  }
+
+  merged.wooStockQuantity = wooProduct.stock_quantity
+
+  // Pull draw_date from ACF — overrides the static fallback in competition-data.ts.
+  // Only applied when the parsed result is a valid date string (parseWooDrawDate
+  // returns '' for any value it cannot normalise, leaving the static fallback intact).
+  if (wooProduct.draw_date) {
+    const parsed = parseWooDrawDate(wooProduct.draw_date)
+    if (parsed) {
+      merged.drawDate = parsed
+      merged.drawDateDisplay = formatDrawDateDisplay(parsed)
+    }
+  }
+
+  // stock_quantity is the source of truth for totalTickets
+  if (wooProduct.stock_quantity != null && wooProduct.stock_quantity > 0) {
+    merged.totalTickets = wooProduct.stock_quantity
+    // Recalculate derived fields against the new totalTickets
+    merged.ticketsLeft = Math.max(0, merged.totalTickets - competition.ticketsSold)
+    merged.soldPercentage = Math.round((competition.ticketsSold / merged.totalTickets) * 1000) / 10
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      `[PWC] #${wooProduct.id} "${wooProduct.name}" | ` +
+      `price: ${wooProduct.price} | stock: ${wooProduct.stock_quantity} | ` +
+      `draw_date raw: ${wooProduct.draw_date ?? '—'} | drawDate: ${merged.drawDate}`
+    )
+  }
+
+  return merged
 }
 
 // ── Legacy helpers (still used by existing pages — keep unchanged) ────────────

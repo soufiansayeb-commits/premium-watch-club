@@ -14,16 +14,27 @@ function pad(n: number) {
 
 export default function HomepageHero({ competition }: Props) {
   const c = competition
-  const drawTimestamp = useMemo(() => new Date(c.drawDate).getTime(), [c.drawDate])
+  // null means the draw date is missing/invalid — timer stays in safe fallback state
+  const drawTimestamp = useMemo(() => {
+    const ts = new Date(c.drawDate).getTime()
+    return isNaN(ts) ? null : ts
+  }, [c.drawDate])
   const maxOdds = `1:${c.totalTickets}`
 
   const [time, setTime]           = useState({ d: '00', h: '00', m: '00', s: '00' })
+  const [closed, setClosed]       = useState(false)
   const [progVisible, setProgVisible] = useState(false)
 
   useEffect(() => {
+    if (drawTimestamp === null) return // no valid draw date — leave timer at default 00:00
     function tick() {
       const diff = drawTimestamp - Date.now()
-      if (diff <= 0) { setTime({ d: '00', h: '00', m: '00', s: '00' }); return }
+      if (diff <= 0) {
+        setClosed(true)
+        setTime({ d: '00', h: '00', m: '00', s: '00' })
+        return
+      }
+      setClosed(false)
       setTime({
         d: pad(Math.floor(diff / 86400000)),
         h: pad(Math.floor((diff % 86400000) / 3600000)),
@@ -61,27 +72,33 @@ export default function HomepageHero({ competition }: Props) {
             <span>CLOSING SOON</span>
           </div>
 
-          <div className="h2-countdown">
-            <div className="h2-cd-block">
-              <span className="h2-cd-num">{time.d}</span>
-              <span className="h2-cd-lbl">DAYS</span>
+          {closed ? (
+            <div className="h2-countdown h2-countdown-closed">
+              <span className="h2-closed-label">Competition Closed</span>
             </div>
-            <span className="h2-cd-sep" aria-hidden="true">:</span>
-            <div className="h2-cd-block">
-              <span className="h2-cd-num">{time.h}</span>
-              <span className="h2-cd-lbl">HRS</span>
+          ) : (
+            <div className="h2-countdown">
+              <div className="h2-cd-block">
+                <span className="h2-cd-num">{time.d}</span>
+                <span className="h2-cd-lbl">DAYS</span>
+              </div>
+              <span className="h2-cd-sep" aria-hidden="true">:</span>
+              <div className="h2-cd-block">
+                <span className="h2-cd-num">{time.h}</span>
+                <span className="h2-cd-lbl">HRS</span>
+              </div>
+              <span className="h2-cd-sep" aria-hidden="true">:</span>
+              <div className="h2-cd-block">
+                <span className="h2-cd-num">{time.m}</span>
+                <span className="h2-cd-lbl">MIN</span>
+              </div>
+              <span className="h2-cd-sep" aria-hidden="true">:</span>
+              <div className="h2-cd-block">
+                <span className="h2-cd-num">{time.s}</span>
+                <span className="h2-cd-lbl">SEC</span>
+              </div>
             </div>
-            <span className="h2-cd-sep" aria-hidden="true">:</span>
-            <div className="h2-cd-block">
-              <span className="h2-cd-num">{time.m}</span>
-              <span className="h2-cd-lbl">MIN</span>
-            </div>
-            <span className="h2-cd-sep" aria-hidden="true">:</span>
-            <div className="h2-cd-block">
-              <span className="h2-cd-num">{time.s}</span>
-              <span className="h2-cd-lbl">SEC</span>
-            </div>
-          </div>
+          )}
 
           <div className="h2-progress">
             <div className="h2-prog-meta">
@@ -111,7 +128,10 @@ export default function HomepageHero({ competition }: Props) {
 
           <div className="h2-meta-row">
             <span className="h2-price">
-              <strong>{c.currency}{c.entryPrice.toFixed(2)}</strong> per entry
+              {c.isFree || c.entryPrice === 0
+                ? <strong style={{ color: 'var(--green)' }}>FREE</strong>
+                : <><strong>{c.currency}{c.entryPrice.toFixed(2)}</strong> per entry</>
+              }
             </span>
             <span className="h2-meta-sep" aria-hidden="true" />
             <span className="h2-social-proof">
@@ -161,7 +181,12 @@ export default function HomepageHero({ competition }: Props) {
             <div className="h2-card-rows">
               <div className="h2-card-row">
                 <span className="h2-card-label">Entry Price</span>
-                <span className="h2-card-val">{c.currency}{c.entryPrice.toFixed(2)}</span>
+                <span className="h2-card-val">
+                  {c.isFree || c.entryPrice === 0
+                    ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>FREE</span>
+                    : `${c.currency}${c.entryPrice.toFixed(2)}`
+                  }
+                </span>
               </div>
               <div className="h2-card-divider" />
               <div className="h2-card-row">
@@ -181,7 +206,7 @@ export default function HomepageHero({ competition }: Props) {
               <div className="h2-card-divider" />
               <div className="h2-card-row">
                 <span className="h2-card-label">Draw Date</span>
-                <span className="h2-card-val">{c.drawDateDisplay.split(',')[0]}</span>
+                <span className="h2-card-val">{c.drawDateDisplay.split(',')[0] || c.drawDateDisplay}</span>
               </div>
             </div>
             <Link href={c.ctaLink} className="h2-card-cta">

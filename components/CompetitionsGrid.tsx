@@ -12,18 +12,24 @@ interface CardData {
 }
 
 function useCountdown(targetDate: string) {
+  const ts = new Date(targetDate).getTime()
+  const validTs = isNaN(ts) ? null : ts
+
   const calc = () => {
-    const diff = new Date(targetDate).getTime() - Date.now()
-    if (diff <= 0) return { d: 0, h: 0, m: 0, s: 0 }
+    if (validTs === null) return { d: 0, h: 0, m: 0, s: 0, closed: false }
+    const diff = validTs - Date.now()
+    if (diff <= 0) return { d: 0, h: 0, m: 0, s: 0, closed: true }
     return {
       d: Math.floor(diff / 86400000),
       h: Math.floor((diff % 86400000) / 3600000),
       m: Math.floor((diff % 3600000) / 60000),
       s: Math.floor((diff % 60000) / 1000),
+      closed: false,
     }
   }
-  const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0 })
+  const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0, closed: false })
   useEffect(() => {
+    if (validTs === null) return
     setTime(calc())
     const id = setInterval(() => setTime(calc()), 1000)
     return () => clearInterval(id)
@@ -60,15 +66,21 @@ function CompCard({ competition: c, label, badgeClass, ctaHref }: CardData) {
         <p className="cgc-comp-name">{c.title}</p>
 
         {/* countdown */}
-        <div className="cgc-cd-row">
-          <CountdownBlock value={time.d} label="DAY" />
-          <div className="cgc-cd-sep">:</div>
-          <CountdownBlock value={time.h} label="HR" />
-          <div className="cgc-cd-sep">:</div>
-          <CountdownBlock value={time.m} label="MIN" />
-          <div className="cgc-cd-sep">:</div>
-          <CountdownBlock value={time.s} label="SEC" />
-        </div>
+        {time.closed ? (
+          <div className="cgc-cd-row cgc-cd-row-closed">
+            <span className="cgc-closed-label">Competition Closed</span>
+          </div>
+        ) : (
+          <div className="cgc-cd-row">
+            <CountdownBlock value={time.d} label="DAY" />
+            <div className="cgc-cd-sep">:</div>
+            <CountdownBlock value={time.h} label="HR" />
+            <div className="cgc-cd-sep">:</div>
+            <CountdownBlock value={time.m} label="MIN" />
+            <div className="cgc-cd-sep">:</div>
+            <CountdownBlock value={time.s} label="SEC" />
+          </div>
+        )}
 
         {/* stats row */}
         <div className="cgc-stats">

@@ -7,10 +7,6 @@ export default function Footer() {
         <div className="footer-top">
           <div className="footer-brand">
             <div className="footer-logo">
-              <div className="footer-logo-img">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/brand-assets/WhatsApp Image 2026-04-21 at 18.26.41.jpeg" alt="PWC Logo" />
-              </div>
               <span className="footer-logo-name">Premium Watch Club</span>
             </div>
             <p className="footer-desc">A curated destination for watch collectors. One competition at a time — done properly.</p>

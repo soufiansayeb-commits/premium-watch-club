@@ -1,0 +1,722 @@
+/* ═══════════════════════════════════════════════════════════════════
+   PREMIUM WATCH CLUB — WooCommerce Checkout Block — Branded CSS
+   Theme: Twenty Twenty-Five (FSE)  |  WooCommerce 10.7.0+
+   Applied via: WordPress Customizer → Additional CSS
+   ═══════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+/* ── Design tokens ────────────────────────────────────────────────── */
+:root {
+  --pwc-navy:        #080b18;
+  --pwc-navy-mid:    #0e1424;
+  --pwc-navy-card:   #111827;
+  --pwc-navy-input:  rgba(255,255,255,0.04);
+  --pwc-border:      rgba(197,160,101,0.14);
+  --pwc-border-focus:rgba(197,160,101,0.55);
+  --pwc-gold:        #C5A065;
+  --pwc-gold-light:  #d9b87c;
+  --pwc-white:       #F5F0E8;
+  --pwc-muted:       rgba(245,240,232,0.52);
+  --pwc-green:       #4caf76;
+  --pwc-red:         #e05252;
+  --pwc-radius:      8px;
+  --pwc-ease:        200ms ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAGE SHELL
+   ═══════════════════════════════════════════════════════════════════ */
+
+body.woocommerce-checkout {
+  background: var(--pwc-navy) !important;
+  color: var(--pwc-white) !important;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  -webkit-font-smoothing: antialiased !important;
+  min-height: 100vh;
+}
+
+/* Hide Twenty Twenty-Five generic header/footer on checkout */
+body.woocommerce-checkout .wp-site-blocks > header,
+body.woocommerce-checkout .wp-site-blocks > footer,
+body.woocommerce-checkout header.wp-block-template-part,
+body.woocommerce-checkout footer.wp-block-template-part {
+  display: none !important;
+}
+
+/* Page content area — transparent so navy shows through */
+body.woocommerce-checkout .wp-site-blocks,
+body.woocommerce-checkout .entry-content,
+body.woocommerce-checkout main,
+body.woocommerce-checkout .wp-block-post-content {
+  background: var(--pwc-navy) !important;
+  color: var(--pwc-white) !important;
+  padding-top: 0 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CUSTOM PWC CHECKOUT HEADER  (CSS-injected — no PHP needed)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wp-block-woocommerce-checkout::before {
+  content: '';
+  display: block;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--pwc-gold), transparent);
+  margin-bottom: 0;
+}
+
+/* PWC brand header above the form */
+.wc-block-checkout > .wc-block-checkout__main::before {
+  content: 'PREMIUM WATCH CLUB';
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  color: var(--pwc-gold);
+  text-align: left;
+  padding: 36px 0 4px;
+  text-transform: uppercase;
+}
+
+/* Headline below brand mark */
+.wc-block-checkout > .wc-block-checkout__main > .wc-block-components-checkout-step:first-child::before {
+  content: 'Secure Checkout';
+  display: block;
+  font-family: 'Lora', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--pwc-white);
+  margin-bottom: 28px;
+  margin-top: -4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MAIN CHECKOUT WRAPPER
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wp-block-woocommerce-checkout.wc-block-checkout {
+  max-width: 1140px !important;
+  margin: 0 auto !important;
+  padding: 0 24px 80px !important;
+  background: transparent !important;
+  color: var(--pwc-white) !important;
+}
+
+/* Left column — the form */
+.wc-block-checkout__main {
+  background: var(--pwc-navy-card) !important;
+  border: 1px solid var(--pwc-border) !important;
+  border-radius: var(--pwc-radius) !important;
+  padding: 0 40px 40px !important;
+  color: var(--pwc-white) !important;
+}
+
+/* Right column — order summary */
+.wc-block-checkout__sidebar {
+  background: transparent !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STEP SECTIONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wc-block-components-checkout-step {
+  border-bottom: 1px solid var(--pwc-border) !important;
+  padding-bottom: 28px !important;
+  margin-bottom: 28px !important;
+}
+.wc-block-components-checkout-step:last-child {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Step number badges */
+.wc-block-components-checkout-step__heading-content .wc-block-components-checkout-step__index {
+  background: var(--pwc-gold) !important;
+  color: var(--pwc-navy) !important;
+  font-weight: 700 !important;
+  border-radius: 50% !important;
+  width: 22px !important;
+  height: 22px !important;
+  line-height: 22px !important;
+  font-size: 0.7rem !important;
+}
+
+/* Step headings */
+.wc-block-components-checkout-step__heading,
+.wc-block-components-checkout-step__heading-content {
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  color: var(--pwc-gold) !important;
+  border: none !important;
+  margin-bottom: 20px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FORM INPUTS & LABELS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wc-block-checkout label,
+.wc-block-components-text-input label,
+.wc-block-components-select label,
+.wc-block-components-combobox label,
+.wc-block-components-country-input label,
+.wc-block-components-state-input label {
+  color: var(--pwc-muted) !important;
+  font-size: 0.68rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+/* All text inputs */
+.wc-block-checkout input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]),
+.wc-block-components-text-input input,
+.wc-block-checkout select,
+.wc-block-components-select select,
+.wc-block-components-country-input input,
+.wc-block-components-state-input input,
+.wc-block-components-combobox input {
+  background: var(--pwc-navy-input) !important;
+  border: 1px solid var(--pwc-border) !important;
+  border-radius: 6px !important;
+  color: var(--pwc-white) !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 0.92rem !important;
+  padding: 14px 16px !important;
+  height: auto !important;
+  min-height: 50px !important;
+  line-height: 1.4 !important;
+  transition: border-color var(--pwc-ease), box-shadow var(--pwc-ease) !important;
+}
+
+.wc-block-checkout input:focus,
+.wc-block-components-text-input input:focus,
+.wc-block-checkout select:focus,
+.wc-block-components-select select:focus,
+.wc-block-components-combobox input:focus {
+  border-color: var(--pwc-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(197,160,101,0.10) !important;
+  outline: none !important;
+  background: rgba(255,255,255,0.065) !important;
+}
+
+.wc-block-checkout input::placeholder {
+  color: rgba(245,240,232,0.22) !important;
+}
+
+/* Floating label style */
+.wc-block-components-text-input.is-active label,
+.wc-block-components-combobox.is-active label {
+  color: var(--pwc-gold) !important;
+}
+
+/* Checkboxes & radio */
+.wc-block-checkout input[type="checkbox"],
+.wc-block-checkout input[type="radio"] {
+  accent-color: var(--pwc-gold) !important;
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.wc-block-checkout input[type="checkbox"] + span,
+.wc-block-checkout input[type="radio"] + span {
+  color: var(--pwc-muted) !important;
+  font-size: 0.85rem !important;
+}
+
+/* Textarea — order note */
+.wc-block-checkout textarea {
+  background: var(--pwc-navy-input) !important;
+  border: 1px solid var(--pwc-border) !important;
+  border-radius: 6px !important;
+  color: var(--pwc-white) !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 0.9rem !important;
+  padding: 14px 16px !important;
+  resize: vertical !important;
+}
+
+/* Country/state dropdown list */
+.wc-block-components-combobox .components-combobox-control__list {
+  background: #1a2236 !important;
+  border: 1px solid var(--pwc-border) !important;
+  border-radius: 6px !important;
+}
+.wc-block-components-combobox .components-combobox-control__list-item:hover {
+  background: rgba(197,160,101,0.1) !important;
+  color: var(--pwc-white) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EXPRESS PAYMENT (Apple Pay / Google Pay)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wp-block-woocommerce-checkout-express-payment-block {
+  padding-bottom: 24px !important;
+  border-bottom: 1px solid var(--pwc-border) !important;
+  margin-bottom: 28px !important;
+}
+
+.wc-block-components-express-payment-continue-rule,
+.wc-block-components-express-payment-continue-rule__content {
+  color: var(--pwc-muted) !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.wc-block-components-express-payment-continue-rule::before,
+.wc-block-components-express-payment-continue-rule::after {
+  background: var(--pwc-border) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SHIPPING METHOD RADIO
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wc-block-components-shipping-rates-control__package,
+.wc-block-components-radio-control__option {
+  background: rgba(255,255,255,0.025) !important;
+  border: 1px solid var(--pwc-border) !important;
+  border-radius: 6px !important;
+  padding: 14px 16px !important;
+  margin-bottom: 8px !important;
+  color: var(--pwc-white) !important;
+  transition: border-color var(--pwc-ease) !important;
+}
+
+.wc-block-components-radio-control__option:has(input:checked) {
+  border-color: var(--pwc-gold) !important;
+  background: rgba(197,160,101,0.06) !important;
+}
+
+.wc-block-components-radio-control__option-layout,
+.wc-block-components-radio-control-accordion-option__content,
+.wc-block-components-shipping-rates-control__package .wc-block-components-radio-control__label {
+  color: var(--pwc-white) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PAYMENT METHOD BLOCK
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wc-block-components-radio-control-accordion-option {
+  background: rgba(255,255,255,0.025) !important;
+  border: 1px solid var(--pwc-border) !important;
+  border-radius: 6px !important;
+  margin-bottom: 8px !important;
+  overflow: hidden !important;
+  transition: border-color var(--pwc-ease) !important;
+}
+
+.wc-block-components-radio-control-accordion-option:has(input:checked) {
+  border-color: var(--pwc-gold) !important;
+  background: rgba(197,160,101,0.05) !important;
+}
+
+.wc-block-components-radio-control-accordion-option header {
+  padding: 16px !important;
+  color: var(--pwc-white) !important;
+}
+
+.wc-block-components-radio-control-accordion-option .wc-block-components-radio-control-accordion-option__content {
+  padding: 0 16px 16px !important;
+  border-top: 1px solid var(--pwc-border) !important;
+  background: transparent !important;
+}
+
+.wc-block-components-payment-method-label,
+.wc-block-components-payment-method-label__img-text {
+  color: var(--pwc-white) !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+}
+
+/* WooPayments / Card fields */
+.wc-block-checkout .wcpay-upe-element,
+.wc-block-checkout .wc-block-components-stripe-input,
+.wc-block-checkout .StripeElement {
+  background: var(--pwc-navy-input) !important;
+  border: 1px solid var(--pwc-border) !important;
+  border-radius: 6px !important;
+  padding: 14px 16px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TERMS & CONDITIONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wc-block-checkout .wc-block-components-checkbox {
+  color: var(--pwc-muted) !important;
+  font-size: 0.8rem !important;
+}
+
+.wc-block-checkout .wc-block-components-checkbox a {
+  color: var(--pwc-gold) !important;
+  text-decoration: underline !important;
+  text-decoration-color: rgba(197,160,101,0.4) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PLACE ORDER BUTTON
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wc-block-components-checkout-place-order-button,
+.wp-block-woocommerce-checkout-actions-block .wc-block-components-button,
+button.wc-block-components-checkout-place-order-button {
+  background: linear-gradient(135deg, #b8924e 0%, #c5a065 40%, #d9b87c 100%) !important;
+  color: #06090f !important;
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+  padding: 20px 40px !important;
+  width: 100% !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 24px rgba(197,160,101,0.28), inset 0 1px 0 rgba(255,255,255,0.12) !important;
+  transition: all 220ms ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.wc-block-components-checkout-place-order-button::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+  transition: left 600ms ease;
+}
+
+.wc-block-components-checkout-place-order-button:hover::after {
+  left: 160%;
+}
+
+.wc-block-components-checkout-place-order-button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 8px 36px rgba(197,160,101,0.42) !important;
+  background: linear-gradient(135deg, #c5a065 0%, #d9b87c 40%, #e8c98a 100%) !important;
+}
+
+.wc-block-components-checkout-place-order-button:active {
+  transform: translateY(0) !important;
+}
+
+/* Return to cart link */
+.wc-block-components-checkout-return-to-cart-button,
+.wc-block-checkout__actions a {
+  color: var(--pwc-muted) !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.08em !important;
+  text-decoration: none !important;
+  transition: color var(--pwc-ease) !important;
+}
+
+.wc-block-components-checkout-return-to-cart-button:hover {
+  color: var(--pwc-white) !important;
+}
+
+/* ── Trust signals below Place Order ── */
+.wp-block-woocommerce-checkout-actions-block::after {
+  content: '🔒 Secure Checkout  ·  18+ Only  ·  Skill-Based Competition  ·  Publicly Streamed Live Draw';
+  display: block;
+  text-align: center;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  color: var(--pwc-muted);
+  margin-top: 16px;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--pwc-border);
+  text-transform: uppercase;
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ORDER SUMMARY (RIGHT SIDEBAR)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wp-block-woocommerce-checkout-order-summary-block {
+  background: var(--pwc-navy-card) !important;
+  border: 1px solid var(--pwc-border) !important;
+  border-radius: var(--pwc-radius) !important;
+  padding: 32px !important;
+  position: sticky !important;
+  top: 24px !important;
+  color: var(--pwc-white) !important;
+}
+
+/* Order summary heading */
+.wp-block-woocommerce-checkout-order-summary-block h2,
+.wc-block-checkout-order-review-title,
+.wc-block-checkout__order-review-title {
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 0.62rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+  color: var(--pwc-gold) !important;
+  border-bottom: 1px solid var(--pwc-border) !important;
+  padding-bottom: 16px !important;
+  margin-bottom: 24px !important;
+}
+
+/* ── Cart items ── */
+.wc-block-order-summary-contents .wc-block-cart-item,
+.wc-block-cart-items__row {
+  border-bottom: 1px solid var(--pwc-border) !important;
+  padding: 16px 0 !important;
+}
+
+.wc-block-cart-item__image img {
+  border-radius: 4px !important;
+  border: 1px solid var(--pwc-border) !important;
+  background: rgba(255,255,255,0.03) !important;
+}
+
+.wc-block-cart-item__wrap .wc-block-cart-item__title,
+.wc-block-cart-item__description .wc-block-cart-item__product-name,
+.wc-block-cart-item__product-name {
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: var(--pwc-white) !important;
+  line-height: 1.4 !important;
+}
+
+.wc-block-cart-item__variation,
+.wc-block-cart-item__meta,
+.wc-block-cart-item__description p {
+  color: var(--pwc-muted) !important;
+  font-size: 0.78rem !important;
+}
+
+/* Item price */
+.wc-block-cart-item__prices .wc-block-formatted-money-amount,
+.wc-block-cart-item__total-price .price {
+  color: var(--pwc-gold) !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+/* FREE badge for £0 items */
+.wc-block-cart-item__prices .wc-block-formatted-money-amount[data-amount="0"],
+.wc-block-cart-item__prices .woocommerce-Price-amount:has(bdi:empty) {
+  color: var(--pwc-green) !important;
+}
+
+/* ── Totals rows ── */
+.wc-block-components-totals-item {
+  border-bottom: 1px solid var(--pwc-border) !important;
+  padding: 12px 0 !important;
+  color: var(--pwc-white) !important;
+}
+
+.wc-block-components-totals-item__label {
+  color: var(--pwc-muted) !important;
+  font-size: 0.82rem !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+.wc-block-components-totals-item__value,
+.wc-block-components-totals-item__value .wc-block-formatted-money-amount {
+  color: var(--pwc-white) !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+}
+
+/* Total row — larger */
+.wc-block-components-totals-footer-item,
+.wc-block-components-totals-footer-item.wc-block-components-totals-item {
+  border-top: 1px solid rgba(197,160,101,0.4) !important;
+  border-bottom: none !important;
+  padding: 20px 0 4px !important;
+  margin-top: 4px !important;
+}
+
+.wc-block-components-totals-footer-item .wc-block-components-totals-item__label {
+  color: var(--pwc-white) !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+.wc-block-components-totals-footer-item .wc-block-components-totals-item__value,
+.wc-block-components-totals-footer-item .wc-block-formatted-money-amount {
+  color: var(--pwc-gold) !important;
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+}
+
+/* Discount / coupon value */
+.wc-block-components-totals-discount .wc-block-components-totals-item__value {
+  color: var(--pwc-green) !important;
+}
+
+/* ── Coupon form ── */
+.wc-block-components-totals-coupon details,
+.wc-block-components-totals-coupon summary {
+  color: var(--pwc-muted) !important;
+  font-size: 0.8rem !important;
+  cursor: pointer !important;
+  letter-spacing: 0.06em !important;
+}
+
+.wc-block-components-totals-coupon__input input {
+  background: var(--pwc-navy-input) !important;
+  border: 1px solid var(--pwc-border) !important;
+  border-radius: 6px 0 0 6px !important;
+  color: var(--pwc-white) !important;
+  padding: 12px 14px !important;
+  height: auto !important;
+  min-height: 44px !important;
+}
+
+.wc-block-components-totals-coupon__button,
+.wc-block-components-totals-coupon__form .wc-block-components-button {
+  background: transparent !important;
+  border: 1px solid var(--pwc-gold) !important;
+  border-left: none !important;
+  border-radius: 0 6px 6px 0 !important;
+  color: var(--pwc-gold) !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  padding: 12px 18px !important;
+  transition: all var(--pwc-ease) !important;
+}
+
+.wc-block-components-totals-coupon__button:hover {
+  background: var(--pwc-gold) !important;
+  color: var(--pwc-navy) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NOTICES / ALERTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wc-block-components-notice-banner {
+  background: rgba(197,160,101,0.07) !important;
+  border: 1px solid rgba(197,160,101,0.22) !important;
+  border-radius: 6px !important;
+  color: var(--pwc-white) !important;
+  padding: 14px 16px !important;
+}
+
+.wc-block-components-notice-banner.is-error {
+  background: rgba(224,82,82,0.07) !important;
+  border-color: rgba(224,82,82,0.3) !important;
+  color: #f5a0a0 !important;
+}
+
+.wc-block-components-notice-banner.is-success {
+  background: rgba(76,175,118,0.07) !important;
+  border-color: rgba(76,175,118,0.3) !important;
+}
+
+.wc-block-components-validation-error p,
+.wc-block-components-validation-error,
+.wc-block-checkout .wc-block-components-text-input.has-error .wc-block-components-validation-error {
+  color: #f08080 !important;
+  font-size: 0.75rem !important;
+}
+
+.wc-block-components-text-input.has-error input {
+  border-color: rgba(224,82,82,0.5) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LINKS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wc-block-checkout a:not(.wc-block-components-checkout-place-order-button) {
+  color: var(--pwc-gold) !important;
+  text-decoration-color: rgba(197,160,101,0.35) !important;
+}
+
+.wc-block-checkout a:hover {
+  color: var(--pwc-gold-light) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SPINNERS & LOADING
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wc-block-checkout .wc-block-components-spinner::before,
+.wc-block-checkout .wc-block-components-checkout-step--disabled::after {
+  border-color: rgba(197,160,101,0.2) !important;
+  border-top-color: var(--pwc-gold) !important;
+}
+
+.wc-block-checkout.processing::after {
+  background: rgba(8,11,24,0.75) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STORE NOTICES (top banner)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.wc-block-store-notices {
+  background: transparent !important;
+}
+
+.wc-block-store-notices .woocommerce-store-notice {
+  background: rgba(197,160,101,0.08) !important;
+  border-bottom: 1px solid var(--pwc-border) !important;
+  color: var(--pwc-white) !important;
+  text-align: center !important;
+  font-size: 0.82rem !important;
+  padding: 12px 24px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .wp-block-woocommerce-checkout.wc-block-checkout {
+    padding: 0 0 60px !important;
+  }
+
+  .wc-block-checkout__main {
+    padding: 0 20px 32px !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+  }
+
+  .wp-block-woocommerce-checkout-order-summary-block {
+    padding: 24px 20px !important;
+    position: static !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-radius: 0 !important;
+    border-top: 1px solid var(--pwc-border) !important;
+  }
+
+  .wc-block-components-checkout-place-order-button {
+    padding: 18px 24px !important;
+    font-size: 0.68rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .wc-block-checkout > .wc-block-checkout__main::before {
+    padding-top: 28px !important;
+  }
+}

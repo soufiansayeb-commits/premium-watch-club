@@ -226,7 +226,9 @@ export default function FreeTicketSelector({ competition: c, onContinue }: Props
                   <span className="fts-entry-label">Entry</span>
                 </div>
                 <div className="fts-right">
-                  <div className="fts-price">{c.currency}0.00</div>
+                  <div className="fts-price">
+                    {c.entryPrice === 0 ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+                  </div>
                   <div className="fts-odds-small">1 in {odds} odds</div>
                 </div>
               </div>
@@ -246,7 +248,9 @@ export default function FreeTicketSelector({ competition: c, onContinue }: Props
                 <div className="fts-op-fraction">1 in {odds}</div>
               </div>
               <div className="fts-op-right">
-                <div className="fts-op-detail">1 entry · {c.currency}0.00</div>
+                <div className="fts-op-detail">
+                  1 entry · {c.entryPrice === 0 ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+                </div>
                 <div className="fts-op-note">
                   Every entry is independently drawn<br />in the publicly streamed live draw.
                 </div>
@@ -265,7 +269,9 @@ export default function FreeTicketSelector({ competition: c, onContinue }: Props
                   Free entry
                 </div>
               </div>
-              <div className="sr-amount">{c.currency}0.00</div>
+              <div className="sr-amount">
+                {c.entryPrice === 0 ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+              </div>
             </div>
 
             {/* CTA */}

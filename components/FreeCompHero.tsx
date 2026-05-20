@@ -14,16 +14,27 @@ function pad(n: number) {
 
 export default function FreeCompHero({ competition }: Props) {
   const c = competition
-  const drawTimestamp = useMemo(() => new Date(c.drawDate).getTime(), [c.drawDate])
+  // null means the draw date is missing/invalid — timer stays in safe fallback state
+  const drawTimestamp = useMemo(() => {
+    const ts = new Date(c.drawDate).getTime()
+    return isNaN(ts) ? null : ts
+  }, [c.drawDate])
   const maxOdds = `1:${c.totalTickets}`
 
   const [progVisible, setProgVisible] = useState(false)
-  const [time, setTime] = useState({ d: '00', h: '00', m: '00', s: '00' })
+  const [time, setTime]   = useState({ d: '00', h: '00', m: '00', s: '00' })
+  const [closed, setClosed] = useState(false)
 
   useEffect(() => {
+    if (drawTimestamp === null) return // no valid draw date — leave timer at default 00:00
     function tick() {
       const diff = drawTimestamp - Date.now()
-      if (diff <= 0) { setTime({ d: '00', h: '00', m: '00', s: '00' }); return }
+      if (diff <= 0) {
+        setClosed(true)
+        setTime({ d: '00', h: '00', m: '00', s: '00' })
+        return
+      }
+      setClosed(false)
       setTime({
         d: pad(Math.floor(diff / 86400000)),
         h: pad(Math.floor((diff % 86400000) / 3600000)),
@@ -41,7 +52,7 @@ export default function FreeCompHero({ competition }: Props) {
     return () => clearTimeout(t)
   }, [])
 
-  const drawDateShort = c.drawDateDisplay.split(',')[0]
+  const drawDateShort = c.drawDateDisplay.split(',')[0] || c.drawDateDisplay
   const entryWord = c.maxTicketsPerPurchase === 1 ? 'entry' : 'entries'
 
   return (
@@ -64,31 +75,37 @@ export default function FreeCompHero({ competition }: Props) {
               <span>LIVE DRAW</span>
               <span className="fc-eyebrow-sep">·</span>
               <span>CLOSING SOON</span>
-              <span className="fc-free-badge">FREE</span>
+              {c.isFree && <span className="fc-free-badge">FREE</span>}
             </div>
 
             {/* Countdown — upper-left, integrated, matches paid hero rhythm */}
-            <div className="fc-countdown">
-              <div className="fc-cd-block">
-                <span className="fc-cd-num">{time.d}</span>
-                <span className="fc-cd-lbl">DAYS</span>
+            {closed ? (
+              <div className="fc-countdown fc-countdown-closed">
+                <span className="fc-closed-label">Competition Closed</span>
               </div>
-              <span className="fc-cd-sep" aria-hidden="true">:</span>
-              <div className="fc-cd-block">
-                <span className="fc-cd-num">{time.h}</span>
-                <span className="fc-cd-lbl">HRS</span>
+            ) : (
+              <div className="fc-countdown">
+                <div className="fc-cd-block">
+                  <span className="fc-cd-num">{time.d}</span>
+                  <span className="fc-cd-lbl">DAYS</span>
+                </div>
+                <span className="fc-cd-sep" aria-hidden="true">:</span>
+                <div className="fc-cd-block">
+                  <span className="fc-cd-num">{time.h}</span>
+                  <span className="fc-cd-lbl">HRS</span>
+                </div>
+                <span className="fc-cd-sep" aria-hidden="true">:</span>
+                <div className="fc-cd-block">
+                  <span className="fc-cd-num">{time.m}</span>
+                  <span className="fc-cd-lbl">MIN</span>
+                </div>
+                <span className="fc-cd-sep" aria-hidden="true">:</span>
+                <div className="fc-cd-block">
+                  <span className="fc-cd-num">{time.s}</span>
+                  <span className="fc-cd-lbl">SEC</span>
+                </div>
               </div>
-              <span className="fc-cd-sep" aria-hidden="true">:</span>
-              <div className="fc-cd-block">
-                <span className="fc-cd-num">{time.m}</span>
-                <span className="fc-cd-lbl">MIN</span>
-              </div>
-              <span className="fc-cd-sep" aria-hidden="true">:</span>
-              <div className="fc-cd-block">
-                <span className="fc-cd-num">{time.s}</span>
-                <span className="fc-cd-lbl">SEC</span>
-              </div>
-            </div>
+            )}
 
             {/* Progress — above headline */}
             <div className="fc-progress">
@@ -110,13 +127,15 @@ export default function FreeCompHero({ competition }: Props) {
             </div>
 
             {/* Headline */}
-            <h2 className="fc-headline">FREE COMP</h2>
+            <h2 className="fc-headline">{c.title}</h2>
 
             {/* Stats row: ENTRY | DRAW DATE | WATCH VALUE */}
             <div className="fc-stats-row">
               <div className="fc-stat">
                 <span className="fc-stat-label">ENTRY</span>
-                <span className="fc-stat-val fc-stat-free">FREE</span>
+                <span className={`fc-stat-val${c.isFree ? ' fc-stat-free' : ''}`}>
+                  {c.isFree ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+                </span>
               </div>
               <div className="fc-stat-divider" />
               <div className="fc-stat">
@@ -141,6 +160,14 @@ export default function FreeCompHero({ competition }: Props) {
               <Link href="#how-it-works" className="fc-secondary-btn">
                 How It Works
               </Link>
+            </div>
+
+            {/* Mobile-only entry label — mirrors paid hero's £price line */}
+            <div className="fc-mobile-entry">
+              {c.isFree
+                ? <><strong>FREE</strong> entry</>
+                : <><strong>{c.currency}{c.entryPrice.toFixed(2)}</strong> per entry</>
+              }
             </div>
 
           </div>
@@ -168,7 +195,9 @@ export default function FreeCompHero({ competition }: Props) {
               <div className="fc-card-rows">
                 <div className="fc-card-row">
                   <span className="fc-card-label">Entry Price</span>
-                  <span className="fc-card-val fc-card-free">FREE</span>
+                  <span className={`fc-card-val${c.isFree ? ' fc-card-free' : ''}`}>
+                    {c.isFree ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+                  </span>
                 </div>
                 <div className="fc-card-divider" />
                 <div className="fc-card-row">
@@ -192,7 +221,7 @@ export default function FreeCompHero({ competition }: Props) {
                 </div>
               </div>
               <Link href={c.ctaLink} className="fc-card-cta">
-                ENTER FOR FREE
+                {c.isFree ? 'ENTER FOR FREE' : 'ENTER NOW'}
               </Link>
             </div>
 
@@ -202,7 +231,7 @@ export default function FreeCompHero({ competition }: Props) {
 
         {/* Bottom info strip */}
         <div className="fc-strip">
-          Free Competition <span>#2</span> · <span>{c.totalTickets}</span> tickets total ·{' '}
+          {c.isFree ? 'Free' : 'Paid'} Competition <span>#2</span> · <span>{c.totalTickets}</span> tickets total ·{' '}
           <span>{c.soldPercentage}%</span> claimed · Max <span>{c.maxTicketsPerPurchase}</span> {entryWord} per member · Publicly streamed live draw
         </div>
 

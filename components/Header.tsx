@@ -2,9 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useCart } from '@/context/CartContext'
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { itemCount, openDrawer } = useCart()
+  const hasItem = itemCount > 0
 
   function closeMenu() {
     setMenuOpen(false)
@@ -32,7 +35,23 @@ export default function Header() {
 
         <div className="nav-right">
           <Link href="/account/signin" className="btn-signin">Sign In</Link>
-          <Link href="/competitions/omega-speedmaster-moonwatch" className="btn-nav-enter">Enter Now</Link>
+
+          {/* Cart icon — opens branded cart drawer */}
+          <button
+            className="nav-cart-btn"
+            onClick={openDrawer}
+            aria-label={hasItem ? `Open basket — ${itemCount} ${itemCount === 1 ? 'entry' : 'entries'}` : 'Open basket'}
+          >
+            <svg width="19" height="19" viewBox="0 0 19 19" fill="none" aria-hidden="true">
+              <circle cx="7" cy="16.5" r="1.5" fill="currentColor" />
+              <circle cx="14" cy="16.5" r="1.5" fill="currentColor" />
+              <path d="M1 1.5h2.5l3 10.5h8.5L17.5 6H5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {hasItem && <span className="nav-cart-badge" aria-hidden="true">{itemCount}</span>}
+          </button>
+
+          <Link href="/#competitions-grid" className="btn-nav-enter">Enter Now</Link>
+
           <button
             className={`hamburger${menuOpen ? ' is-open' : ''}`}
             id="hamburger"
@@ -41,7 +60,7 @@ export default function Header() {
           >
             {menuOpen ? (
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-                <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             ) : (
               <>
