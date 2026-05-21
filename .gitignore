@@ -24,3 +24,5 @@ winnaars images/
 
 # Claude instruction files
 CLAUDE*.md
+
+.vercel

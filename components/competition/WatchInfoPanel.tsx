@@ -4,8 +4,22 @@ interface Props {
   competition: Competition
 }
 
+const CONDITION_LABELS: Record<string, string> = {
+  brand_new:       'Brand New · Full Box & Papers',
+  new:             'Brand New · Full Box & Papers',
+  unworn:          'Unworn · Full Box & Papers',
+  pre_owned:       'Pre-Owned · Box & Papers',
+  pre_owned_papers:'Pre-Owned · Papers Only',
+  used:            'Pre-Owned',
+}
+
+function formatCondition(raw: string): string {
+  return CONDITION_LABELS[raw.toLowerCase().replace(/[\s-]/g, '_')]
+    ?? raw.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
 export default function WatchInfoPanel({ competition: c }: Props) {
-  const fmt = (n: number) => `${c.currency}${n.toLocaleString()}`
+  const fmt = (n: number) => `${c.currency}${n.toLocaleString('en-GB')}`
 
   return (
     <div className="entry-left">
@@ -51,7 +65,7 @@ export default function WatchInfoPanel({ competition: c }: Props) {
         </div>
         <div className="wi-row">
           <div className="wi-key">Condition</div>
-          <div className="wi-val">Brand New · Full Box &amp; Papers</div>
+          <div className="wi-val">{c.condition ? formatCondition(c.condition) : 'Brand New · Full Box & Papers'}</div>
         </div>
         <div className="wi-row">
           <div className="wi-key">Draw Date</div>

@@ -76,7 +76,7 @@ export default function CtaBanner({ competition: c }: Props) {
             <div className="cd-pill-sep" />
             <div className="cd-pill">
               <span className="cd-pill-label">Watch Value</span>
-              <span className="cd-pill-value">{c.currency}{c.retailValue.toLocaleString()}</span>
+              <span className="cd-pill-value">{c.currency}{c.retailValue.toLocaleString('en-GB')}</span>
             </div>
           </div>
 

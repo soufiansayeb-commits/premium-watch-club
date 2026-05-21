@@ -20,6 +20,14 @@ export interface WooProduct {
   images: Array<{ src: string; alt: string }>
   /** ACF custom field: draw/closing date for this competition. Extracted from meta_data. */
   draw_date?: string
+  /** ACF custom field: fixed maximum entries for this competition. */
+  total_entries?: number
+  /** ACF custom field: retail value of the prize (number). */
+  retail_value?: number
+  /** ACF custom field: prize condition (select field, e.g. "Brand New · Full Box & Papers"). */
+  condition?: string
+  /** ACF custom field: cash alternative value (number). */
+  cash_alternative?: number
 }
 
 // ── Internal config check ────────────────────────────────────────────────────
@@ -82,6 +90,18 @@ async function wcFetch(endpoint: string): Promise<unknown> {
   }
 
   return res.json()
+}
+
+// ── ACF / meta_data helpers ──────────────────────────────────────────────────
+
+/**
+ * Extract a value from the WooCommerce meta_data array by key.
+ * Returns the raw value or undefined if not found.
+ */
+function getMetaValue(raw: Record<string, unknown>, key: string): unknown {
+  const metaData = Array.isArray(raw.meta_data) ? raw.meta_data as Record<string, unknown>[] : []
+  const entry = metaData.find(m => m.key === key)
+  return entry?.value
 }
 
 // ── draw_date helpers ────────────────────────────────────────────────────────
@@ -164,15 +184,34 @@ function formatDrawDateDisplay(iso: string): string {
 function toSafeProduct(raw: Record<string, unknown>): WooProduct {
   const rawImages = Array.isArray(raw.images) ? raw.images as Record<string, unknown>[] : []
 
-  // ACF custom fields are stored in meta_data as [{key, value}] pairs.
-  // We extract draw_date here; other ACF fields can be added the same way.
-  const metaData = Array.isArray(raw.meta_data) ? raw.meta_data as Record<string, unknown>[] : []
-  const drawDateMeta = metaData.find(m => m.key === 'draw_date')
-  // Guard: value may be null/false/0 — only stringify if it's a non-empty string or number
-  const drawDateVal = drawDateMeta?.value
+  // draw_date: prefer ACF object field, fall back to meta_data array
+  const acf = (raw.acf && typeof raw.acf === 'object') ? raw.acf as Record<string, unknown> : {}
+
+  const drawDateVal = acf.draw_date ?? getMetaValue(raw, 'draw_date')
   const drawDateRaw = (drawDateVal !== null && drawDateVal !== undefined && drawDateVal !== false)
     ? String(drawDateVal).trim()
     : ''
+
+  // total_entries: prefer ACF object field, fall back to meta_data array
+  const rawTotalEntries = acf.total_entries ?? getMetaValue(raw, 'total_entries')
+  const parsedTotalEntries = rawTotalEntries != null ? Number(rawTotalEntries) : NaN
+  const totalEntries = !isNaN(parsedTotalEntries) && parsedTotalEntries > 0 ? parsedTotalEntries : undefined
+
+  // retail_value (number ACF field)
+  const rawRetailValue = acf.retail_value ?? getMetaValue(raw, 'retail_value')
+  const parsedRetailValue = rawRetailValue != null ? Number(rawRetailValue) : NaN
+  const retailValue = !isNaN(parsedRetailValue) && parsedRetailValue > 0 ? parsedRetailValue : undefined
+
+  // condition (select ACF field)
+  const rawCondition = acf.condition ?? getMetaValue(raw, 'condition')
+  const condition = (rawCondition != null && rawCondition !== '' && rawCondition !== false)
+    ? String(rawCondition).trim()
+    : undefined
+
+  // cash_alternative (number ACF field)
+  const rawCashAlt = acf.cash_alternative ?? getMetaValue(raw, 'cash_alternative')
+  const parsedCashAlt = rawCashAlt != null ? Number(rawCashAlt) : NaN
+  const cashAlternative = !isNaN(parsedCashAlt) && parsedCashAlt > 0 ? parsedCashAlt : undefined
 
   return {
     id:             Number(raw.id)             || 0,
@@ -188,7 +227,11 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
       src: String(img.src ?? ''),
       alt: String(img.alt ?? ''),
     })),
-    draw_date:      drawDateRaw || undefined,
+    draw_date:        drawDateRaw || undefined,
+    total_entries:    totalEntries,
+    retail_value:     retailValue,
+    condition:        condition,
+    cash_alternative: cashAlternative,
   }
 }
 
@@ -291,20 +334,57 @@ export function mergeWooData(
     }
   }
 
-  // stock_quantity is the source of truth for totalTickets
-  if (wooProduct.stock_quantity != null && wooProduct.stock_quantity > 0) {
-    merged.totalTickets = wooProduct.stock_quantity
-    // Recalculate derived fields against the new totalTickets
-    merged.ticketsLeft = Math.max(0, merged.totalTickets - competition.ticketsSold)
-    merged.soldPercentage = Math.round((competition.ticketsSold / merged.totalTickets) * 1000) / 10
+  // ── ACF product-info overrides ────────────────────────────────────────────
+  if (wooProduct.retail_value != null)     merged.retailValue     = wooProduct.retail_value
+  if (wooProduct.condition    != null)     merged.condition       = wooProduct.condition
+  if (wooProduct.cash_alternative != null) merged.cashAlternative = wooProduct.cash_alternative
+
+  // ── Correct Total Entries / Remaining logic ──────────────────────────────
+  // totalEntries = ACF total_entries (fixed max, never changes as tickets sell)
+  // remainingTickets = WooCommerce stock_quantity (decreases as tickets sell)
+  // soldTickets = totalEntries - remainingTickets
+  // soldPercentage = soldTickets / totalEntries * 100
+
+  const totalEntries = wooProduct.total_entries ?? competition.totalTickets
+  merged.totalTickets = totalEntries
+
+  if (wooProduct.stock_quantity != null) {
+    const remaining = Math.max(0, wooProduct.stock_quantity)
+    const sold = Math.max(0, totalEntries - remaining)
+    merged.ticketsLeft  = remaining
+    merged.ticketsSold  = sold
+    merged.soldPercentage = totalEntries > 0
+      ? Math.round((sold / totalEntries) * 1000) / 10
+      : 0
+  } else if (wooProduct.total_entries != null) {
+    // total_entries known but no stock info — keep static ticketsLeft/soldPercentage
+    // but update totalTickets to the ACF value
+    const sold = Math.max(0, totalEntries - competition.ticketsLeft)
+    merged.ticketsLeft    = competition.ticketsLeft
+    merged.ticketsSold    = sold
+    merged.soldPercentage = totalEntries > 0
+      ? Math.round((sold / totalEntries) * 1000) / 10
+      : competition.soldPercentage
   }
 
   if (process.env.NODE_ENV === 'development') {
     console.log(
       `[PWC] #${wooProduct.id} "${wooProduct.name}" | ` +
-      `price: ${wooProduct.price} | stock: ${wooProduct.stock_quantity} | ` +
+      `price: ${wooProduct.price} | stock(remaining): ${wooProduct.stock_quantity} | ` +
+      `total_entries(ACF): ${wooProduct.total_entries ?? '—'} | ` +
+      `retail_value(ACF): ${wooProduct.retail_value ?? '—'} | ` +
+      `condition(ACF): ${wooProduct.condition ?? '—'} | ` +
+      `cash_alternative(ACF): ${wooProduct.cash_alternative ?? '—'} | ` +
+      `totalTickets: ${merged.totalTickets} | ticketsLeft: ${merged.ticketsLeft} | ` +
+      `soldPercentage: ${merged.soldPercentage}% | ` +
       `draw_date raw: ${wooProduct.draw_date ?? '—'} | drawDate: ${merged.drawDate}`
     )
+    if (wooProduct.total_entries == null) {
+      console.warn(
+        `[PWC] ⚠ total_entries ACF field missing for product #${wooProduct.id} "${wooProduct.name}". ` +
+        `Falling back to static totalTickets: ${competition.totalTickets}`
+      )
+    }
   }
 
   return merged

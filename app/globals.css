@@ -351,10 +351,10 @@ img { max-width: 100%; display: block; }
 /* Headline */
 .h2-headline {
   font-family: var(--font-serif);
-  font-size: clamp(36px, 4.6vw, 70px);
+  font-size: clamp(34px, 3.6vw, 54px);
   font-weight: 700;
   color: var(--text-on-dark);
-  line-height: 1.05; letter-spacing: -0.02em;
+  line-height: 1.08; letter-spacing: -0.025em;
   margin-bottom: 30px;
   animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.12s both;
 }
@@ -604,7 +604,7 @@ img { max-width: 100%; display: block; }
 @media (max-width: 420px) {
   .h2-cd-block { padding: 8px 9px; min-width: 48px; }
   .h2-cd-num { font-size: 20px; }
-  .h2-headline { font-size: 34px; margin-bottom: 22px; }
+  .h2-headline { font-size: 30px; margin-bottom: 20px; }
 }
 
 /* ════════════════════════════════
@@ -806,10 +806,10 @@ img { max-width: 100%; display: block; }
 /* Headline */
 .fc-headline {
   font-family: var(--font-serif);
-  font-size: clamp(30px, 3.4vw, 52px);
+  font-size: clamp(32px, 3.6vw, 54px);
   font-weight: 700;
   color: var(--text-on-dark);
-  line-height: 1.05; letter-spacing: -0.02em;
+  line-height: 1.08; letter-spacing: -0.025em;
   margin-bottom: 22px;
   animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.10s both;
 }
@@ -1047,7 +1047,7 @@ img { max-width: 100%; display: block; }
   .fc-progress   { display: block; margin-bottom: 14px; }
   .fc-secondary-btn { display: none; }
   /* Compact headline and CTA */
-  .fc-headline { font-size: 32px; margin-bottom: 16px; }
+  .fc-headline { font-size: 30px; margin-bottom: 16px; }
   .fc-stats-row { display: none; }
   .fc-cta-group { flex-direction: column; align-items: stretch; }
   .fc-cta-btn { justify-content: center; }
@@ -1261,241 +1261,228 @@ img { max-width: 100%; display: block; }
 }
 
 /* ════════════════════════════════
-   HOW IT WORKS — PREMIUM UPGRADE
+   HOW IT WORKS — INTERACTIVE TIMELINE
 ════════════════════════════════ */
-.how-section {
-  padding: 80px 0 96px;
-  background: var(--bg-off-white);
-  border-top: 1px solid var(--border-light);
+
+/* Section wrapper */
+.hiw-section {
   position: relative;
+  background: var(--navy);
+  border-top: 1px solid rgba(197, 160, 101, 0.15);
   overflow: hidden;
 }
-/* Subtle gold dot matrix texture */
-.how-section::before {
+
+.hiw-section::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image: radial-gradient(circle, rgba(197,160,101,0.07) 1px, transparent 1px);
-  background-size: 30px 30px;
+  background-size: 28px 28px;
   pointer-events: none;
   z-index: 0;
 }
-.how-section .container {
+
+.hiw-inner {
   position: relative;
   z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 80px 48px 88px;
 }
 
-/* 4-column grid */
-.how-steps-row {
+.hiw-header {
+  text-align: center;
+  margin-bottom: 52px;
+}
+
+.hiw-title {
+  font-family: var(--font-serif);
+  font-size: clamp(22px, 2.6vw, 34px);
+  font-weight: 700;
+  color: var(--text-on-dark);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+
+.hiw-subtitle {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+  max-width: 52ch;
+  margin: 0 auto;
+  line-height: 1.75;
+}
+
+/* 2×2 grid on desktop, 1 col on mobile */
+.hiw-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
-  position: relative;
 }
 
-/* Horizontal connector line — aligned to circle center (padding 32px + half of 56px circle = 60px) */
-.how-connector {
-  position: absolute;
-  top: 60px;
-  left: calc(12.5% + 12px);
-  right: calc(12.5% + 12px);
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(197,160,101,0.5) 20%, rgba(197,160,101,0.5) 80%, transparent);
-  pointer-events: none;
-  z-index: 0;
+@media (max-width: 767px) {
+  .hiw-inner { padding: 60px 20px 72px; }
+  .hiw-grid  { grid-template-columns: 1fr; gap: 14px; }
+  .hiw-header { margin-bottom: 36px; }
 }
-.how-connector::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(197,160,101,0.6),
-    rgba(197,160,101,0.6) 8px,
-    transparent 8px,
-    transparent 16px
+
+/* ── Animated gold snake border ── */
+/* @property makes the angle animatable so the conic-gradient rotates smoothly */
+@property --hiw-shimmer {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes hiw-border-spin {
+  to { --hiw-shimmer: 360deg; }
+}
+
+.hiw-card-wrap {
+  border-radius: 21px;
+  padding: 1px;
+  /*
+   * A razor-thin bright streak (only 8° wide) surrounded by near-transparent.
+   * The card's solid navy background blocks the inner gradient from bleeding
+   * through — only the 1px padding edge is visible as the moving gold line.
+   */
+  background: conic-gradient(
+    from var(--hiw-shimmer),
+    transparent          0deg,
+    transparent          348deg,
+    rgba(197,160,101,0.2) 352deg,
+    rgba(245,205, 90,1.0) 356deg,
+    rgba(197,160,101,0.2) 358deg,
+    transparent          360deg
   );
-  pointer-events: none;
+  animation: hiw-border-spin 5s linear infinite;
 }
 
-/* Individual step card */
-.how-step {
+.hiw-card-wrap:hover {
+  animation-duration: 2s;
+}
+
+/* ── Card ── */
+/* background MUST be solid so the inner conic gradient doesn't bleed through */
+.hiw-card {
+  background: #0A1F44;
+  border: none;
+  border-radius: 20px;
   position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-white);
-  border: 1.5px solid rgba(197,160,101,0.18);
-  border-radius: 12px;
-  padding: 32px 24px 30px;
-  box-shadow: 0 2px 12px rgba(10,31,68,0.05), 0 1px 4px rgba(0,0,0,0.03);
-  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
-  outline: none;
-  cursor: default;
-}
-.how-step:hover,
-.how-step:focus-visible {
-  transform: translateY(-6px);
-  box-shadow: 0 20px 56px rgba(10,31,68,0.11), 0 6px 20px rgba(197,160,101,0.10);
-  border-color: rgba(197,160,101,0.55);
+  overflow: hidden;
+  min-height: 280px;
+  transition: background 0.35s ease;
 }
 
-/* Gold top accent bar that appears on hover */
-.how-step-accent {
+.hiw-card-wrap:hover .hiw-card {
+  background: #0D2550;
+}
+
+.hiw-card::before {
+  content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  border-radius: 8px 8px 0 0;
-  background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
-  opacity: 0;
-  transition: opacity 220ms ease;
-  pointer-events: none;
-}
-.how-step:hover .how-step-accent,
-.how-step:focus-visible .how-step-accent {
-  opacity: 1;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold-dark) 20%,
+    var(--gold) 50%,
+    var(--gold-light) 80%,
+    transparent 100%
+  );
+  border-radius: 20px 20px 0 0;
 }
 
-/* Top row: number + icon side by side */
-.how-step-top {
+.hiw-card-ghost-num {
+  position: absolute;
+  bottom: -16px;
+  right: 24px;
+  font-family: var(--font-serif);
+  font-size: 140px;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(197, 160, 101, 0.06);
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -0.05em;
+}
+
+.hiw-card-inner {
+  padding: 32px 36px 36px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.hiw-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  gap: 12px;
 }
 
-/* Step number circle */
-.how-step-num {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--navy);
-  color: var(--gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.hiw-num {
   font-family: var(--font-serif);
-  font-size: 17px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  border: 1px solid rgba(197, 160, 101, 0.38);
+  border-radius: 999px;
+  padding: 5px 16px;
+  background: rgba(197, 160, 101, 0.08);
   flex-shrink: 0;
-  position: relative;
-  box-shadow: 0 4px 18px rgba(10,31,68,0.20), inset 0 1px 0 rgba(255,255,255,0.08);
-  transition: box-shadow 220ms ease, transform 220ms ease;
-}
-/* Outer glow ring — visible at rest, brightens on hover */
-.how-step-num::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(197,160,101,0.30);
-  pointer-events: none;
-  transition: border-color 220ms ease, box-shadow 220ms ease;
-}
-/* Inner faint gold dot for depth */
-.how-step-num::after {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: 50%;
-  border: 1px solid rgba(197,160,101,0.12);
-  pointer-events: none;
-  transition: border-color 220ms ease;
-}
-.how-step:hover .how-step-num,
-.how-step:focus-visible .how-step-num {
-  box-shadow: 0 8px 28px rgba(10,31,68,0.28), 0 0 0 5px rgba(197,160,101,0.10), inset 0 1px 0 rgba(255,255,255,0.08);
-  transform: scale(1.07);
-}
-.how-step:hover .how-step-num::before,
-.how-step:focus-visible .how-step-num::before {
-  border-color: rgba(197,160,101,0.60);
-  box-shadow: 0 0 12px rgba(197,160,101,0.18);
-}
-.how-step:hover .how-step-num::after,
-.how-step:focus-visible .how-step-num::after {
-  border-color: rgba(197,160,101,0.28);
+  display: inline-flex;
+  align-items: center;
 }
 
-/* Icon wrapper — subtle tinted pill */
-.how-step-icon-wrap {
-  width: 44px;
-  height: 44px;
+.hiw-icon-wrap {
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
-  background: rgba(197,160,101,0.08);
-  border: 1px solid rgba(197,160,101,0.18);
+  background: rgba(197, 160, 101, 0.08);
+  border: 1px solid rgba(197, 160, 101, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: background 220ms ease, border-color 220ms ease;
-}
-.how-step:hover .how-step-icon-wrap,
-.how-step:focus-visible .how-step-icon-wrap {
-  background: rgba(197,160,101,0.14);
-  border-color: rgba(197,160,101,0.40);
-}
-
-/* Icon */
-.how-step-icon {
   color: var(--gold-dark);
-  opacity: 0.75;
-  transition: opacity 220ms ease, color 220ms ease;
+  flex-shrink: 0;
+}
+
+.hiw-card-body {
+  flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.how-step:hover .how-step-icon,
-.how-step:focus-visible .how-step-icon {
-  opacity: 1;
-  color: var(--gold);
+  flex-direction: column;
+  gap: 10px;
 }
 
-/* Gold divider line between top and body */
-.how-step-divider {
-  height: 1px;
-  background: linear-gradient(90deg, rgba(197,160,101,0.30), rgba(197,160,101,0.08) 70%, transparent);
-  margin: 20px 0;
-  transition: background 220ms ease;
-}
-.how-step:hover .how-step-divider,
-.how-step:focus-visible .how-step-divider {
-  background: linear-gradient(90deg, rgba(197,160,101,0.55), rgba(197,160,101,0.15) 70%, transparent);
-}
-
-/* Card body */
-.how-step-body { flex: 1; }
-.how-step-title {
-  font-family: var(--font-serif);
-  font-size: 17px;
+.hiw-detail {
+  font-size: 9px;
   font-weight: 700;
-  color: var(--text-dark);
-  margin-bottom: 10px;
-  line-height: 1.3;
-  letter-spacing: -0.01em;
-}
-.how-step-desc {
-  font-size: 13.5px;
-  color: var(--text-muted);
-  line-height: 1.80;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(197, 160, 101, 0.55);
 }
 
-/* ── Responsive ── */
-@media (max-width: 900px) {
-  .how-steps-row { grid-template-columns: 1fr 1fr; gap: 16px; }
-  .how-connector { display: none; }
+.hiw-card-title {
+  font-family: var(--font-serif);
+  font-size: clamp(20px, 1.8vw, 26px);
+  font-weight: 700;
+  color: var(--text-on-dark);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0;
 }
-@media (max-width: 560px) {
-  .how-section { padding: 60px 0 72px; }
-  .how-steps-row { grid-template-columns: 1fr; gap: 14px; }
-  .how-step { padding: 26px 20px 24px; }
-  .how-step-divider { margin: 16px 0; }
-}
-@media (max-width: 480px) {
-  .how-section .section-headline { font-size: 24px; }
-  .how-step-num { width: 48px; height: 48px; font-size: 15px; }
-  .how-step-icon-wrap { width: 38px; height: 38px; }
+
+.hiw-card-desc {
+  font-size: 14px;
+  line-height: 1.8;
+  color: rgba(245, 244, 240, 0.55);
+  margin: 0;
 }
 
 /* ════════════════════════════════

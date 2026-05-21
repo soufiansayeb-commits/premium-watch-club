@@ -20,6 +20,7 @@ export interface Competition {
   image: string;
   heroImage: string;
   retailValue: number;
+  condition?: string;
   entryPrice: number;
   isFree?: boolean; // true = free-entry competition, connect to WooCommerce free product later
   currency: string;
