@@ -57,6 +57,8 @@ const steps = [
   },
 ]
 
+const EASE = [0.22, 1, 0.36, 1] as const
+
 const cardVariants = {
   hidden: { opacity: 0, y: 44, scale: 0.96 },
   visible: (i: number) => ({
@@ -65,8 +67,8 @@ const cardVariants = {
     scale: 1,
     transition: {
       duration: 0.55,
-      delay: i * 1.0,   // exactly 1 second between each card
-      ease: [0.22, 1, 0.36, 1],
+      delay: i * 1.0,
+      ease: EASE,
     },
   }),
 }
@@ -80,7 +82,7 @@ export default function HowItWorks() {
           initial={{ opacity: 0, y: 28 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ duration: 0.55, ease: [0.21, 0.47, 0.32, 0.98] }}
+          transition={{ duration: 0.55, ease: EASE }}
         >
           <div className="section-eyebrow">The Process</div>
           <h2 className="hiw-title">Four steps to your dream watch</h2>
