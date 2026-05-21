@@ -169,6 +169,49 @@ export async function getWooCart(): Promise<WooCartResponse | null> {
 }
 
 /**
+ * Update the quantity of an existing WooCommerce cart item by its cart item key.
+ */
+export async function updateWooCartItem(
+  cartItemKey: string,
+  quantity: number
+): Promise<boolean> {
+  const origin = getStoreOrigin()
+  if (!origin || !cartItemKey) return false
+
+  try {
+    const res = await fetch(`${origin}/wp-json/wc/store/v1/cart/update-item`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ key: cartItemKey, quantity: Math.max(1, Math.floor(quantity)) }),
+    })
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[PWC woo-cart] update-item', { cartItemKey, quantity, ok: res.ok })
+    }
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Fetch the WooCommerce cart and return a Map of productId → { key, quantity }.
+ * Returns null on CORS/network failure.
+ * Used to refresh the frontend cart after the user edits quantities on the WooCommerce cart page.
+ */
+export async function getWooCartQuantityMap(): Promise<Map<number, { key: string; quantity: number }> | null> {
+  const cart = await getWooCart()
+  if (!cart) return null
+
+  const map = new Map<number, { key: string; quantity: number }>()
+  for (const item of cart.items) {
+    map.set(item.id, { key: item.key, quantity: item.quantity })
+  }
+  return map
+}
+
+/**
  * Clear all items from the WooCommerce cart.
  */
 export async function clearWooCart(): Promise<boolean> {

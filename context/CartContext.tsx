@@ -9,8 +9,16 @@ import {
   type ReactNode,
 } from 'react'
 import { CartItem, CART_STORAGE_KEY, buildCheckoutUrl, buildBareCheckoutUrl } from '@/lib/cartStore'
-import { syncPwcCartToWoo } from '@/lib/woocommerce-cart'
+import {
+  syncPwcCartToWoo,
+  removeFromWooCart,
+  updateWooCartItem,
+  getWooCartQuantityMap,
+  getWooCart,
+} from '@/lib/woocommerce-cart'
 import { trackEvent } from '@/lib/analytics'
+
+const CHECKOUT_FLAG_KEY = 'pwc_checkout_initiated'
 
 interface CartContextValue {
   items: CartItem[]
@@ -19,19 +27,11 @@ interface CartContextValue {
   checkoutUrl: string | null
   addItem: (item: CartItem) => void
   removeItem: (competitionId: string) => void
+  /** Update the quantity of an item already in the cart. Removes it if newQty ≤ 0. */
+  updateQuantity: (competitionId: string, newQty: number) => void
   clearCart: () => void
   openDrawer: () => void
   closeDrawer: () => void
-  /**
-   * Call this when the user clicks "Continue to Checkout".
-   * Clears the WooCommerce cart and re-adds exactly the current PWC basket items,
-   * then returns the checkout URL to redirect to.
-   *
-   * Falls back to ?add-to-cart= URL for single-item carts if Store API sync fails
-   * (e.g. CORS not yet configured on WooCommerce).
-   *
-   * Returns null if there are no items or no checkout URL configured.
-   */
   prepareCheckout: () => Promise<string | null>
 }
 
@@ -42,13 +42,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [hydrated, setHydrated] = useState(false)
 
-  // Hydrate from localStorage after first render (avoids SSR mismatch)
+  // ── Hydrate from localStorage after first render (avoids SSR mismatch) ──────
   useEffect(() => {
     try {
       const raw = localStorage.getItem(CART_STORAGE_KEY)
       if (raw) {
         const parsed = JSON.parse(raw)
-        // Support both legacy single-item (object) and new multi-item (array) formats
         setItems(Array.isArray(parsed) ? parsed : [parsed])
       }
     } catch {
@@ -57,7 +56,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setHydrated(true)
   }, [])
 
-  // Persist to localStorage whenever items change (skip pre-hydration)
+  // ── After hydration: detect post-checkout cart clear ─────────────────────────
+  // When prepareCheckout() fires it sets a flag. On return to the site we check
+  // if the WooCommerce cart is now empty (order was processed) and clear locally.
+  useEffect(() => {
+    if (!hydrated) return
+
+    const flag = localStorage.getItem(CHECKOUT_FLAG_KEY)
+    if (!flag) return
+
+    localStorage.removeItem(CHECKOUT_FLAG_KEY)
+
+    getWooCart().then((wooCart) => {
+      if (wooCart && wooCart.items.length === 0) {
+        setItems([])
+        trackEvent('purchase_completed')
+      }
+    }).catch(() => {})
+  }, [hydrated])
+
+  // ── Persist to localStorage whenever items change ─────────────────────────────
   useEffect(() => {
     if (!hydrated) return
     if (items.length > 0) {
@@ -67,10 +85,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, hydrated])
 
+  // ── Refresh frontend quantities from WooCommerce cart ─────────────────────────
+  // Called when the drawer opens. Handles the case where the user changed
+  // quantities directly on the WooCommerce cart page.
+  const refreshFromWoo = useCallback(async () => {
+    const wooMap = await getWooCartQuantityMap()
+    if (!wooMap) return // CORS/network failure — keep local state as-is
+
+    setItems((prev) => {
+      const next = prev.map((item) => {
+        const wooItem = wooMap.get(item.wooProductId)
+        if (!wooItem) return item // not in Woo cart — keep local item
+        return {
+          ...item,
+          quantity: wooItem.quantity,
+          total: item.isFreeCompetition
+            ? 0
+            : parseFloat((item.price * wooItem.quantity).toFixed(2)),
+          wooCartItemKey: wooItem.key,
+        }
+      })
+      return next
+    })
+  }, [])
+
+  // ── addItem ───────────────────────────────────────────────────────────────────
   const addItem = useCallback((newItem: CartItem) => {
-    setItems(prev => {
-      // Replace if same competition is already in cart, otherwise append
-      const exists = prev.findIndex(i => i.competitionId === newItem.competitionId)
+    setItems((prev) => {
+      const exists = prev.findIndex((i) => i.competitionId === newItem.competitionId)
       if (exists >= 0) {
         const next = [...prev]
         next[exists] = newItem
@@ -91,62 +133,99 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  // ── removeItem ────────────────────────────────────────────────────────────────
   const removeItem = useCallback((competitionId: string) => {
-    setItems(prev => prev.filter(i => i.competitionId !== competitionId))
+    setItems((prev) => {
+      const item = prev.find((i) => i.competitionId === competitionId)
+      // Best-effort: remove from WooCommerce if we have a cart item key
+      if (item?.wooCartItemKey) {
+        removeFromWooCart(item.wooCartItemKey).catch(() => {})
+      }
+      return prev.filter((i) => i.competitionId !== competitionId)
+    })
     trackEvent('cart_item_removed', { competitionId })
   }, [])
 
+  // ── updateQuantity ────────────────────────────────────────────────────────────
+  const updateQuantity = useCallback(
+    (competitionId: string, newQty: number) => {
+      const qty = Math.max(0, Math.floor(newQty))
+
+      if (qty === 0) {
+        removeItem(competitionId)
+        return
+      }
+
+      setItems((prev) =>
+        prev.map((item) => {
+          if (item.competitionId !== competitionId) return item
+          const updated: CartItem = {
+            ...item,
+            quantity: qty,
+            total: item.isFreeCompetition
+              ? 0
+              : parseFloat((item.price * qty).toFixed(2)),
+          }
+          // Best-effort: update WooCommerce if we already have the cart item key
+          if (item.wooCartItemKey) {
+            updateWooCartItem(item.wooCartItemKey, qty).catch(() => {})
+          }
+          return updated
+        })
+      )
+
+      trackEvent('cart_quantity_updated', { competitionId, newQty: qty })
+    },
+    [removeItem]
+  )
+
+  // ── clearCart ─────────────────────────────────────────────────────────────────
   const clearCart = useCallback(() => {
     setItems([])
   }, [])
 
+  // ── openDrawer / closeDrawer ──────────────────────────────────────────────────
   const openDrawer = useCallback(() => {
     setIsOpen(true)
+    refreshFromWoo() // sync quantities from WooCommerce silently
     trackEvent('cart_opened')
-  }, [])
+  }, [refreshFromWoo])
 
   const closeDrawer = useCallback(() => {
     setIsOpen(false)
   }, [])
 
-  /**
-   * Syncs the PWC basket to WooCommerce (clear → add all items) then returns
-   * the correct checkout URL. This is the ONLY place we touch the Woo cart
-   * before checkout — no pre-syncing elsewhere.
-   *
-   * Strategy:
-   *  1. Try Store API sync (clear + add): guarantees exact quantities, works for multi-item.
-   *     Returns bare /checkout/ URL on success.
-   *  2. If sync fails (CORS not configured) and there is exactly one item:
-   *     fall back to ?add-to-cart=ID&quantity=N URL. The Woo session may still
-   *     have stale items in this case, but it's better than a broken redirect.
-   *  3. Multi-item sync failure: return null (caller should show an error).
-   */
+  // ── prepareCheckout ───────────────────────────────────────────────────────────
+  // Clears the WooCommerce cart and re-adds exactly the current PWC basket,
+  // then sets a flag so we can detect post-order cart clearing on return.
   const prepareCheckout = useCallback(async (): Promise<string | null> => {
-    const validItems = items.filter(i => i.wooProductId > 0 && Number.isInteger(i.wooProductId))
+    const validItems = items.filter(
+      (i) => i.wooProductId > 0 && Number.isInteger(i.wooProductId)
+    )
     if (validItems.length === 0) return null
 
     const syncResult = await syncPwcCartToWoo(
-      validItems.map(i => ({ wooProductId: i.wooProductId, quantity: i.quantity }))
+      validItems.map((i) => ({ wooProductId: i.wooProductId, quantity: i.quantity }))
     )
 
     if (syncResult.success) {
-      // Woo cart is now exactly our PWC basket — redirect to bare checkout
+      // Flag that checkout has been initiated — checked on next visit to detect order completion
+      localStorage.setItem(CHECKOUT_FLAG_KEY, 'true')
       return buildBareCheckoutUrl()
     }
 
-    // Sync failed — fall back to ?add-to-cart= for single-item carts only
+    // Sync failed — fall back to ?add-to-cart= for single-item carts
     if (validItems.length === 1) {
       if (process.env.NODE_ENV === 'development') {
         console.warn(
           '[PWC cart] Store API sync failed, using ?add-to-cart= fallback. ' +
-          'Enable CORS on WooCommerce for this origin to fix cart duplication.'
+            'Enable CORS on WooCommerce for this origin to fix cart duplication.'
         )
       }
+      localStorage.setItem(CHECKOUT_FLAG_KEY, 'true')
       return buildCheckoutUrl(items)
     }
 
-    // Multi-item sync failed — cannot guarantee correct checkout
     if (process.env.NODE_ENV === 'development') {
       console.error('[PWC cart] Multi-item sync failed and no fallback is available.')
     }
@@ -165,6 +244,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         checkoutUrl,
         addItem,
         removeItem,
+        updateQuantity,
         clearCart,
         openDrawer,
         closeDrawer,

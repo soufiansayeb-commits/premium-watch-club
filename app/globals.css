@@ -4968,6 +4968,47 @@ footer {
   margin-bottom: 16px;
 }
 
+/* Quantity stepper row */
+.cd-row-qty { align-items: center; }
+
+.cd-qty-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  overflow: hidden;
+  height: 28px;
+}
+
+.cd-qty-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--bg-light);
+  border: none;
+  cursor: pointer;
+  color: var(--navy);
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.cd-qty-btn:hover:not(:disabled) { background: var(--navy); color: var(--gold); }
+.cd-qty-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.cd-qty-num {
+  min-width: 32px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dark);
+  font-variant-numeric: tabular-nums;
+  border-left: 1px solid var(--border-light);
+  border-right: 1px solid var(--border-light);
+  line-height: 28px;
+}
+
 /* Remove button */
 .cd-remove-btn {
   background: none; border: none; cursor: pointer;

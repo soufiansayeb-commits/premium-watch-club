@@ -8,8 +8,10 @@ export type TrackableEvent =
   | 'add_to_cart'
   | 'cart_opened'
   | 'cart_item_removed'
+  | 'cart_quantity_updated'
   | 'begin_checkout'
   | 'checkout_error'
+  | 'purchase_completed'
 
 export function trackEvent(
   event: TrackableEvent,

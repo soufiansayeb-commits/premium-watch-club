@@ -9,15 +9,78 @@ function fmt(amount: number, currency: string): string {
   return `${currency}${amount.toFixed(2)}`
 }
 
+function QuantityStepper({
+  item,
+  onUpdate,
+  onRemove,
+}: {
+  item: CartItem
+  onUpdate: (competitionId: string, qty: number) => void
+  onRemove: (competitionId: string) => void
+}) {
+  const max = 20 // max tickets per competition
+  const min = 1
+
+  function dec() {
+    if (item.quantity <= min) {
+      onRemove(item.competitionId)
+    } else {
+      onUpdate(item.competitionId, item.quantity - 1)
+    }
+  }
+
+  function inc() {
+    if (item.quantity >= max) return
+    onUpdate(item.competitionId, item.quantity + 1)
+  }
+
+  return (
+    <div className="cd-qty-stepper" role="group" aria-label="Ticket quantity">
+      <button
+        className="cd-qty-btn"
+        onClick={dec}
+        aria-label={item.quantity <= min ? 'Remove entry' : 'Decrease quantity'}
+      >
+        {item.quantity <= min ? (
+          // Trash icon when at minimum
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14H6L5 6" />
+            <path d="M10 11v6M14 11v6" />
+            <path d="M9 6V4h6v2" />
+          </svg>
+        ) : (
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+            <path d="M1.5 5.5h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
+      <span className="cd-qty-num" aria-live="polite" aria-atomic="true">
+        {item.quantity}
+      </span>
+      <button
+        className="cd-qty-btn"
+        onClick={inc}
+        disabled={item.quantity >= max}
+        aria-label="Increase quantity"
+      >
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+          <path d="M5.5 1.5v8M1.5 5.5h8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
 export default function CartDrawer() {
-  const { items, itemCount, isOpen, closeDrawer, removeItem, prepareCheckout } = useCart()
+  const { items, itemCount, isOpen, closeDrawer, removeItem, updateQuantity, prepareCheckout } = useCart()
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
 
   const hasItems = items.length > 0
   const grandTotal = items.reduce((sum, i) => sum + i.total, 0)
   const grandCurrency = items[0]?.currency ?? '£'
-  const allFree = items.every(i => i.isFreeCompetition)
+  const allFree = items.every((i) => i.isFreeCompetition)
 
   async function handleContinueToCheckout() {
     if (!hasItems || isSyncing) return
@@ -36,7 +99,7 @@ export default function CartDrawer() {
     trackEvent('begin_checkout', {
       itemCount,
       grandTotal,
-      items: items.map(i => ({
+      items: items.map((i) => ({
         competitionId: i.competitionId,
         wooProductId: i.wooProductId,
         quantity: i.quantity,
@@ -45,11 +108,6 @@ export default function CartDrawer() {
     })
 
     window.location.href = url
-  }
-
-  async function handleRemove(item: CartItem) {
-    removeItem(item.competitionId)
-    // wooCartItemKey is no longer pre-synced so may be undefined — that is expected
   }
 
   return (
@@ -125,8 +183,6 @@ export default function CartDrawer() {
                       </div>
                       <div className="cd-item-title">{item.title}</div>
                       <div className="cd-item-qty-line">
-                        {item.quantity} {item.quantity === 1 ? 'ticket' : 'tickets'}
-                        <span className="cd-meta-dot" aria-hidden="true">·</span>
                         {item.isFreeCompetition ? 'FREE' : fmt(item.price, item.currency)} per ticket
                       </div>
                     </div>
@@ -134,17 +190,21 @@ export default function CartDrawer() {
 
                   {/* ── Order rows ── */}
                   <div className="cd-rows">
-                    <div className="cd-row">
+                    {/* Quantity row with stepper */}
+                    <div className="cd-row cd-row-qty">
                       <span className="cd-row-label">Tickets</span>
-                      <span className="cd-row-val">{item.quantity}</span>
+                      <QuantityStepper
+                        item={item}
+                        onUpdate={updateQuantity}
+                        onRemove={removeItem}
+                      />
                     </div>
                     <div className="cd-row">
                       <span className="cd-row-label">Price per ticket</span>
                       <span className="cd-row-val">
                         {item.isFreeCompetition
                           ? <span className="cd-free">FREE</span>
-                          : fmt(item.price, item.currency)
-                        }
+                          : fmt(item.price, item.currency)}
                       </span>
                     </div>
                     <div className="cd-row">
@@ -156,8 +216,7 @@ export default function CartDrawer() {
                       <span className="cd-row-val">
                         {item.isFreeCompetition
                           ? <span className="cd-free">FREE</span>
-                          : fmt(item.total, item.currency)
-                        }
+                          : fmt(item.total, item.currency)}
                       </span>
                     </div>
                   </div>
@@ -168,21 +227,20 @@ export default function CartDrawer() {
                   </div>
 
                   {/* ── Remove ── */}
-                  <button className="cd-remove-btn" onClick={() => handleRemove(item)}>
+                  <button className="cd-remove-btn" onClick={() => removeItem(item.competitionId)}>
                     Remove entry
                   </button>
                 </div>
               ))}
 
-              {/* ── Grand total (shown only when multiple items) ── */}
+              {/* ── Grand total (shown when multiple items) ── */}
               {items.length > 1 && (
                 <div className="cd-grand-total">
                   <span className="cd-row-label">Order Total</span>
                   <span className="cd-row-val">
                     {allFree
                       ? <span className="cd-free">FREE</span>
-                      : fmt(grandTotal, grandCurrency)
-                    }
+                      : fmt(grandTotal, grandCurrency)}
                   </span>
                 </div>
               )}
@@ -206,9 +264,8 @@ export default function CartDrawer() {
             {isSyncing
               ? 'Preparing checkout...'
               : !hasItems
-                ? 'No entry selected'
-                : 'Continue to Checkout'
-            }
+              ? 'No entry selected'
+              : 'Continue to Checkout'}
             {!isSyncing && hasItems && (
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
                 <path d="M2.5 7.5h10M9 3.5l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
