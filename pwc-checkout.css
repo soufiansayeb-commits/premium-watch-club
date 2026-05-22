@@ -173,14 +173,17 @@ body.woocommerce-checkout .wp-block-post-content {
 .wc-block-components-country-input label,
 .wc-block-components-state-input label {
   color: var(--pwc-text-mid) !important;
-  font-size: 0.68rem !important;
+  font-size: 0.65rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.1em !important;
   text-transform: uppercase !important;
   font-family: 'DM Sans', sans-serif !important;
+  /* Floating label: anchor to top of field */
+  top: 8px !important;
+  line-height: 1.2 !important;
 }
 
-/* All text inputs */
+/* All text inputs — floating label layout: top padding makes room for the label */
 .wc-block-checkout input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]),
 .wc-block-components-text-input input,
 .wc-block-checkout select,
@@ -194,12 +197,14 @@ body.woocommerce-checkout .wp-block-post-content {
   color: var(--pwc-text) !important;
   font-family: 'DM Sans', sans-serif !important;
   font-size: 0.93rem !important;
-  padding: 14px 16px !important;
+  /* Asymmetric padding: top room for floating label, compact bottom */
+  padding: 22px 16px 8px !important;
   height: auto !important;
-  min-height: 50px !important;
-  line-height: 1.4 !important;
+  min-height: 54px !important;
+  line-height: 1.35 !important;
   transition: border-color var(--pwc-ease), box-shadow var(--pwc-ease) !important;
   box-shadow: none !important;
+  vertical-align: bottom !important;
 }
 
 .wc-block-checkout input:focus,
@@ -312,6 +317,9 @@ body.woocommerce-checkout .wp-block-post-content {
 
 /* ═══════════════════════════════════════════════════════════════════
    PAYMENT METHOD BLOCK
+   WooCommerce 10.7: option row = div.wc-block-components-radio-control__option
+   Expanded content = .wc-block-components-radio-control-accordion-content
+   overflow:visible prevents radio input from being clipped at border edge.
    ═══════════════════════════════════════════════════════════════════ */
 
 .wc-block-components-radio-control-accordion-option {
@@ -319,7 +327,7 @@ body.woocommerce-checkout .wp-block-post-content {
   border: 1.5px solid var(--pwc-border) !important;
   border-radius: 7px !important;
   margin-bottom: 8px !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   transition: border-color var(--pwc-ease), box-shadow var(--pwc-ease) !important;
 }
 
@@ -329,22 +337,50 @@ body.woocommerce-checkout .wp-block-post-content {
   box-shadow: 0 0 0 3px rgba(197,160,101,0.10) !important;
 }
 
-.wc-block-components-radio-control-accordion-option header {
-  padding: 16px !important;
-  color: var(--pwc-text) !important;
+/* The option row: radio input + label — WooCommerce renders this as a plain div */
+.wc-block-components-radio-control-accordion-option
+  .wc-block-components-radio-control__option {
+  padding: 14px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  border-width: 0 !important;
 }
 
-.wc-block-components-radio-control-accordion-option .wc-block-components-radio-control-accordion-option__content {
-  padding: 0 16px 16px !important;
+/* Radio input — prevent shrink, keep statically placed */
+.wc-block-components-radio-control-accordion-option
+  .wc-block-components-radio-control__input {
+  flex-shrink: 0 !important;
+  position: static !important;
+  margin: 0 !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+/* Payment method label / text */
+.wc-block-components-radio-control-accordion-option
+  .wc-block-components-radio-control__label,
+.wc-block-components-radio-control-accordion-option
+  .wc-block-components-payment-method-label,
+.wc-block-components-radio-control-accordion-option
+  .wc-block-components-payment-method-label__img-text {
+  color: var(--pwc-text) !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  padding-left: 0 !important;
+}
+
+/* Expanded content — correct class in WooCommerce 10.7 */
+.wc-block-components-radio-control-accordion-option
+  .wc-block-components-radio-control-accordion-content {
+  padding: 12px 16px 16px !important;
   border-top: 1px solid var(--pwc-divider) !important;
+  font-size: 0.84rem !important;
+  line-height: 1.65 !important;
+  color: var(--pwc-text-mid) !important;
   background: transparent !important;
-}
-
-.wc-block-components-payment-method-label,
-.wc-block-components-payment-method-label__img-text {
-  color: var(--pwc-text) !important;
-  font-size: 0.9rem !important;
-  font-weight: 500 !important;
 }
 
 /* Card / Stripe fields */
@@ -437,7 +473,7 @@ button.wc-block-components-checkout-place-order-button {
 
 /* Trust signals below Place Order */
 .wp-block-woocommerce-checkout-actions-block::after {
-  content: '🔒 Secure Checkout  ·  18+ Only  ·  Skill-Based Competition  ·  Publicly Streamed Live Draw';
+  content: 'Secure Checkout  \00B7  18+ Only  \00B7  Skill-Based Competition  \00B7  Publicly Streamed Live Draw';
   display: block;
   text-align: center;
   font-size: 0.62rem;
@@ -737,11 +773,45 @@ button.wc-block-components-checkout-place-order-button {
    ═══════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 768px) {
+  /* ── Outer wrapper: flex column for reliable single-column stacking ── */
   .wp-block-woocommerce-checkout.wc-block-checkout {
+    display: flex !important;
+    flex-direction: column !important;
     padding: 0 0 60px !important;
   }
 
+  /* ── ORDER SUMMARY SIDEBAR — ALWAYS VISIBLE at the top ──
+     display:block !important overrides any React inline style="display:none"
+     order:-1 !important overrides WooCommerce's @container order:0
+  ── */
+  .wc-block-checkout__sidebar {
+    display: block !important;
+    order: -1 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Force any panel content inside the sidebar to be always open */
+  .wc-block-checkout__sidebar .wc-block-components-panel__content,
+  .wc-block-checkout__sidebar .wc-block-components-panel__content[hidden],
+  .wc-block-checkout__sidebar [class*="panel__content"] {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Hide the collapsed "Order summary £X ▾" toggle button */
+  .wc-block-checkout__sidebar .wc-block-components-panel__button,
+  .wc-block-checkout__sidebar [class*="panel__button"] {
+    display: none !important;
+  }
+
+  /* ── Main form — after the order summary ── */
   .wc-block-checkout__main {
+    order: 0 !important;
+    width: 100% !important;
     padding: 0 20px 32px !important;
     border-left: none !important;
     border-right: none !important;
@@ -749,30 +819,74 @@ button.wc-block-components-checkout-place-order-button {
     box-shadow: none !important;
   }
 
+  /* ── Order summary block: clean mobile card ── */
   .wp-block-woocommerce-checkout-order-summary-block {
-    padding: 24px 20px !important;
+    padding: 20px 20px 24px !important;
     position: static !important;
     border-left: none !important;
     border-right: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    border-top: 1px solid var(--pwc-divider) !important;
+    border-bottom: 2px solid var(--pwc-border-gold) !important;
+    border-top: none !important;
+    margin-bottom: 0 !important;
   }
 
+  /* ── Order summary product row: readable on mobile ── */
+  .wc-block-components-order-summary-item__name {
+    font-size: 0.95rem !important;
+  }
+  .wc-block-components-order-summary-item__individual-prices,
+  .wc-block-components-order-summary-item__full-price {
+    font-size: 0.95rem !important;
+  }
+
+  /* ── Totals: clear spacing ── */
+  .wc-block-components-totals-footer-item
+    .wc-block-components-totals-item__value,
+  .wc-block-components-totals-footer-item
+    .wc-block-formatted-money-amount {
+    font-size: 1.25rem !important;
+  }
+
+  /* ── Place order button ── */
   .wc-block-components-checkout-place-order-button {
     padding: 18px 24px !important;
     font-size: 0.68rem !important;
   }
 
+  /* ── "Secure Checkout" heading ── */
   .wc-block-checkout > .wc-block-checkout__main > .wc-block-components-checkout-step:first-child::before {
     margin-top: 24px !important;
     font-size: 1.3rem !important;
   }
+
+  /* ── Payment method accordion: compact on mobile ── */
+  .wc-block-components-radio-control-accordion-option
+    .wc-block-components-radio-control__option {
+    padding: 13px 14px !important;
+  }
+  .wc-block-components-radio-control-accordion-option
+    .wc-block-components-payment-method-label {
+    font-size: 0.85rem !important;
+  }
 }
 
 @media (max-width: 480px) {
+  .wp-block-woocommerce-checkout.wc-block-checkout {
+    padding: 0 0 48px !important;
+  }
+
   .wc-block-checkout > .wc-block-checkout__main > .wc-block-components-checkout-step:first-child::before {
     margin-top: 20px !important;
     font-size: 1.2rem !important;
+  }
+
+  .wp-block-woocommerce-checkout-order-summary-block {
+    padding: 16px 16px 20px !important;
+  }
+
+  .wc-block-checkout__main {
+    padding: 0 16px 28px !important;
   }
 }

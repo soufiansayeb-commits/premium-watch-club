@@ -379,58 +379,93 @@ img { max-width: 100%; display: block; }
 }
 .h2-cta-btn svg { flex-shrink: 0; }
 
-/* Price + social proof row */
+/* Price row */
 .h2-meta-row {
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
   animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.32s both;
 }
-.h2-price { font-size: 15px; color: var(--text-muted-dark); }
+.h2-price { font-size: 15px; color: rgba(245, 244, 240, 0.72); }
 .h2-price strong { color: var(--gold); font-weight: 700; font-size: 18px; }
 .h2-meta-sep {
   width: 1px; height: 14px;
   background: rgba(255,255,255,0.12); flex-shrink: 0;
 }
-.h2-social-proof {
-  font-size: 13px; color: rgba(197,160,101,0.52); font-style: italic;
-}
 
-/* Leaderboard panel */
-.h2-leaderboard {
+/* ── Activity Ticker ── */
+.act-ticker {
   animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.42s both;
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.065);
+  background: rgba(255,255,255,0.028);
+  border: 1px solid rgba(197,160,101,0.14);
   border-radius: 7px;
-  padding: 16px 18px;
-  backdrop-filter: blur(10px);
+  padding: 9px 12px;
+  backdrop-filter: blur(12px);
+  /* Constrain width to match the old social-proof line — not full column */
+  width: 100%;
+  max-width: 360px;
+  overflow: hidden;
+  align-self: flex-start;
 }
-.h2-lb-header {
-  display: flex; align-items: center; gap: 8px;
-  margin-bottom: 12px;
-}
-.h2-lb-live-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--green); animation: blink 2s ease-in-out infinite; flex-shrink: 0;
-}
-.h2-lb-title {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
-  color: var(--text-muted-dark);
-}
-.h2-lb-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 9px 0;
-  border-top: 1px solid rgba(255,255,255,0.045);
-}
-.h2-lb-left { display: flex; align-items: center; gap: 10px; }
-.h2-lb-rank {
-  font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
-  color: var(--gold); min-width: 24px;
-}
-.h2-lb-name { font-size: 13px; font-weight: 500; color: var(--text-on-dark); }
-.h2-lb-tickets { font-size: 11px; font-weight: 500; color: var(--text-muted-dark); }
 
-/* Hide leaderboard on mobile */
-.h2-lb-desktop { display: block; }
+.act-ticker-badge {
+  display: flex; align-items: center; gap: 7px;
+  margin-bottom: 7px;
+}
+.act-ticker-dot {
+  width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+  background: var(--green);
+  box-shadow: 0 0 5px rgba(39,174,96,0.7);
+  animation: blink 2s ease-in-out infinite;
+}
+.act-ticker-label {
+  font-size: 8.5px; font-weight: 700; letter-spacing: 0.26em; text-transform: uppercase;
+  color: rgba(197, 160, 101, 0.65);
+}
+
+.act-ticker-mask {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+}
+
+.act-ticker-track {
+  display: flex; align-items: center;
+  white-space: nowrap;
+  animation: tickerScroll 60s linear infinite;
+  will-change: transform;
+}
+.act-ticker-track.act-ticker-paused {
+  animation-play-state: paused;
+}
+
+@keyframes tickerScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.act-ticker-item {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 0 18px;
+  flex-shrink: 0;
+}
+.act-ticker-text {
+  font-size: 12px; font-weight: 500;
+  color: rgba(245, 244, 240, 0.92);
+  letter-spacing: 0.01em;
+}
+.act-ticker-time {
+  font-size: 10px; font-weight: 400;
+  color: rgba(197, 160, 101, 0.70);
+  letter-spacing: 0.02em;
+}
+.act-ticker-sep {
+  color: rgba(255, 255, 255, 0.18);
+  font-size: 11px;
+  user-select: none;
+}
+
+/* Mobile-only ticker wrapper — sits after competition details card */
+.act-ticker-mobile-wrap { display: none; }
 
 /* ── COL 2: CENTRE — watch only, zero obstruction ── */
 .h2-center {
@@ -515,10 +550,10 @@ img { max-width: 100%; display: block; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 9px 16px;
 }
-.h2-card-label { font-size: 11px; color: rgba(255,255,255,0.42); }
-.h2-card-val   { font-size: 12px; font-weight: 700; color: var(--text-on-dark); }
+.h2-card-label { font-size: 11px; color: rgba(255,255,255,0.62); }
+.h2-card-val   { font-size: 12.5px; font-weight: 700; color: var(--text-on-dark); }
 .h2-card-gold  { color: var(--gold); }
-.h2-card-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 0 16px; }
+.h2-card-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 0 16px; }
 .h2-card-cta {
   display: block; text-align: center;
   padding: 13px 16px;
@@ -573,32 +608,52 @@ img { max-width: 100%; display: block; }
 @media (max-width: 680px) {
   .h2-inner {
     grid-template-columns: 1fr;
+    /* Explicitly reset the 2-row constraint inherited from the 960px breakpoint */
+    grid-template-rows: unset;
     grid-template-areas:
       "left"
       "center"
       "cards";
     gap: 0;
+    padding: 0 16px;
+    /* Prevent any child from causing horizontal bleed */
+    overflow: hidden;
   }
-  .h2-left   { padding: 36px 0 20px; }
-  .h2-center { padding: 4px 0 12px; }
-  .h2-cards-col {
-    flex-direction: column;
-    padding: 0 0 20px;
+  /* min-width: 0 is the standard grid fix — grid items don't shrink below their
+     min-content size by default, which causes overflow on narrow screens */
+  .h2-left,
+  .h2-center,
+  .h2-cards-col,
+  .act-ticker-mobile-wrap {
+    grid-column: 1;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
+  .h2-left        { grid-area: left;   padding: 32px 0 16px; }
+  .h2-center      { grid-area: center; padding: 4px 0 12px; }
+  .h2-cards-col   { grid-area: cards;  flex-direction: column; padding: 0 0 20px; }
   .h2-watch-stage { max-width: 320px; margin: 0 auto; }
-  .h2-countdown { gap: 7px; }
-  .h2-cd-block { padding: 9px 11px; min-width: 54px; }
-  .h2-cd-num { font-size: 24px; }
-  .h2-cd-sep { font-size: 18px; margin-bottom: 8px; }
-  .h2-meta-row { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .h2-meta-sep { display: none; }
-  /* Swap leaderboard: hide inside left col, show below watch */
-  .h2-lb-desktop { display: none; }
-  .h2-lb-mobile  {
+  .h2-countdown   { gap: 7px; }
+  .h2-cd-block    { padding: 9px 11px; min-width: 54px; }
+  .h2-cd-num      { font-size: 24px; }
+  .h2-cd-sep      { font-size: 18px; margin-bottom: 8px; }
+  .h2-meta-row    { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .h2-meta-sep    { display: none; }
+  /* Ticker inside h2-left hidden on mobile — shown via wrapper below competition details */
+  .h2-left .act-ticker { display: none; }
+  /* Mobile ticker wrapper */
+  .act-ticker-mobile-wrap {
     display: block;
-    padding: 0 0 32px;
-    margin: 0;
+    padding: 0 0 28px;
+    overflow: hidden;
   }
+  .act-ticker-mobile-wrap .act-ticker {
+    max-width: 100%;
+    display: block;
+  }
+  .act-ticker-text { font-size: 11.5px; }
+  .act-ticker-time { font-size: 9.5px; }
 }
 
 @media (max-width: 420px) {
@@ -778,7 +833,7 @@ img { max-width: 100%; display: block; }
   color: var(--green);
 }
 .fc-prog-count {
-  font-size: 11px; color: rgba(255,255,255,0.38); letter-spacing: 0.04em;
+  font-size: 11px; color: rgba(255, 255, 255, 0.65); letter-spacing: 0.04em;
 }
 .fc-prog-track {
   height: 7px; background: rgba(255,255,255,0.08);
@@ -969,8 +1024,8 @@ img { max-width: 100%; display: block; }
   display: flex; align-items: center; justify-content: space-between;
   padding: 9px 16px;
 }
-.fc-card-label { font-size: 11px; color: rgba(255,255,255,0.42); }
-.fc-card-val   { font-size: 12px; font-weight: 700; color: var(--text-on-dark); }
+.fc-card-label { font-size: 11px; color: rgba(255,255,255,0.62); }
+.fc-card-val   { font-size: 12.5px; font-weight: 700; color: var(--text-on-dark); }
 .fc-card-gold  { color: var(--gold); }
 .fc-card-free  { color: #4ade80; font-size: 13px; font-weight: 800; letter-spacing: 0.06em; }
 .fc-card-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 0 16px; }
@@ -1056,7 +1111,7 @@ img { max-width: 100%; display: block; }
     display: block;
     margin-top: 10px;
     font-size: 15px;
-    color: rgba(197,160,101,0.48);
+    color: rgba(245, 244, 240, 0.72);
     letter-spacing: 0.01em;
     font-style: italic;
   }
