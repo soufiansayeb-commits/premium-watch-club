@@ -27,9 +27,10 @@ export default function CheckoutStep({
   onBack,
 }: Props) {
   const fmt = (n: number) => `${c.currency}${n.toFixed(2)}`
-  const total = selectedQty * c.entryPrice
+  const [qty, setQty] = useState(selectedQty)
+  const total = qty * c.entryPrice
 
-  const { prepareCheckout } = useCart()
+  const { prepareCheckout, updateQuantity } = useCart()
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
 
@@ -38,6 +39,7 @@ export default function CheckoutStep({
     setSyncError(null)
     setIsSyncing(true)
 
+    updateQuantity(c.id, qty)
     const url = await prepareCheckout()
 
     setIsSyncing(false)
@@ -51,7 +53,7 @@ export default function CheckoutStep({
       competitionId: c.id,
       slug: c.slug,
       wooProductId: c.wooProductId,
-      quantity: selectedQty,
+      quantity: qty,
       total,
     })
 
@@ -87,9 +89,20 @@ export default function CheckoutStep({
               </div>
               <div className="os-row">
                 <span className="label">Tickets</span>
-                <span className="value">
-                  {selectedQty} {selectedQty === 1 ? 'ticket' : 'tickets'}
-                </span>
+                <div className="qty-stepper">
+                  <button
+                    className="qty-btn"
+                    onClick={() => setQty(q => Math.max(1, q - 1))}
+                    disabled={qty <= 1}
+                    aria-label="Remove ticket"
+                  >−</button>
+                  <span className="qty-value">{qty}</span>
+                  <button
+                    className="qty-btn"
+                    onClick={() => setQty(q => q + 1)}
+                    aria-label="Add ticket"
+                  >+</button>
+                </div>
               </div>
               {!c.isFree && (
                 <div className="os-row">

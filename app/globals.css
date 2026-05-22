@@ -3445,6 +3445,23 @@ footer {
 .os-row .value { font-weight: 600; color: var(--text-dark); }
 .os-row.total .label { font-weight: 700; color: var(--text-dark); font-size: 15px; }
 .os-row.total .value { font-size: 18px; color: var(--gold-dark); font-weight: 700; }
+.qty-stepper {
+  display: flex; align-items: center; gap: 0;
+  border: 1px solid var(--border-mid); border-radius: 6px; overflow: hidden;
+}
+.qty-btn {
+  background: var(--bg-off-white); border: none; cursor: pointer;
+  width: 32px; height: 32px; font-size: 18px; line-height: 1;
+  color: var(--text-dark); transition: background 150ms;
+  display: flex; align-items: center; justify-content: center;
+}
+.qty-btn:hover:not(:disabled) { background: var(--gold); color: white; }
+.qty-btn:disabled { opacity: 0.35; cursor: default; }
+.qty-value {
+  min-width: 36px; text-align: center; font-size: 14px; font-weight: 600;
+  color: var(--text-dark); padding: 0 4px;
+  border-left: 1px solid var(--border-mid); border-right: 1px solid var(--border-mid);
+}
 .customer-form-placeholder {
   border: 1.5px dashed var(--border-mid); border-radius: 5px;
   padding: 36px; text-align: center; margin-bottom: 24px;

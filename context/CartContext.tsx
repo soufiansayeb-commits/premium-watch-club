@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { CartItem, CART_STORAGE_KEY, buildCheckoutUrl, buildBareCheckoutUrl } from '@/lib/cartStore'
+import { CartItem, CART_STORAGE_KEY, buildBareCheckoutUrl, buildCheckoutUrl } from '@/lib/cartStore'
 import {
   syncPwcCartToWoo,
   removeFromWooCart,
@@ -214,25 +214,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return buildBareCheckoutUrl()
     }
 
-    // Sync failed — fall back to ?add-to-cart= for single-item carts
-    if (validItems.length === 1) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(
-          '[PWC cart] Store API sync failed, using ?add-to-cart= fallback. ' +
-            'Enable CORS on WooCommerce for this origin to fix cart duplication.'
-        )
-      }
-      localStorage.setItem(CHECKOUT_FLAG_KEY, 'true')
-      return buildCheckoutUrl(items)
-    }
-
+    // Sync failed (e.g. CORS not configured, localhost dev) — fall back to the
+    // ?add-to-cart= redirect so the customer can still reach checkout.
+    // WooCommerce may stack quantities if the user goes back and re-adds, but
+    // that is acceptable until the full cart sync is configured.
     if (process.env.NODE_ENV === 'development') {
-      console.error('[PWC cart] Multi-item sync failed and no fallback is available.')
+      console.warn('[PWC cart] Cart sync failed — using ?add-to-cart= redirect fallback.', syncResult.error)
     }
-    return null
+    return buildCheckoutUrl(validItems)
   }, [items])
 
-  const checkoutUrl = buildCheckoutUrl(items)
+  // checkoutUrl is intentionally null — always use prepareCheckout() which syncs the
+  // WooCommerce cart before redirecting. Direct ?add-to-cart= URLs stack quantities.
+  const checkoutUrl = null
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0)
 
   return (
