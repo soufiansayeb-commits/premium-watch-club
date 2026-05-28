@@ -422,46 +422,14 @@ img { max-width: 100%; display: block; }
   color: rgba(197, 160, 101, 0.65);
 }
 
-.act-ticker-mask {
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
-}
-
-.act-ticker-track {
-  display: flex; align-items: center;
-  white-space: nowrap;
-  animation: tickerScroll 60s linear infinite;
-  will-change: transform;
-}
-.act-ticker-track.act-ticker-paused {
-  animation-play-state: paused;
-}
-
-@keyframes tickerScroll {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.act-ticker-item {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 0 18px;
-  flex-shrink: 0;
-}
-.act-ticker-text {
+/* Single-item fade display — replaces old horizontal scroll track */
+.act-live-text {
   font-size: 12px; font-weight: 500;
   color: rgba(245, 244, 240, 0.92);
   letter-spacing: 0.01em;
-}
-.act-ticker-time {
-  font-size: 10px; font-weight: 400;
-  color: rgba(197, 160, 101, 0.70);
-  letter-spacing: 0.02em;
-}
-.act-ticker-sep {
-  color: rgba(255, 255, 255, 0.18);
-  font-size: 11px;
-  user-select: none;
+  line-height: 1.45;
+  min-height: 1.45em; /* prevent height shift when cycling */
+  will-change: opacity, transform;
 }
 
 /* Mobile-only ticker wrapper — sits after competition details card */
@@ -652,8 +620,7 @@ img { max-width: 100%; display: block; }
     max-width: 100%;
     display: block;
   }
-  .act-ticker-text { font-size: 11.5px; }
-  .act-ticker-time { font-size: 9.5px; }
+  .act-live-text { font-size: 11.5px; }
 }
 
 @media (max-width: 420px) {

@@ -1,4 +1,5 @@
 import { Competition } from '@/lib/competition-data'
+import LiveActivity from '@/components/LiveActivity'
 
 interface Props {
   competition: Competition
@@ -39,6 +40,9 @@ export default function WatchInfoPanel({ competition: c }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Real order activity — renders only when matching WooCommerce orders exist */}
+      <LiveActivity productId={c.wooProductId} />
 
       <div className="watch-info-card">
         <div className="wic-section-title">Watch &amp; Competition Information</div>

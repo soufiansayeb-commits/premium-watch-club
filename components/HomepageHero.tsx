@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
+import LiveActivity from '@/components/LiveActivity'
 
 interface Props {
   competition: Competition
@@ -10,68 +11,6 @@ interface Props {
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
-}
-
-// ── Activity Ticker ──────────────────────────────────────────────────────────
-
-interface ActivityItem {
-  city: string
-  ticketCount: number
-  timeAgo: string
-}
-
-const ACTIVITY_DATA: ActivityItem[] = [
-  { city: 'London',     ticketCount: 10, timeAgo: '2 min ago'  },
-  { city: 'Amsterdam',  ticketCount: 5,  timeAgo: '7 min ago'  },
-  { city: 'Manchester', ticketCount: 3,  timeAgo: '14 min ago' },
-  { city: 'Edinburgh',  ticketCount: 20, timeAgo: '21 min ago' },
-  { city: 'Rotterdam',  ticketCount: 5,  timeAgo: '29 min ago' },
-  { city: 'Paris',      ticketCount: 1,  timeAgo: '35 min ago' },
-  { city: 'Birmingham', ticketCount: 2,  timeAgo: '41 min ago' },
-  { city: 'Antwerp',    ticketCount: 10, timeAgo: '48 min ago' },
-  { city: 'Dublin',     ticketCount: 15, timeAgo: '55 min ago' },
-  { city: 'Brussels',   ticketCount: 3,  timeAgo: '1 hr ago'   },
-]
-
-function formatActivity(item: ActivityItem): string {
-  const t = item.ticketCount === 1 ? '1 ticket' : `${item.ticketCount} tickets`
-  return `Member from ${item.city} secured ${t}`
-}
-
-function ActivityTicker() {
-  const trackRef = useRef<HTMLDivElement>(null)
-  const [paused, setPaused] = useState(false)
-
-  // Duplicate items so the loop is seamless
-  const items = [...ACTIVITY_DATA, ...ACTIVITY_DATA]
-
-  return (
-    <div
-      className="act-ticker"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-    >
-      <div className="act-ticker-badge">
-        <span className="act-ticker-dot" />
-        <span className="act-ticker-label">LIVE ACTIVITY</span>
-      </div>
-
-      <div className="act-ticker-mask">
-        <div
-          ref={trackRef}
-          className={`act-ticker-track${paused ? ' act-ticker-paused' : ''}`}
-        >
-          {items.map((item, i) => (
-            <span key={i} className="act-ticker-item">
-              <span className="act-ticker-text">{formatActivity(item)}</span>
-              <span className="act-ticker-time">{item.timeAgo}</span>
-              <span className="act-ticker-sep" aria-hidden="true">·</span>
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
 }
 
 export default function HomepageHero({ competition }: Props) {
@@ -198,7 +137,7 @@ export default function HomepageHero({ competition }: Props) {
             </span>
           </div>
 
-          <ActivityTicker />
+          <LiveActivity productId={c.wooProductId} />
 
         </div>
 
@@ -262,7 +201,7 @@ export default function HomepageHero({ competition }: Props) {
 
         {/* Mobile-only ticker — rendered as 4th grid child so it appears below competition details */}
         <div className="act-ticker-mobile-wrap">
-          <ActivityTicker />
+          <LiveActivity productId={c.wooProductId} />
         </div>
 
       </div>
