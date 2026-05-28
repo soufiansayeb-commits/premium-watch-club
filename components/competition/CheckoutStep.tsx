@@ -1,16 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { useCart } from '@/context/CartContext'
 import { trackEvent } from '@/lib/analytics'
 
-interface Props {
-  competition: Competition
-  selectedQty: number
-  selectedAnswer: string | null
-  onBack: () => void
-}
+// ── Icons ──────────────────────────────────────────────────────────────────────
 
 const TpStar = () => (
   <div className="tp-star">
@@ -20,46 +16,183 @@ const TpStar = () => (
   </div>
 )
 
+const TrashIcon = () => (
+  <svg
+    width="13" height="13" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6l-1 14H6L5 6" />
+    <path d="M10 11v6M14 11v6" />
+    <path d="M9 6V4h6v2" />
+  </svg>
+)
+
+// ── Props ─────────────────────────────────────────────────────────────────────
+
+interface Props {
+  competition: Competition
+  selectedQty: number
+  selectedAnswer: string | null
+  onBack: () => void
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export default function CheckoutStep({
   competition: c,
   selectedQty,
   selectedAnswer,
   onBack,
 }: Props) {
-  const fmt = (n: number) => `${c.currency}${n.toFixed(2)}`
-  const [qty, setQty] = useState(selectedQty)
-  const total = qty * c.entryPrice
+  // All cart items — used for the full order summary
+  const { items, removeItem, updateQuantity, prepareCheckout } = useCart()
 
-  const { prepareCheckout, updateQuantity } = useCart()
-  const [isSyncing, setIsSyncing] = useState(false)
-  const [syncError, setSyncError] = useState<string | null>(null)
+  const fmt = (n: number, currency: string = c.currency) => `${currency}${n.toFixed(2)}`
 
+  // Qty stepper state — only applies to the current competition (paid comps)
+  const entriesRemaining = c.ticketsLeft > 0 ? c.ticketsLeft : c.maxTicketsPerPurchase
+  const allowedMaxQty    = Math.min(c.maxTicketsPerPurchase, entriesRemaining)
+  const [qty, setQty]    = useState(() => Math.min(selectedQty, allowedMaxQty))
+
+  const [isSyncing,  setIsSyncing]  = useState(false)
+  const [syncError,  setSyncError]  = useState<string | null>(null)
+
+  // ── Debug logging — runs whenever cart items change ─────────────────────────
+  useEffect(() => {
+    // URL inspection
+    const url        = typeof window !== 'undefined' ? window.location.href : ''
+    let addToCartParam: string | null = null
+    let quantityParam: string | null  = null
+
+    try {
+      const urlObj    = new URL(url)
+      addToCartParam  = urlObj.searchParams.get('add-to-cart')
+      quantityParam   = urlObj.searchParams.get('quantity')
+    } catch { /* non-browser env */ }
+
+    console.log('[PWC Checkout] === CHECKOUT STEP ===')
+    console.log('[PWC Checkout] URL:', url)
+
+    if (addToCartParam) {
+      console.warn(
+        `[PWC Checkout] ⚠️  add-to-cart param found in URL (product ${addToCartParam}).` +
+        ` This may auto-add that product to the WooCommerce cart when checkout opens!` +
+        ` This should not happen — check buildCheckoutUrl() / prepareCheckout().`
+      )
+    } else {
+      console.log('[PWC Checkout] add-to-cart param: none ✓')
+    }
+    console.log('[PWC Checkout] quantity param:', quantityParam ?? 'none')
+
+    console.log(`[PWC Checkout] Cart items (${items.length}):`)
+    items.forEach((item, idx) => {
+      console.log(
+        `  [${idx + 1}] ` +
+        `key=${item.wooCartItemKey ?? '(no key)'} | ` +
+        `id=${item.wooProductId} | ` +
+        `name="${item.title}" | ` +
+        `qty=${item.quantity} | ` +
+        `price=${item.price} | ` +
+        `lineTotal=${item.total} | ` +
+        `${item.isFreeCompetition ? 'FREE' : 'PAID'}`
+      )
+    })
+
+    console.log('[PWC Checkout] Rendered order summary items (in order):',
+      items.map(i => `"${i.title}" ×${i.quantity} (${i.isFreeCompetition ? 'FREE' : `${i.currency}${i.total.toFixed(2)}`})`)
+    )
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length, items.map(i => i.competitionId + i.quantity).join(',')])
+
+  // ── Derived totals from ALL cart items ─────────────────────────────────────
+  // For the current competition, override quantity from local stepper state
+  // so the displayed total stays live while the user adjusts the stepper.
+  const displayItems = items.map(item => {
+    // Apply the local stepper quantity to the current competition so the order
+    // total reflects the stepper before the user submits.
+    // Use allowedMaxQty > 1 (not price > 0) so free multi-entry competitions
+    // also get live stepper feedback. Free items have price=0 so total stays 0.
+    if (item.competitionId === c.id && allowedMaxQty > 1) {
+      return {
+        ...item,
+        quantity: qty,
+        total: parseFloat((item.price * qty).toFixed(2)),
+      }
+    }
+    return item
+  })
+
+  const grandTotal   = displayItems.reduce((sum, i) => sum + i.total, 0)
+  const grandCurrency = displayItems[0]?.currency ?? c.currency
+  // Derive allFree from live prices, not from the stale isFreeCompetition flag in cart
+  const allFree      = displayItems.every(i => i.price === 0)
+
+  // ── Checkout handler ───────────────────────────────────────────────────────
   async function handleContinueToCheckout() {
-    if (isSyncing) return
+    if (isSyncing || items.length === 0) return
     setSyncError(null)
     setIsSyncing(true)
 
+    // Flush local stepper qty back into the cart store before sync.
+    // Always sync — even for free multi-entry competitions (qty can be > 1).
+    // Using allowedMaxQty > 1 as the guard ensures single-entry comps (max=1) are
+    // not unnecessarily updated, but the correct fix for multi-entry free comps
+    // is to always persist whatever qty the stepper shows.
     updateQuantity(c.id, qty)
-    const url = await prepareCheckout()
 
+    const url = await prepareCheckout()
     setIsSyncing(false)
 
     if (!url) {
-      setSyncError('Could not connect to checkout. Please try again or contact support.')
+      setSyncError(
+        'Could not sync your cart with checkout. Please try again. ' +
+        'If this keeps happening, contact support.'
+      )
       return
     }
 
     trackEvent('begin_checkout', {
       competitionId: c.id,
-      slug: c.slug,
-      wooProductId: c.wooProductId,
-      quantity: qty,
-      total,
+      slug:          c.slug,
+      wooProductId:  c.wooProductId,
+      quantity:      qty,
+      grandTotal,
+      itemCount:     items.length,
     })
 
     window.location.href = url
   }
 
+  // ── Empty-cart guard ───────────────────────────────────────────────────────
+  if (items.length === 0) {
+    return (
+      <div className="step-panel active" id="panel-step-3">
+        <div className="checkout-card">
+          <div className="checkout-body chk-empty-body">
+            <div className="chk-empty-icon" aria-hidden="true">
+              <svg width="40" height="40" viewBox="0 0 36 36" fill="none">
+                <circle cx="13" cy="31" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+                <circle cx="27" cy="31" r="2.5" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M2 4h4.5l4.5 18H28l4-12H9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <p className="chk-empty-title">Your cart is empty</p>
+            <p className="chk-empty-sub">
+              Add an entry to a competition before proceeding to checkout.
+            </p>
+            <Link href="/#competitions-grid" className="btn-pay chk-empty-btn">
+              Browse Competitions
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Main checkout summary ──────────────────────────────────────────────────
   return (
     <>
       <div className="step-panel active" id="panel-step-3">
@@ -80,60 +213,103 @@ export default function CheckoutStep({
               Entry added to your basket
             </div>
 
-            {/* Order summary */}
+            {/* ── Order summary — renders ALL cart items ─────────────────── */}
             <div className="order-summary">
               <div className="os-title">Order Summary</div>
-              <div className="os-row">
-                <span className="label">Competition</span>
-                <span className="value">{c.title}</span>
-              </div>
-              <div className="os-row">
-                <span className="label">Tickets</span>
-                <div className="qty-stepper">
-                  <button
-                    className="qty-btn"
-                    onClick={() => setQty(q => Math.max(1, q - 1))}
-                    disabled={qty <= 1}
-                    aria-label="Remove ticket"
-                  >−</button>
-                  <span className="qty-value">{qty}</span>
-                  <button
-                    className="qty-btn"
-                    onClick={() => setQty(q => q + 1)}
-                    aria-label="Add ticket"
-                  >+</button>
-                </div>
-              </div>
-              {!c.isFree && (
+
+              {displayItems.map((item) => {
+                const isCurrentComp = item.competitionId === c.id
+                // Derive paid/free from live price, not from isFreeCompetition flag stored
+                // in the cart. The flag is set at add-to-cart time and can be stale if the
+                // product changed from free→paid after the item was added.
+                return (
+                  <div key={item.competitionId} className="os-row os-item-row">
+
+                    {/* Left: name + qty control */}
+                    <div className="os-item-info">
+                      <span className="label os-item-name">{item.title}</span>
+
+                      {/* Qty stepper for the current competition when multiple entries
+                          are allowed (allowedMaxQty > 1). Works for both paid AND
+                          free multi-entry competitions. For single-entry comps (max=1)
+                          or other cart items, show a static badge. */}
+                      {isCurrentComp && allowedMaxQty > 1 ? (
+                        <div className="qty-stepper os-stepper">
+                          <button
+                            className="qty-btn"
+                            onClick={() => setQty(q => Math.max(1, q - 1))}
+                            disabled={qty <= 1}
+                            aria-label="Remove one ticket"
+                          >−</button>
+                          <span className="qty-value">{qty}</span>
+                          <button
+                            className="qty-btn"
+                            onClick={() => setQty(q => Math.min(allowedMaxQty, q + 1))}
+                            disabled={qty >= allowedMaxQty}
+                            aria-label="Add one ticket"
+                          >+</button>
+                        </div>
+                      ) : (
+                        <span className="os-qty-badge">
+                          × {item.quantity}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Right: price + trash button */}
+                    <div className="os-item-right">
+                      <span className="value">
+                        {item.price === 0 ? (
+                          <span className="os-free-label">FREE</span>
+                        ) : (
+                          fmt(item.total, item.currency)
+                        )}
+                      </span>
+
+                      <button
+                        type="button"
+                        className="os-remove-btn"
+                        onClick={() => removeItem(item.competitionId)}
+                        aria-label={`Remove ${item.title} from cart`}
+                        title="Remove from cart"
+                      >
+                        <TrashIcon />
+                      </button>
+                    </div>
+
+                  </div>
+                )
+              })}
+
+              {/* Skill answer row (current competition only) */}
+              {selectedAnswer && (
                 <div className="os-row">
-                  <span className="label">Price per ticket</span>
-                  <span className="value">{fmt(c.entryPrice)}</span>
+                  <span className="label">Skill answer</span>
+                  <span className="value" style={{ color: 'var(--green)' }}>
+                    {selectedAnswer}
+                  </span>
                 </div>
               )}
-              <div className="os-row">
-                <span className="label">Skill answer</span>
-                <span className="value" style={{ color: 'var(--green)' }}>
-                  {selectedAnswer}
-                </span>
-              </div>
+
+              {/* Grand total */}
               <div className="os-row total">
                 <span className="label">Total</span>
                 <span className="value">
-                  {c.isFree ? (
+                  {allFree ? (
                     <span style={{ color: 'var(--green)', fontWeight: 700 }}>FREE</span>
                   ) : (
-                    fmt(total)
+                    fmt(grandTotal, grandCurrency)
                   )}
                 </span>
               </div>
             </div>
 
-            {/* Skill answer note */}
+            {/* Skill answer disclaimer */}
             <div className="skill-note-subtle">
               Your selected answer will be recorded with your entry. Only entries with the correct answer are eligible for the final draw.
             </div>
 
-            {/* Sync/checkout error */}
+            {/* Sync / checkout error */}
             {syncError && (
               <div className="cart-error-notice" role="alert">
                 {syncError}
@@ -163,7 +339,7 @@ export default function CheckoutStep({
               <button
                 className="btn-pay"
                 onClick={handleContinueToCheckout}
-                disabled={isSyncing}
+                disabled={isSyncing || items.length === 0}
               >
                 {isSyncing ? 'Preparing...' : 'Continue to Checkout'}
                 {!isSyncing && (

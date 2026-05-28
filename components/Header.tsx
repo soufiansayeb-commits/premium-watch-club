@@ -34,8 +34,6 @@ export default function Header() {
         </ul>
 
         <div className="nav-right">
-          <Link href="/account/signin" className="btn-signin">Sign In</Link>
-
           {/* Cart icon — opens branded cart drawer */}
           <button
             className="nav-cart-btn"

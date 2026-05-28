@@ -33,7 +33,10 @@ export default function CompetitionEntryFlow({ competition }: Props) {
   }
 
   function handleSkillContinue(isCorrect: boolean) {
-    const qty = competition.isFree ? 1 : selectedTicketQty
+    // Always use selectedTicketQty — it is already clamped to allowedMaxQty by
+    // TicketSelector. Never force qty=1 based on isFree; sold_individually is
+    // the only source of truth for single-entry products.
+    const qty = selectedTicketQty
     const price = competition.entryPrice
     const isFree = !!competition.isFree
     const challengeId = competition.skillChallengeId ?? ''
@@ -58,6 +61,7 @@ export default function CompetitionEntryFlow({ competition }: Props) {
       timestampAdded: Date.now(),
       image: competition.heroImage,
       isFreeCompetition: isFree,
+      maxTicketsPerPurchase: competition.maxTicketsPerPurchase,
     })
 
     goToStep(3)
@@ -92,7 +96,7 @@ export default function CompetitionEntryFlow({ competition }: Props) {
             {currentStep === 3 && (
               <CheckoutStep
                 competition={competition}
-                selectedQty={competition.isFree ? 1 : selectedTicketQty}
+                selectedQty={selectedTicketQty}
                 selectedAnswer={selectedOptionId
                   ? getOptionLabel(competition.skillChallengeId ?? '', selectedOptionId)
                   : null}

@@ -28,6 +28,10 @@ export interface WooProduct {
   condition?: string
   /** ACF custom field: cash alternative value (number). */
   cash_alternative?: number
+  /** ACF custom field: percentage of total_entries allowed per user (e.g. 33 → 33%). */
+  max_entries_percentage?: number
+  /** WooCommerce native field: when true, product is limited to 1 per order (source of truth for single-entry products). */
+  sold_individually?: boolean
 }
 
 // ── Internal config check ────────────────────────────────────────────────────
@@ -59,8 +63,9 @@ async function wcFetch(endpoint: string): Promise<unknown> {
         Authorization: `Basic ${basicToken}`,
         'Content-Type': 'application/json',
       },
-      // Next.js ISR: revalidate every 60 s
-      next: { revalidate: 60 },
+      // Next.js ISR: revalidate frequently in dev so stale product config changes
+      // (price, sold_individually, ACF fields) are always reflected immediately.
+      next: { revalidate: process.env.NODE_ENV === 'development' ? 5 : 60 },
     })
   } catch (networkErr) {
     throw new Error(`Network error reaching WooCommerce: ${(networkErr as Error).message}`)
@@ -182,6 +187,15 @@ function formatDrawDateDisplay(iso: string): string {
 
 // ── Safe field filter — never expose raw WooCommerce response ────────────────
 function toSafeProduct(raw: Record<string, unknown>): WooProduct {
+  // Raw-API diagnostic: log the exact sold_individually and price values
+  // straight from the WooCommerce response, before any transformation.
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      `[PWC toSafeProduct] #${raw.id} "${raw.name}" | ` +
+      `raw.price="${raw.price}" | raw.sold_individually=${JSON.stringify(raw.sold_individually)}`
+    )
+  }
+
   const rawImages = Array.isArray(raw.images) ? raw.images as Record<string, unknown>[] : []
 
   // draw_date: prefer ACF object field, fall back to meta_data array
@@ -213,6 +227,21 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
   const parsedCashAlt = rawCashAlt != null ? Number(rawCashAlt) : NaN
   const cashAlternative = !isNaN(parsedCashAlt) && parsedCashAlt > 0 ? parsedCashAlt : undefined
 
+  // max_entries_percentage (number ACF field — e.g. 33 means 33%)
+  const rawMaxEntriesPct = acf.max_entries_percentage ?? getMetaValue(raw, 'max_entries_percentage')
+  const parsedMaxEntriesPct = rawMaxEntriesPct != null ? Number(rawMaxEntriesPct) : NaN
+  const maxEntriesPercentage = !isNaN(parsedMaxEntriesPct) && parsedMaxEntriesPct > 0 ? parsedMaxEntriesPct : undefined
+
+  // sold_individually (WooCommerce native boolean — true = max 1 per order, source of truth for single-entry products)
+  // Preserve the three distinct states: true / false / absent-from-response (undefined).
+  // DO NOT use `soldIndividually || undefined` — that collapses false→undefined and loses
+  // the information that the API explicitly returned false.
+  const soldIndividuallyRaw = raw.sold_individually
+  const soldIndividually =
+    soldIndividuallyRaw === true  ? true  :
+    soldIndividuallyRaw === false ? false :
+    undefined
+
   return {
     id:             Number(raw.id)             || 0,
     name:           String(raw.name            ?? ''),
@@ -227,11 +256,13 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
       src: String(img.src ?? ''),
       alt: String(img.alt ?? ''),
     })),
-    draw_date:        drawDateRaw || undefined,
-    total_entries:    totalEntries,
-    retail_value:     retailValue,
-    condition:        condition,
-    cash_alternative: cashAlternative,
+    draw_date:              drawDateRaw || undefined,
+    total_entries:          totalEntries,
+    retail_value:           retailValue,
+    condition:              condition,
+    cash_alternative:       cashAlternative,
+    max_entries_percentage: maxEntriesPercentage,
+    sold_individually:      soldIndividually,
   }
 }
 
@@ -317,8 +348,6 @@ export function mergeWooData(
     merged.entryPrice = parsedPrice
     // Always derive isFree from WooCommerce price — overrides any static fallback
     merged.isFree = parsedPrice === 0
-    // When free, enforce 1 entry per member; when paid, restore competition default
-    merged.maxTicketsPerPurchase = parsedPrice === 0 ? 1 : competition.maxTicketsPerPurchase
   }
 
   merged.wooStockQuantity = wooProduct.stock_quantity
@@ -367,22 +396,73 @@ export function mergeWooData(
       : competition.soldPercentage
   }
 
+  // ── Per-user entry cap ───────────────────────────────────────────────────────
+  // Source of truth: WooCommerce native `sold_individually` setting.
+  // When true  → hard cap of 1 entry per order, regardless of ACF fields.
+  // When false → Math.floor(total_entries × max_entries_percentage / 100).
+  // If ACF fields are missing, falls back to the static competition default.
+  {
+    const isSoldIndividually = wooProduct.sold_individually === true
+
+    const maxEntriesPerUser = isSoldIndividually
+      ? 1
+      : wooProduct.max_entries_percentage != null && wooProduct.max_entries_percentage > 0 && totalEntries > 0
+        ? Math.floor(totalEntries * (wooProduct.max_entries_percentage / 100))
+        : competition.maxTicketsPerPurchase
+
+    merged.maxTicketsPerPurchase = Math.max(1, maxEntriesPerUser)
+  }
+
   if (process.env.NODE_ENV === 'development') {
+    // ── Per-product decision trace ────────────────────────────────────────────
+    // This tells you exactly which branch determined maxTicketsPerPurchase.
+    const isSoldIndividually = wooProduct.sold_individually === true
+    const hasPctCap =
+      wooProduct.max_entries_percentage != null &&
+      wooProduct.max_entries_percentage > 0 &&
+      (wooProduct.total_entries ?? 0) > 0
+
+    const maxDecisionSource = isSoldIndividually
+      ? 'sold_individually=true → 1'
+      : hasPctCap
+        ? `percentage cap: floor(${wooProduct.total_entries} × ${wooProduct.max_entries_percentage}% / 100) = ${merged.maxTicketsPerPurchase}`
+        : `static fallback: competition.maxTicketsPerPurchase = ${competition.maxTicketsPerPurchase}`
+
     console.log(
-      `[PWC] #${wooProduct.id} "${wooProduct.name}" | ` +
-      `price: ${wooProduct.price} | stock(remaining): ${wooProduct.stock_quantity} | ` +
-      `total_entries(ACF): ${wooProduct.total_entries ?? '—'} | ` +
-      `retail_value(ACF): ${wooProduct.retail_value ?? '—'} | ` +
-      `condition(ACF): ${wooProduct.condition ?? '—'} | ` +
-      `cash_alternative(ACF): ${wooProduct.cash_alternative ?? '—'} | ` +
-      `totalTickets: ${merged.totalTickets} | ticketsLeft: ${merged.ticketsLeft} | ` +
-      `soldPercentage: ${merged.soldPercentage}% | ` +
-      `draw_date raw: ${wooProduct.draw_date ?? '—'} | drawDate: ${merged.drawDate}`
+      `[PWC mergeWooData] #${wooProduct.id} "${wooProduct.name}"\n` +
+      `  price:                  ${wooProduct.price}\n` +
+      `  sold_individually(raw): ${wooProduct.sold_individually === undefined ? '(absent from API response)' : wooProduct.sold_individually}\n` +
+      `  stock_quantity:         ${wooProduct.stock_quantity}\n` +
+      `  total_entries(ACF):     ${wooProduct.total_entries ?? '(missing)'}\n` +
+      `  max_entries_pct(ACF):   ${wooProduct.max_entries_percentage ?? '(missing)'}\n` +
+      `  maxTicketsPerPurchase:  ${merged.maxTicketsPerPurchase}  ← ${maxDecisionSource}\n` +
+      `  totalTickets:           ${merged.totalTickets}\n` +
+      `  ticketsLeft:            ${merged.ticketsLeft}\n` +
+      `  soldPercentage:         ${merged.soldPercentage}%\n` +
+      `  retail_value(ACF):      ${wooProduct.retail_value ?? '(missing)'}\n` +
+      `  condition(ACF):         ${wooProduct.condition ?? '(missing)'}\n` +
+      `  cash_alternative(ACF):  ${wooProduct.cash_alternative ?? '(missing)'}\n` +
+      `  draw_date raw:          ${wooProduct.draw_date ?? '(missing)'}\n` +
+      `  drawDate:               ${merged.drawDate}`
     )
-    if (wooProduct.total_entries == null) {
+
+    if (wooProduct.sold_individually === undefined) {
       console.warn(
-        `[PWC] ⚠ total_entries ACF field missing for product #${wooProduct.id} "${wooProduct.name}". ` +
-        `Falling back to static totalTickets: ${competition.totalTickets}`
+        `[PWC] ⚠ sold_individually field absent from WooCommerce response for #${wooProduct.id} "${wooProduct.name}". ` +
+        `Make sure the WooCommerce REST API returns this field (it should by default).`
+      )
+    }
+    if (!isSoldIndividually && wooProduct.total_entries == null) {
+      console.warn(
+        `[PWC] ⚠ total_entries ACF field missing for #${wooProduct.id} "${wooProduct.name}". ` +
+        `Set it in WooCommerce → Product → ACF fields.`
+      )
+    }
+    if (!isSoldIndividually && wooProduct.max_entries_percentage == null) {
+      console.warn(
+        `[PWC] ⚠ max_entries_percentage ACF field missing for #${wooProduct.id} "${wooProduct.name}". ` +
+        `maxTicketsPerPurchase is falling back to static value: ${competition.maxTicketsPerPurchase}. ` +
+        `Set the ACF field to get the correct cap.`
       )
     }
   }

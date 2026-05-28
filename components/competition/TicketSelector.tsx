@@ -16,26 +16,45 @@ interface Props {
 export default function TicketSelector({ competition: c, selectedQty, onQtyChange, onContinue }: Props) {
   const fmt = (n: number) => `${c.currency}${n.toFixed(2)}`
 
-  // Use competition data as the authority on max tickets per purchase.
-  // Free comp has maxTicketsPerPurchase: 1, paid comp has 165.
-  const maxQty = c.maxTicketsPerPurchase
-  const showSlider = maxQty > 1
+  // maxTicketsPerPurchase = policy cap (from ACF percentage or override).
+  // allowedMaxQty = min(policy cap, live remaining stock).
+  const entriesRemaining = c.ticketsLeft > 0 ? c.ticketsLeft : 1
+  const allowedMaxQty = Math.min(c.maxTicketsPerPurchase, entriesRemaining)
+  const showSlider = allowedMaxQty > 1
 
   const subtotal = selectedQty * c.entryPrice
-  const odds = Math.round(c.totalTickets / selectedQty)
-  const pct = Math.min((selectedQty / maxQty) * 100, 100)
-  const sliderPct = maxQty > 1 ? ((selectedQty - 1) / (maxQty - 1)) * 100 : 100
+  // Odds based on current entries sold (WWC model):
+  //   entriesSold = totalTickets − entriesRemaining
+  //   currentPool = entriesSold + selectedQty  (pool after your selection joins)
+  //   oddsDenominator = ceil(currentPool / selectedQty)
+  const entriesSold = Math.max(0, c.totalTickets - entriesRemaining)
+  const currentPool = entriesSold + selectedQty
+  const odds = Math.max(1, Math.ceil(currentPool / selectedQty))
+  const pct = Math.min((selectedQty / allowedMaxQty) * 100, 100)
+  const sliderPct = allowedMaxQty > 1 ? ((selectedQty - 1) / (allowedMaxQty - 1)) * 100 : 100
 
-  function handleChange(val: number) {
-    onQtyChange(Math.max(1, Math.min(maxQty, val)))
+  // ── Temporary debug — remove once AP max quantity is confirmed correct ────────
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[AP QUANTITY DEBUG]', {
+      id:                    c.wooProductId,
+      name:                  c.title,
+      price:                 c.entryPrice,
+      isFree:                c.isFree,
+      totalTickets:          c.totalTickets,
+      ticketsLeft:           c.ticketsLeft,
+      entriesRemaining,
+      maxTicketsPerPurchase: c.maxTicketsPerPurchase,
+      allowedMaxQty,
+      showSlider,
+      selectedQty,
+      selectorUsed:          'TicketSelector',
+    })
   }
 
-  const oddsNote =
-    selectedQty >= 20
-      ? 'Maximum-odds entry. Every ticket is independently drawn into the live draw.'
-      : selectedQty >= 10
-      ? 'Strong entry. More tickets mean stronger odds — each is independently drawn.'
-      : 'Every ticket is independently entered into the live draw. Add more for better odds.'
+  function handleChange(val: number) {
+    onQtyChange(Math.max(1, Math.min(allowedMaxQty, val)))
+  }
+
 
   const isFree = !!c.isFree
 
@@ -68,27 +87,34 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
           {/* ── Bundle / entry grid ── */}
           <div className="bundle-grid">
             {c.ticketOptions.map(opt => {
-              const isLockedByFree = isFree && opt.qty > 1
-              const badge: Badge = isLockedByFree || isFree ? null : (BADGES[opt.qty] ?? null)
+              // Lock based solely on allowedMaxQty — works for both free and paid products.
+              // sold_individually=true → allowedMaxQty=1 → all options >1 are locked.
+              // Never lock based on isFree alone; a free product can allow multiple entries
+              // if sold_individually is false.
+              const isLocked = opt.qty > allowedMaxQty
+              const badge: Badge = isLocked ? null : (BADGES[opt.qty] ?? null)
               const isSelected = selectedQty === opt.qty
               const isHero = badge === 'BEST ODDS'
               const isLarge = opt.qty >= 10
-              const bundleOdds = Math.round(c.totalTickets / opt.qty)
+              // Odds based on entries sold (same WWC model as the summary panel)
+              const effectiveQty = Math.min(opt.qty, allowedMaxQty)
+              const bundlePool = entriesSold + effectiveQty
+              const bundleOdds = Math.max(1, Math.ceil(bundlePool / effectiveQty))
 
               return (
                 <div
                   key={opt.qty}
                   role="button"
-                  aria-pressed={isSelected && !isLockedByFree}
-                  aria-disabled={isLockedByFree}
-                  onClick={() => !isLockedByFree && onQtyChange(opt.qty)}
+                  aria-pressed={isSelected && !isLocked}
+                  aria-disabled={isLocked}
+                  onClick={() => !isLocked && onQtyChange(opt.qty)}
                   className={[
                     'bundle-card',
-                    isSelected && !isLockedByFree ? 'bundle-selected' : '',
+                    isSelected && !isLocked ? 'bundle-selected' : '',
                     isHero     ? 'bundle-hero'     : '',
                     isLarge    ? 'bundle-large'    : '',
                   ].filter(Boolean).join(' ')}
-                  style={isLockedByFree ? {
+                  style={isLocked ? {
                     opacity: 0.35,
                     cursor: 'not-allowed',
                     pointerEvents: 'none',
@@ -100,14 +126,14 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                       {badge}
                     </span>
                   )}
-                  {isLockedByFree && (
+                  {isLocked && (
                     <span className="bundle-badge badge-navy" style={{ opacity: 0.6 }}>
-                      PAID ONLY
+                      SOLD OUT
                     </span>
                   )}
                   <span className="bc-qty">{opt.qty}</span>
                   <span className="bc-label">{opt.qty === 1 ? 'Entry' : 'Tickets'}</span>
-                  <span className={`bc-price${isFree && !isLockedByFree ? ' bc-price-free' : ''}`}>
+                  <span className={`bc-price${isFree ? ' bc-price-free' : ''}`}>
                     {priceLabel(opt.qty)}
                   </span>
                   <span className="bc-odds">1 in {bundleOdds}</span>
@@ -135,7 +161,7 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                   type="range"
                   className="qty-slider"
                   min={1}
-                  max={maxQty}
+                  max={allowedMaxQty}
                   value={selectedQty}
                   onChange={e => handleChange(parseInt(e.target.value))}
                   style={{
@@ -146,10 +172,11 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                   className="slider-btn"
                   aria-label="Increase"
                   onClick={() => handleChange(selectedQty + 1)}
+                  disabled={selectedQty >= allowedMaxQty}
                 >+</button>
               </div>
               <div className="slider-cap">
-                Maximum {maxQty} {maxQty === 1 ? 'ticket' : 'tickets'} per purchase for this competition
+                {`Maximum ${allowedMaxQty} ${allowedMaxQty === 1 ? 'ticket' : 'tickets'} per person for this competition`}
               </div>
             </div>
           )}
@@ -170,14 +197,14 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                   <div className="op-bar-fill" style={{ width: `${pct}%` }} />
                 </div>
                 <div className="op-bar-label">
-                  {maxQty === 1
+                  {allowedMaxQty === 1
                     ? 'One entry per member for this competition'
                     : `${Math.round(pct)}% of your maximum entries`
                   }
                 </div>
               </div>
             </div>
-            {!isFree && <p className="op-note">{oddsNote}</p>}
+            <p className="op-note">*Odds based on current entries sold. Your odds may change as sales progress.</p>
           </div>
 
           <div className="entry-divider" />

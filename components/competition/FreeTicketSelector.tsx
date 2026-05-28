@@ -9,7 +9,8 @@ interface Props {
 }
 
 export default function FreeTicketSelector({ competition: c, onContinue }: Props) {
-  const odds = c.totalTickets
+  // Odds based on current entries remaining — same formula as paid comp.
+  const odds = c.ticketsLeft > 0 ? c.ticketsLeft : c.totalTickets
 
   return (
     <>
@@ -253,6 +254,9 @@ export default function FreeTicketSelector({ competition: c, onContinue }: Props
                 </div>
                 <div className="fts-op-note">
                   Every entry is independently drawn<br />in the publicly streamed live draw.
+                </div>
+                <div className="fts-op-note" style={{ marginTop: 6 }}>
+                  Odds based on current entries remaining.<br />Your odds may change as sales progress.
                 </div>
               </div>
             </div>

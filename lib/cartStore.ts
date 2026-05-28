@@ -19,6 +19,7 @@ export interface CartItem {
   timestampAdded: number // unix ms — used for abandoned cart detection
   image: string
   isFreeCompetition: boolean
+  maxTicketsPerPurchase?: number // policy cap — carried from competition for cart-page stepper
   wooCartItemKey?: string // returned by WooCommerce Store API after sync; used for remove
 }
 

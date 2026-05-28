@@ -86,7 +86,7 @@ export const competitions: Competition[] = [
       { qty: 10, popular: true  },
       { qty: 20, popular: false },
     ],
-    maxTicketsPerPurchase: 165,
+    maxTicketsPerPurchase: 165, // static fallback — overridden by ACF max_entries_percentage (33% of 500)
     skillQuestion: 'Which Swiss manufacturer produces the Speedmaster Moonwatch?',
     skillAnswers: ['Omega', 'Rolex', 'Breitling', 'TAG Heuer'],
     correctAnswer: 'Omega',
@@ -131,7 +131,7 @@ export const competitions: Competition[] = [
       { qty: 10, popular: true  },
       { qty: 20, popular: false },
     ],
-    maxTicketsPerPurchase: 165, // capped to 1 by mergeWooData when price=0
+    maxTicketsPerPurchase: 100, // static fallback — overridden by ACF max_entries_percentage when set in WooCommerce
     skillQuestion: 'Which Swiss manufacturer produces the Speedmaster Moonwatch?',
     skillAnswers: ['Omega', 'Rolex', 'Breitling', 'TAG Heuer'],
     correctAnswer: 'Omega',
