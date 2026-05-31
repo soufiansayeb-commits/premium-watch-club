@@ -33,7 +33,7 @@ export default async function CompetitionPage({ params }: Props) {
         <Header />
         <CompetitionEntryFlow competition={mergedCompetition} />
         <WinnersSection />
-        <ProductEditorial />
+        <ProductEditorial competition={mergedCompetition} />
         <NewsletterSection />
         <ScrollReveal />
         <CompetitionFooter />
@@ -52,7 +52,7 @@ export default async function CompetitionPage({ params }: Props) {
       <Header />
       <CompetitionEntryFlow competition={competition} />
       <WinnersSection />
-      <ProductEditorial />
+      <ProductEditorial competition={competition} />
       <NewsletterSection />
       <ScrollReveal />
       <CompetitionFooter />

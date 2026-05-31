@@ -21,6 +21,8 @@ function formatCondition(raw: string): string {
 
 export default function WatchInfoPanel({ competition: c }: Props) {
   const fmt = (n: number) => `${c.currency}${n.toLocaleString('en-GB')}`
+  // Prefer the WooCommerce gallery/featured image; fall back to the static template image.
+  const productImage = c.galleryImages?.[0]?.src ?? c.image
 
   return (
     <div className="entry-left">
@@ -29,7 +31,7 @@ export default function WatchInfoPanel({ competition: c }: Props) {
           <div className="watch-image-badge">Current Prize</div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={c.image}
+            src={productImage}
             alt={c.title}
           />
         </div>

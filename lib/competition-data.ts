@@ -69,6 +69,17 @@ export interface Competition {
    * are normalised to a URL string in woocommerce.ts / toSafeProduct.
    */
   heroBackgroundImage?: string;
+  /**
+   * WooCommerce product description (HTML).
+   * Used by ProductEditorial to populate "The Story Behind The Prize" section.
+   * Parsed server-side into headline/paragraphs/specs/features/quote.
+   */
+  wooDescription?: string;
+  /**
+   * All WooCommerce product images (featured image first, then gallery images).
+   * Used by ProductEditorial for the right-side image / thumbnail gallery.
+   */
+  galleryImages?: Array<{ src: string; alt: string }>;
   checkoutUrl: string;
   ctaLink: string;
   recentPurchases: string[];

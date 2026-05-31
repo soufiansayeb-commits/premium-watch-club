@@ -5,11 +5,7 @@ import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut } from '@/lib/competition-status'
 
-interface CardData {
-  competition: Competition
-  label: string
-  badgeClass: string
-}
+// ── Countdown helper ──────────────────────────────────────────────────────────
 
 function useCountdown(targetDate: string) {
   const ts = new Date(targetDate).getTime()
@@ -33,9 +29,29 @@ function useCountdown(targetDate: string) {
     setTime(calc())
     const id = setInterval(() => setTime(calc()), 1000)
     return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetDate])
   return time
 }
+
+// ── Label helpers ─────────────────────────────────────────────────────────────
+
+function getDropLabel(comp: Competition): string {
+  switch (comp.competitionType) {
+    case 'starter':  return 'STARTER DROP'
+    case 'weekly':   return 'WEEKLY DROP'
+    case 'monthly':  return 'MONTHLY DROP'
+    case 'special':  return 'SPECIAL DROP'
+    default: return comp.isFree ? 'FREE COMP' : 'COMPETITION'
+  }
+}
+
+function getBadgeClass(comp: Competition): string {
+  if (comp.isFree || comp.competitionType === 'starter') return 'cgc-badge-free'
+  return 'cgc-badge-paid'
+}
+
+// ── Single card ───────────────────────────────────────────────────────────────
 
 function CountdownBlock({ value, label }: { value: number; label: string }) {
   return (
@@ -46,10 +62,12 @@ function CountdownBlock({ value, label }: { value: number; label: string }) {
   )
 }
 
-function CompCard({ competition: c, label, badgeClass }: CardData) {
-  const time = useCountdown(c.drawDate)
-  const imgRef = useRef<HTMLDivElement>(null)
+function CompCard({ competition: c }: { competition: Competition }) {
+  const time    = useCountdown(c.drawDate)
+  const imgRef  = useRef<HTMLDivElement>(null)
   const soldOut = isSoldOut(c)
+  const label   = getDropLabel(c)
+  const badge   = getBadgeClass(c)
 
   return (
     <article className="cgc-card">
@@ -58,7 +76,7 @@ function CompCard({ competition: c, label, badgeClass }: CardData) {
         <div className="cgc-img-shine" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={c.heroImage} alt={c.title} className="cgc-watch-img" draggable={false} />
-        <div className={`cgc-badge ${badgeClass}`}>{label}</div>
+        <div className={`cgc-badge ${badge}`}>{label}</div>
         <div className="cgc-img-overlay" />
       </div>
 
@@ -83,7 +101,7 @@ function CompCard({ competition: c, label, badgeClass }: CardData) {
           </div>
         )}
 
-        {/* stats row */}
+        {/* stats */}
         <div className="cgc-stats">
           <div className="cgc-stat">
             <span className="cgc-stat-label">Entry</span>
@@ -94,7 +112,9 @@ function CompCard({ competition: c, label, badgeClass }: CardData) {
           <div className="cgc-stat-divider" />
           <div className="cgc-stat">
             <span className="cgc-stat-label">Tickets Left</span>
-            <span className="cgc-stat-val cgc-stat-gold">{c.ticketsLeft}</span>
+            <span className="cgc-stat-val cgc-stat-gold">
+              {soldOut ? '0' : c.ticketsLeft}
+            </span>
           </div>
           <div className="cgc-stat-divider" />
           <div className="cgc-stat">
@@ -137,24 +157,15 @@ function CompCard({ competition: c, label, badgeClass }: CardData) {
   )
 }
 
+// ── Grid ──────────────────────────────────────────────────────────────────────
+
 interface Props {
-  weeklyComp: Competition
-  freeComp: Competition
+  /** All active competitions to display (Live + Sold Out; Coming Soon and Closed excluded). */
+  competitions: Competition[]
 }
 
-export default function CompetitionsGrid({ weeklyComp, freeComp }: Props) {
-  const cards: CardData[] = [
-    {
-      competition: weeklyComp,
-      label: 'WEEKLY COMP',
-      badgeClass: 'cgc-badge-paid',
-    },
-    {
-      competition: freeComp,
-      label: freeComp.isFree ? 'FREE COMP' : 'MONTHLY COMP',
-      badgeClass: 'cgc-badge-free',
-    },
-  ]
+export default function CompetitionsGrid({ competitions }: Props) {
+  if (competitions.length === 0) return null
 
   return (
     <section id="competitions-grid">
@@ -164,7 +175,6 @@ export default function CompetitionsGrid({ weeklyComp, freeComp }: Props) {
       <div className="cgc-bg-glow-right" />
 
       <div className="cgc-container">
-        {/* section header */}
         <header className="cgc-header">
           <div className="cgc-header-rule" />
           <div className="cgc-header-content">
@@ -180,10 +190,9 @@ export default function CompetitionsGrid({ weeklyComp, freeComp }: Props) {
           <div className="cgc-header-rule" />
         </header>
 
-        {/* grid */}
         <div className="cgc-grid">
-          {cards.map((card) => (
-            <CompCard key={card.competition.id} {...card} />
+          {competitions.map(c => (
+            <CompCard key={c.id} competition={c} />
           ))}
         </div>
       </div>

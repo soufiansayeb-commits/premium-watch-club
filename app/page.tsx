@@ -1,4 +1,5 @@
 import { getAllActiveCompetitionsByType } from '@/lib/woocommerce'
+import type { Competition } from '@/lib/competition-data'
 import Header from '@/components/Header'
 import HomepageHeroContainer from '@/components/HomepageHeroContainer'
 import StatsBar from '@/components/StatsBar'
@@ -12,26 +13,32 @@ import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
 
 export default async function HomePage() {
-  // Single fetch — groups all published WooCommerce products by competition_type.
   const competitionsByType = await getAllActiveCompetitionsByType()
 
-  // CompetitionsGrid needs both a weekly and a "secondary" competition.
-  // Use starter as the secondary (replaces old free comp slot).
-  const weeklyComp  = competitionsByType.weekly
-  const starterComp = competitionsByType.starter
+  // Current Competitions grid: show Live + Sold Out competitions.
+  // Coming Soon = excluded (nothing enterable yet).
+  // Closed = already excluded by getAllActiveCompetitionsByType (slot is null).
+  const gridComps = (
+    [
+      competitionsByType.starter,
+      competitionsByType.weekly,
+      competitionsByType.monthly,
+      competitionsByType.special,
+    ] as (Competition | null)[]
+  ).filter((c): c is Competition =>
+    c !== null && c.competitionStatus !== 'Coming Soon'
+  )
 
   return (
     <>
       <Header />
-      {/* One hero + switcher — replaces the old stacked HomepageHero + FreeCompHero */}
       <HomepageHeroContainer competitionsByType={competitionsByType} />
       <StatsBar />
       <WinnersSection />
       <HowItWorks />
       <TrustBar />
-      {weeklyComp && starterComp && (
-        <CompetitionsGrid weeklyComp={weeklyComp} freeComp={starterComp} />
-      )}
+      {/* Current Competitions section — always rendered when any non-Coming-Soon comp exists */}
+      <CompetitionsGrid competitions={gridComps} />
       <JournalPreview />
       <NewsletterSection />
       <Footer />

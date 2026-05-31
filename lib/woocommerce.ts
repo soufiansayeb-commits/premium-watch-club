@@ -44,6 +44,11 @@ export interface WooProduct {
    */
   hero_background_image?: string
   /**
+   * WooCommerce product description HTML.
+   * Used by ProductEditorial for the "Story Behind The Prize" section.
+   */
+  description?: string
+  /**
    * Raw ACF image ID — set when ACF returns only an integer/numeric-string.
    * Resolved asynchronously via WordPress media API in getAllActiveCompetitionsByType.
    * Not exposed to the Competition object; used only as an intermediate during server render.
@@ -397,6 +402,13 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     ? String(rawWatchRef).trim()
     : undefined
 
+  // description (WooCommerce product description HTML — used for ProductEditorial)
+  // Capped at 100 KB to guard against unexpectedly large descriptions.
+  const rawDescription = raw.description
+  const description = (typeof rawDescription === 'string' && rawDescription.trim())
+    ? rawDescription.trim().slice(0, 102400)
+    : undefined
+
   // hero_background_image (ACF Image field — homepage hero background per product)
   // Checked in both the acf object (requires acf-to-rest-api / ACF REST API support)
   // and the meta_data array (raw WooCommerce meta, value format depends on ACF Return Format).
@@ -437,6 +449,7 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     watch_reference:           watchReference,
     hero_background_image:     heroBgExtracted.url,
     hero_background_image_id:  heroBgExtracted.id,
+    description,
   }
 }
 
@@ -545,6 +558,9 @@ export function mergeWooData(
   if (wooProduct.competition_type    != null) merged.competitionType     = wooProduct.competition_type
   if (wooProduct.watch_reference     != null) merged.reference           = wooProduct.watch_reference
   if (wooProduct.hero_background_image != null) merged.heroBackgroundImage = wooProduct.hero_background_image
+  if (wooProduct.description         != null) merged.wooDescription     = wooProduct.description
+  // Always overwrite gallery with live WooCommerce images (static templates have none)
+  if (wooProduct.images.length > 0)           merged.galleryImages      = wooProduct.images
 
   // ── Correct Total Entries / Remaining logic ──────────────────────────────
   // totalEntries = ACF total_entries (fixed max, never changes as tickets sell)
@@ -712,6 +728,8 @@ export function wooProductToCompetition(wooProduct: WooProduct): Competition {
     competitionStatus:     wooProduct.competition_status,
     competitionType:       wooProduct.competition_type,
     heroBackgroundImage:   wooProduct.hero_background_image,
+    wooDescription:        wooProduct.description,
+    galleryImages:         wooProduct.images.length > 0 ? wooProduct.images : undefined,
     checkoutUrl:           '/checkout',
     ctaLink:               `/competitions/${wooProduct.slug}`,
     recentPurchases:       [],
@@ -850,13 +868,14 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
 
     let selected: WooProduct | null = null
 
-    // Live: stock_quantity === null means stock tracking is disabled → treat as in-stock
-    const live = typed.filter(p =>
+    // ── Tier 1: Live with stock available (enterable) ─────────────────────────
+    // stock_quantity === null = tracking disabled = treat as unlimited (still Live).
+    const liveWithStock = typed.filter(p =>
       p.competition_status === 'Live' &&
       (p.stock_quantity === null || p.stock_quantity > 0)
     )
-    if (live.length > 0) {
-      selected = live.reduce<WooProduct | null>((best, p) => {
+    if (liveWithStock.length > 0) {
+      selected = liveWithStock.reduce<WooProduct | null>((best, p) => {
         if (!best) return p
         const bestMs = best.draw_date ? new Date(parseWooDrawDate(best.draw_date)).getTime() : Infinity
         const pMs    = p.draw_date    ? new Date(parseWooDrawDate(p.draw_date)).getTime()    : Infinity
@@ -864,15 +883,30 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
       }, null)
     }
 
+    // ── Tier 2: Live but zero stock → visually Sold Out, NOT removed ──────────
+    // Keeps the competition visible in switcher + grid. The frontend isSoldOut()
+    // helper detects ticketsLeft <= 0 and disables the CTA without hiding the card.
+    if (!selected) {
+      const liveSoldOut = typed.filter(p =>
+        p.competition_status === 'Live' &&
+        p.stock_quantity !== null && p.stock_quantity <= 0
+      )
+      if (liveSoldOut.length > 0) selected = liveSoldOut[liveSoldOut.length - 1]
+    }
+
+    // ── Tier 3: Admin explicitly set status = "Sold Out" ──────────────────────
     if (!selected) {
       const soldOut = typed.filter(p => p.competition_status === 'Sold Out')
       if (soldOut.length > 0) selected = soldOut[soldOut.length - 1]
     }
 
+    // ── Tier 4: Coming Soon ────────────────────────────────────────────────────
     if (!selected) {
       const comingSoon = typed.filter(p => p.competition_status === 'Coming Soon')
       if (comingSoon.length > 0) selected = comingSoon[0]
     }
+
+    // Tier 5: "Closed" is filtered out above — slot stays null (card hidden).
 
     if (process.env.NODE_ENV === 'development') {
       console.log(

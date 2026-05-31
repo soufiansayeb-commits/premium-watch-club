@@ -66,8 +66,8 @@ const cardVariants = {
     y: 0,
     scale: 1,
     transition: {
-      duration: 0.55,
-      delay: i * 0.75,
+      duration: 0.50,
+      delay: i * 0.14,
       ease: EASE,
     },
   }),

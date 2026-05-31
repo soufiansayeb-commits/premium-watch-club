@@ -26,7 +26,7 @@ export default async function FreeCompetitionPage() {
       <Header />
       <CompetitionEntryFlow competition={mergedCompetition} />
       <WinnersSection />
-      <ProductEditorial />
+      <ProductEditorial competition={mergedCompetition} />
       <NewsletterSection />
       <ScrollReveal />
       <CompetitionFooter />

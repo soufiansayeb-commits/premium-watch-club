@@ -5601,12 +5601,11 @@ footer {
 }
 
 /* ── Individual card ──
-   High-opacity dark navy background + strong backdrop blur + subtle gold border.
-   This ensures cards are legible against ANY hero background image. */
+   Slightly lifted opacity + stronger gold border for readability against hero bg. */
 .hs-card {
   position: relative;
-  background: rgba(4, 9, 28, 0.82);
-  border: 1px solid rgba(197,160,101,0.28);
+  background: rgba(6, 12, 36, 0.88);
+  border: 1px solid rgba(197,160,101,0.38);
   border-radius: 10px;
   padding: 18px 16px 15px;
   cursor: pointer;
@@ -5614,11 +5613,11 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  backdrop-filter: blur(22px);
-  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   box-shadow:
-    0 4px 24px rgba(0,0,0,0.45),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+    0 4px 28px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.06);
   transition:
     border-color 0.22s ease,
     background   0.22s ease,
@@ -5630,24 +5629,24 @@ footer {
 
 /* Hover state — live/selectable cards only */
 .hs-card:not(.hs-card--disabled):hover {
-  border-color: rgba(197,160,101,0.55);
-  background: rgba(4, 9, 28, 0.92);
+  border-color: rgba(197,160,101,0.62);
+  background: rgba(6, 12, 36, 0.95);
   transform: translateY(-2px);
   box-shadow:
-    0 10px 36px rgba(0,0,0,0.55),
-    0 0 0 1px rgba(197,160,101,0.18),
-    inset 0 1px 0 rgba(255,255,255,0.06);
+    0 12px 40px rgba(0,0,0,0.60),
+    0 0 0 1px rgba(197,160,101,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 /* ── Active card — clear gold highlight ── */
 .hs-card--active {
   border-color: var(--gold) !important;
-  background: rgba(4, 9, 28, 0.92) !important;
+  background: rgba(8, 15, 42, 0.96) !important;
   box-shadow:
-    0 0 0 1px rgba(197,160,101,0.35),
-    0 8px 40px rgba(197,160,101,0.22),
-    0 16px 48px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(197,160,101,0.1) !important;
+    0 0 0 1px rgba(197,160,101,0.45),
+    0 8px 44px rgba(197,160,101,0.28),
+    0 16px 52px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(197,160,101,0.12) !important;
   transform: translateY(-2px);
 }
 
@@ -5666,20 +5665,36 @@ footer {
   transform: scaleX(1);
 }
 
-/* ── Disabled card (Coming Soon / Sold Out) ── */
+/* ── Disabled card (Coming Soon only) ── */
 .hs-card--disabled {
   cursor: not-allowed;
-  opacity: 0.62;
-  border-color: rgba(197,160,101,0.14);
-  background: rgba(4, 9, 28, 0.70);
+  opacity: 0.58;
+  border-color: rgba(197,160,101,0.12);
+  background: rgba(4, 9, 28, 0.68);
 }
 .hs-card--disabled:hover {
-  border-color: rgba(197,160,101,0.14) !important;
-  background: rgba(4, 9, 28, 0.70) !important;
+  border-color: rgba(197,160,101,0.12) !important;
+  background: rgba(4, 9, 28, 0.68) !important;
   transform: none !important;
   box-shadow:
     0 4px 24px rgba(0,0,0,0.45),
     inset 0 1px 0 rgba(255,255,255,0.04) !important;
+}
+
+/* ── Sold Out card — visible & clickable, distinct red-tint treatment ── */
+.hs-card--soldout {
+  border-color: rgba(180, 40, 40, 0.40);
+  background: rgba(24, 6, 6, 0.82);
+}
+.hs-card--soldout:hover {
+  border-color: rgba(200, 60, 60, 0.55) !important;
+  background: rgba(30, 8, 8, 0.90) !important;
+  box-shadow:
+    0 10px 32px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(180,40,40,0.22) !important;
+}
+.hs-card--soldout .hs-card__topbar {
+  background: linear-gradient(90deg, #8b1a1a, #cc3333, #8b1a1a);
 }
 
 /* ── Status badge ── */
@@ -5714,9 +5729,11 @@ footer {
   border: 1px solid rgba(197,160,101,0.20);
 }
 .hs-badge--soldout {
-  background: rgba(192,57,43,0.14);
-  color: rgba(235,120,100,0.85);
-  border: 1px solid rgba(192,57,43,0.24);
+  background: rgba(160, 28, 28, 0.28);
+  color: #ff7f7f;
+  border: 1px solid rgba(200, 50, 50, 0.42);
+  font-weight: 800;
+  letter-spacing: 0.16em;
 }
 .hs-badge--draw,
 .hs-badge--winner {
@@ -5803,9 +5820,9 @@ footer {
 }
 .hs-price--soldout {
   font-size: 10px;
-  color: rgba(235,120,100,0.65);
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  color: #ff8080;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 

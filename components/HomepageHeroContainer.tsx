@@ -13,23 +13,34 @@ const TYPE_ORDER: CompetitionType[] = ['starter', 'weekly', 'monthly', 'special'
 
 /**
  * Pick the initial active competition type.
- * 1. First Live slot (starter → weekly → monthly → special).
- * 2. Fall back to first slot that has any product at all (Coming Soon shown in disabled hero).
- * 3. null = truly no products → show empty state.
+ * Priority: Live+enterable → Live+soldout → explicit Sold Out → any non-null non-Coming-Soon.
+ * Coming Soon competitions are shown last (hero will display disabled state).
  */
 function resolveDefault(comps: CompetitionsByType): CompetitionType | null {
+  // Prefer a fully enterable Live competition
   for (const t of TYPE_ORDER) {
-    if (comps[t]?.competitionStatus === 'Live') return t
+    const c = comps[t]
+    if (c && c.competitionStatus === 'Live' && c.ticketsLeft > 0) return t
   }
+  // Fall back to sold-out (Live with no stock, or explicit Sold Out) — still worth showing
+  for (const t of TYPE_ORDER) {
+    const c = comps[t]
+    if (c && c.competitionStatus !== 'Coming Soon') return t
+  }
+  // Last resort: first non-null slot (Coming Soon)
   for (const t of TYPE_ORDER) {
     if (comps[t] !== null) return t
   }
   return null
 }
 
-/** A competition is clickable in the switcher only when it is Live AND has tickets. */
+/**
+ * A competition is selectable (card click changes the hero) unless it is Coming Soon.
+ * Sold Out is selectable — users can view the sold-out hero; the CTA is disabled inside HomepageHero.
+ * Coming Soon is not selectable — there is nothing useful to show yet.
+ */
 function isSelectable(comp: NonNullable<CompetitionsByType[CompetitionType]>): boolean {
-  return comp.competitionStatus === 'Live' && comp.ticketsLeft > 0
+  return comp.competitionStatus !== 'Coming Soon'
 }
 
 export default function HomepageHeroContainer({ competitionsByType }: Props) {

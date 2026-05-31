@@ -24,6 +24,7 @@ interface Props {
 export default function HeroSwitcher({ competitionsByType, activeType, onSelect }: Props) {
   const visibleCards = CARD_CONFIG.filter(({ type }) => {
     const comp = competitionsByType[type]
+    // Closed products (slot = null) and explicitly-Closed status → hidden
     return comp !== null && comp.competitionStatus !== 'Closed'
   })
 
@@ -32,7 +33,6 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
   return (
     <section className="hs-section" aria-label="Competition type selector">
       <div className="hs-inner">
-        {/* Decorative rule */}
         <div className="hs-rule" aria-hidden="true">
           <div className="hs-rule-line" />
           <span className="hs-rule-label">SELECT DROP</span>
@@ -42,18 +42,27 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
         <div className="hs-cards" role="group" aria-label="Competition types">
           {visibleCards.map(({ type, label, tagline }) => {
             const comp = competitionsByType[type]!
-            const status = comp.competitionStatus ?? 'Live'
-            const isActive      = activeType === type
-            const isLive        = status === 'Live'
-            const isSoldOut     = status === 'Sold Out'
-            const isComingSoon  = status === 'Coming Soon'
-            const isDisabled    = isComingSoon // Coming Soon = not clickable (Sold Out CAN be shown as last state but not enterable)
+            const acfStatus  = comp.competitionStatus ?? 'Live'
+            const isActive   = activeType === type
+
+            // Sold Out = either admin set ACF status OR stock hit 0 (ticketsLeft <= 0)
+            // This covers both explicit 'Sold Out' and Live-but-zero-stock scenarios.
+            const isSoldOut    = acfStatus === 'Sold Out' || comp.ticketsLeft <= 0
+            const isComingSoon = acfStatus === 'Coming Soon'
+            const isLive       = !isSoldOut && !isComingSoon
+
+            // Derived display status for badge (overrides raw ACF when stock=0)
+            const displayStatus = isSoldOut ? 'Sold Out' : acfStatus
+
+            // Only Coming Soon is fully non-clickable.
+            // Sold Out can still be selected so users can see the sold-out hero.
+            const isDisabled = isComingSoon
 
             const cardClass = [
               'hs-card',
-              isActive    ? 'hs-card--active'   : '',
-              isDisabled  ? 'hs-card--disabled' : '',
-              isLive && !isActive ? 'hs-card--live' : '',
+              isActive   ? 'hs-card--active'   : '',
+              isDisabled ? 'hs-card--disabled'  : '',
+              isSoldOut && !isActive ? 'hs-card--soldout' : '',
             ].filter(Boolean).join(' ')
 
             return (
@@ -63,16 +72,16 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
                 onClick={() => !isDisabled && onSelect(type)}
                 disabled={isDisabled}
                 aria-pressed={isActive}
-                aria-label={`${label} — ${status}`}
+                aria-label={`${label} — ${displayStatus}`}
                 type="button"
               >
-                {/* Gold top accent bar (visible when active) */}
+                {/* Gold top accent bar (slides in on active) */}
                 <span className="hs-card__topbar" aria-hidden="true" />
 
                 {/* Status badge */}
-                <span className={`hs-card__badge hs-badge--${slugify(status)}`}>
+                <span className={`hs-card__badge hs-badge--${slugify(displayStatus)}`}>
                   {isLive && <span className="hs-badge__dot" aria-hidden="true" />}
-                  {status}
+                  {displayStatus}
                 </span>
 
                 {/* Text content */}
@@ -84,7 +93,7 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
                   )}
                 </span>
 
-                {/* Bottom price area */}
+                {/* Bottom price / status strip */}
                 <span className="hs-card__price">
                   {isComingSoon ? (
                     <span className="hs-price--soon">Notify me</span>
