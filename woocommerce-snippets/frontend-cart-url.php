@@ -22,7 +22,7 @@
 
 // Local dev:  http://localhost:3000/cart
 // Production: https://your-vercel-domain.com/cart  ← CHANGE THIS before deploying
-define( 'PWC_FRONTEND_CART_URL', 'http://localhost:3000/cart' );
+define( 'PWC_FRONTEND_CART_URL', 'https://premium-watch-club-vvl3.vercel.app/cart' );
 
 // woocommerce_cart_url is the real filter used by wc_get_cart_url().
 // WooCommerce Blocks checkout reads this value for the "Return to Cart" link.

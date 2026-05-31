@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
+import { isSoldOut } from '@/lib/competition-status'
 
 interface Props {
   competition: Competition
@@ -53,6 +54,7 @@ export default function FreeCompHero({ competition }: Props) {
     return () => clearTimeout(t)
   }, [])
 
+  const soldOut = isSoldOut(c)
   const drawDateShort = c.drawDateDisplay.split(',')[0] || c.drawDateDisplay
   const entryWord = c.maxTicketsPerPurchase === 1 ? 'entry' : 'entries'
 
@@ -152,12 +154,30 @@ export default function FreeCompHero({ competition }: Props) {
 
             {/* CTAs */}
             <div className="fc-cta-group">
-              <Link href={c.ctaLink} className="fc-cta-btn">
-                <span>SECURE YOUR ENTRY</span>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </Link>
+              {soldOut ? (
+                <button
+                  disabled
+                  aria-disabled="true"
+                  className="fc-cta-btn"
+                  style={{
+                    background: 'rgba(18,12,4,0.92)',
+                    border: '1px solid rgba(212,175,55,0.22)',
+                    color: 'rgba(212,175,55,0.45)',
+                    cursor: 'not-allowed',
+                    pointerEvents: 'none',
+                    letterSpacing: '0.18em',
+                  }}
+                >
+                  <span>SOLD OUT</span>
+                </button>
+              ) : (
+                <Link href={c.ctaLink} className="fc-cta-btn">
+                  <span>SECURE YOUR ENTRY</span>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </Link>
+              )}
               <Link href="#how-it-works" className="fc-secondary-btn">
                 How It Works
               </Link>
@@ -221,9 +241,29 @@ export default function FreeCompHero({ competition }: Props) {
                   <span className="fc-card-val">{drawDateShort}</span>
                 </div>
               </div>
-              <Link href={c.ctaLink} className="fc-card-cta">
-                {c.isFree ? 'ENTER FOR FREE' : 'ENTER NOW'}
-              </Link>
+              {soldOut ? (
+                <button
+                  disabled
+                  aria-disabled="true"
+                  className="fc-card-cta"
+                  style={{
+                    background: 'rgba(18,12,4,0.92)',
+                    border: '1px solid rgba(212,175,55,0.22)',
+                    color: 'rgba(212,175,55,0.45)',
+                    cursor: 'not-allowed',
+                    pointerEvents: 'none',
+                    letterSpacing: '0.18em',
+                    textAlign: 'center',
+                    display: 'block',
+                  }}
+                >
+                  SOLD OUT
+                </button>
+              ) : (
+                <Link href={c.ctaLink} className="fc-card-cta">
+                  {c.isFree ? 'ENTER FOR FREE' : 'ENTER NOW'}
+                </Link>
+              )}
             </div>
 
           </div>

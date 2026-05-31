@@ -3,12 +3,12 @@
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
+import { isSoldOut } from '@/lib/competition-status'
 
 interface CardData {
   competition: Competition
   label: string
   badgeClass: string
-  ctaHref: string
 }
 
 function useCountdown(targetDate: string) {
@@ -46,9 +46,10 @@ function CountdownBlock({ value, label }: { value: number; label: string }) {
   )
 }
 
-function CompCard({ competition: c, label, badgeClass, ctaHref }: CardData) {
+function CompCard({ competition: c, label, badgeClass }: CardData) {
   const time = useCountdown(c.drawDate)
   const imgRef = useRef<HTMLDivElement>(null)
+  const soldOut = isSoldOut(c)
 
   return (
     <article className="cgc-card">
@@ -102,36 +103,56 @@ function CompCard({ competition: c, label, badgeClass, ctaHref }: CardData) {
           </div>
         </div>
 
-        {/* CTA */}
-        <Link href={ctaHref} className="cgc-cta">
-          <span>ENTER NOW</span>
-          <svg className="cgc-cta-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
+        {/* CTA — disabled when sold out */}
+        {soldOut ? (
+          <button
+            disabled
+            aria-disabled="true"
+            className="cgc-cta"
+            style={{
+              background: 'rgba(18,12,4,0.92)',
+              border: '1px solid rgba(212,175,55,0.22)',
+              color: 'rgba(212,175,55,0.45)',
+              cursor: 'not-allowed',
+              pointerEvents: 'none',
+              letterSpacing: '0.18em',
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span>SOLD OUT</span>
+          </button>
+        ) : (
+          <Link href={c.ctaLink} className="cgc-cta">
+            <span>ENTER NOW</span>
+            <svg className="cgc-cta-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        )}
       </div>
     </article>
   )
 }
 
 interface Props {
-  paidComp: Competition
+  weeklyComp: Competition
   freeComp: Competition
 }
 
-export default function CompetitionsGrid({ paidComp, freeComp }: Props) {
+export default function CompetitionsGrid({ weeklyComp, freeComp }: Props) {
   const cards: CardData[] = [
     {
-      competition: paidComp,
-      label: 'PAID COMP',
+      competition: weeklyComp,
+      label: 'WEEKLY COMP',
       badgeClass: 'cgc-badge-paid',
-      ctaHref: paidComp.ctaLink,
     },
     {
       competition: freeComp,
-      label: 'FREE COMP',
+      label: freeComp.isFree ? 'FREE COMP' : 'MONTHLY COMP',
       badgeClass: 'cgc-badge-free',
-      ctaHref: '/competitions/free-omega-speedmaster-moonwatch',
     },
   ]
 

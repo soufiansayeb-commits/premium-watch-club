@@ -1,25 +1,31 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
+import { isSoldOut } from '@/lib/competition-status'
 import LiveActivity from '@/components/LiveActivity'
 
 interface Props {
   competition: Competition
+  /** Rendered inside the hero section, between the 3-col grid and the beige strip. */
+  switcherSlot?: React.ReactNode
 }
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
 }
 
-export default function HomepageHero({ competition }: Props) {
+export default function HomepageHero({ competition, switcherSlot }: Props) {
   const c = competition
-  // null means the draw date is missing/invalid — timer stays in safe fallback state
+  const soldOut    = isSoldOut(c)
+  const isComingSoon = c.competitionStatus === 'Coming Soon'
+
   const drawTimestamp = useMemo(() => {
     const ts = new Date(c.drawDate).getTime()
     return isNaN(ts) ? null : ts
   }, [c.drawDate])
+
   const maxOdds = `1:${c.totalTickets}`
 
   const [time, setTime]           = useState({ d: '00', h: '00', m: '00', s: '00' })
@@ -27,7 +33,7 @@ export default function HomepageHero({ competition }: Props) {
   const [progVisible, setProgVisible] = useState(false)
 
   useEffect(() => {
-    if (drawTimestamp === null) return // no valid draw date — leave timer at default 00:00
+    if (drawTimestamp === null) return
     const ts = drawTimestamp
     function tick() {
       const diff = ts - Date.now()
@@ -55,7 +61,13 @@ export default function HomepageHero({ competition }: Props) {
   }, [])
 
   return (
-    <section id="hero">
+    <section
+      id="hero"
+      style={c.heroBackgroundImage
+        ? { backgroundImage: `url('${c.heroBackgroundImage}')` }
+        : undefined
+      }
+    >
       {/* Layered cinematic backgrounds */}
       <div className="h2-bg-gradient" />
       <div className="h2-bg-vignette" />
@@ -121,12 +133,46 @@ export default function HomepageHero({ competition }: Props) {
 
           <h1 className="h2-headline">{c.title}</h1>
 
-          <Link href={c.ctaLink} className="h2-cta-btn">
-            <span>SECURE YOUR ENTRY</span>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </Link>
+          {isComingSoon ? (
+            <button
+              disabled
+              aria-disabled="true"
+              className="h2-cta-btn"
+              style={{
+                background: 'rgba(18,12,4,0.92)',
+                border: '1px solid rgba(212,175,55,0.22)',
+                color: 'rgba(212,175,55,0.45)',
+                cursor: 'not-allowed',
+                pointerEvents: 'none',
+                letterSpacing: '0.18em',
+              }}
+            >
+              <span>COMING SOON</span>
+            </button>
+          ) : soldOut ? (
+            <button
+              disabled
+              aria-disabled="true"
+              className="h2-cta-btn"
+              style={{
+                background: 'rgba(18,12,4,0.92)',
+                border: '1px solid rgba(212,175,55,0.22)',
+                color: 'rgba(212,175,55,0.45)',
+                cursor: 'not-allowed',
+                pointerEvents: 'none',
+                letterSpacing: '0.18em',
+              }}
+            >
+              <span>SOLD OUT</span>
+            </button>
+          ) : (
+            <Link href={c.ctaLink} className="h2-cta-btn">
+              <span>SECURE YOUR ENTRY</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </Link>
+          )}
 
           <div className="h2-meta-row">
             <span className="h2-price">
@@ -137,11 +183,11 @@ export default function HomepageHero({ competition }: Props) {
             </span>
           </div>
 
-          <LiveActivity productId={c.wooProductId} />
+          <LiveActivity key={c.wooProductId} productId={c.wooProductId} />
 
         </div>
 
-        {/* ── COL 2: CENTER — watch only, completely clean ── */}
+        {/* ── COL 2: CENTER — watch only ── */}
         <div className="h2-center">
           <div className="h2-watch-stage">
             <div className="h2-watch-glow" />
@@ -155,10 +201,8 @@ export default function HomepageHero({ competition }: Props) {
           </div>
         </div>
 
-        {/* ── COL 3: RIGHT — details card only (reference removed) ── */}
+        {/* ── COL 3: RIGHT — details card ── */}
         <div className="h2-cards-col">
-
-          {/* Competition details card */}
           <div className="h2-details-card">
             <div className="h2-card-eyebrow">COMPETITION DETAILS</div>
             <div className="h2-card-rows">
@@ -192,19 +236,59 @@ export default function HomepageHero({ competition }: Props) {
                 <span className="h2-card-val">{c.drawDateDisplay.split(',')[0] || c.drawDateDisplay}</span>
               </div>
             </div>
-            <Link href={c.ctaLink} className="h2-card-cta">
-              ENTER NOW
-            </Link>
+            {isComingSoon ? (
+              <button
+                disabled
+                aria-disabled="true"
+                className="h2-card-cta"
+                style={{
+                  background: 'rgba(18,12,4,0.92)',
+                  border: '1px solid rgba(212,175,55,0.22)',
+                  color: 'rgba(212,175,55,0.45)',
+                  cursor: 'not-allowed',
+                  pointerEvents: 'none',
+                  letterSpacing: '0.18em',
+                  textAlign: 'center',
+                  display: 'block',
+                }}
+              >
+                COMING SOON
+              </button>
+            ) : soldOut ? (
+              <button
+                disabled
+                aria-disabled="true"
+                className="h2-card-cta"
+                style={{
+                  background: 'rgba(18,12,4,0.92)',
+                  border: '1px solid rgba(212,175,55,0.22)',
+                  color: 'rgba(212,175,55,0.45)',
+                  cursor: 'not-allowed',
+                  pointerEvents: 'none',
+                  letterSpacing: '0.18em',
+                  textAlign: 'center',
+                  display: 'block',
+                }}
+              >
+                SOLD OUT
+              </button>
+            ) : (
+              <Link href={c.ctaLink} className="h2-card-cta">
+                ENTER NOW
+              </Link>
+            )}
           </div>
-
         </div>
 
-        {/* Mobile-only ticker — rendered as 4th grid child so it appears below competition details */}
+        {/* Mobile-only ticker — below competition details */}
         <div className="act-ticker-mobile-wrap">
-          <LiveActivity productId={c.wooProductId} />
+          <LiveActivity key={`mob-${c.wooProductId}`} productId={c.wooProductId} />
         </div>
 
       </div>
+
+      {/* ── Hero Switcher slot — inside the hero, above the beige strip ── */}
+      {switcherSlot}
 
       {/* Bottom data strip */}
       <div className="h2-strip">

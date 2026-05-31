@@ -18,7 +18,7 @@
 // ── Change this URL when you go live ─────────────────────────────────────────
 // Local dev:  http://localhost:3000/cart
 // Production: https://your-vercel-domain.com/cart  ← update before going live
-define( 'PWC_RETURN_TO_CART_URL', 'http://localhost:3000/cart' );
+define( 'PWC_RETURN_TO_CART_URL', 'https://premium-watch-club-vvl3.vercel.app/cart' );
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Hide success/info notices on cart and checkout pages ─────────────────────

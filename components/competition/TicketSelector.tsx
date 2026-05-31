@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
+import { isSoldOut } from '@/lib/competition-status'
 
 type Badge = 'MOST POPULAR' | 'BEST ODDS' | null
 const BADGES: Record<number, Badge> = { 10: 'MOST POPULAR', 20: 'BEST ODDS' }
@@ -15,6 +16,39 @@ interface Props {
 
 export default function TicketSelector({ competition: c, selectedQty, onQtyChange, onContinue }: Props) {
   const fmt = (n: number) => `${c.currency}${n.toFixed(2)}`
+
+  // Defense-in-depth: CompetitionEntryFlow already gates on isSoldOut before
+  // rendering TicketSelector. This guard handles any direct-render edge cases.
+  if (isSoldOut(c)) {
+    return (
+      <div className="step-panel active" id="panel-step-1">
+        <div className="entry-card">
+          <div className="entry-card-body" style={{ textAlign: 'center', padding: '48px 32px' }}>
+            <div
+              style={{
+                display: 'inline-block',
+                padding: '14px 40px',
+                background: 'rgba(18,12,4,0.92)',
+                border: '1px solid rgba(212,175,55,0.22)',
+                color: 'rgba(212,175,55,0.45)',
+                fontSize: '13px',
+                fontWeight: 700,
+                letterSpacing: '0.18em',
+                borderRadius: '2px',
+                cursor: 'not-allowed',
+                marginBottom: '16px',
+              }}
+            >
+              SOLD OUT
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+              All entries for this competition have been sold.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // maxTicketsPerPurchase = policy cap (from ACF percentage or override).
   // allowedMaxQty = min(policy cap, live remaining stock).

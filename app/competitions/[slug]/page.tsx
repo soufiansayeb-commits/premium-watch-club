@@ -1,5 +1,11 @@
 import { getCompetitionBySlug } from '@/lib/competition-data'
-import { fetchWooProductById, mergeWooData } from '@/lib/woocommerce'
+import {
+  fetchWooProductById,
+  fetchWooProductBySlug,
+  fetchWooProducts,
+  mergeWooData,
+  wooProductToCompetition,
+} from '@/lib/woocommerce'
 import { notFound } from 'next/navigation'
 import Header from '@/components/Header'
 import CompetitionEntryFlow from '@/components/competition/CompetitionEntryFlow'
@@ -14,16 +20,37 @@ interface Props {
 }
 
 export default async function CompetitionPage({ params }: Props) {
-  const competition = getCompetitionBySlug(params.slug)
-  if (!competition) notFound()
+  // 1. Try static template first (has skill question, ticket options, etc.)
+  const staticComp = getCompetitionBySlug(params.slug)
 
-  const { product: wooProduct } = await fetchWooProductById(competition.wooProductId)
-  const mergedCompetition = wooProduct ? mergeWooData(competition, wooProduct) : competition
+  if (staticComp) {
+    // Known competition — fetch live WooCommerce data and merge
+    const { product: wooProduct } = await fetchWooProductById(staticComp.wooProductId)
+    const mergedCompetition = wooProduct ? mergeWooData(staticComp, wooProduct) : staticComp
+
+    return (
+      <>
+        <Header />
+        <CompetitionEntryFlow competition={mergedCompetition} />
+        <WinnersSection />
+        <ProductEditorial />
+        <NewsletterSection />
+        <ScrollReveal />
+        <CompetitionFooter />
+      </>
+    )
+  }
+
+  // 2. No static template — try WooCommerce product by slug (new/future competitions)
+  const { product: wooProduct } = await fetchWooProductBySlug(params.slug)
+  if (!wooProduct) notFound()
+
+  const competition = wooProductToCompetition(wooProduct)
 
   return (
     <>
       <Header />
-      <CompetitionEntryFlow competition={mergedCompetition} />
+      <CompetitionEntryFlow competition={competition} />
       <WinnersSection />
       <ProductEditorial />
       <NewsletterSection />
@@ -34,5 +61,25 @@ export default async function CompetitionPage({ params }: Props) {
 }
 
 export async function generateStaticParams() {
-  return [{ slug: 'omega-speedmaster-moonwatch' }]
+  // Static slugs — always available
+  const staticSlugs = [
+    'omega-speedmaster-moonwatch',
+    'free-omega-speedmaster-moonwatch',
+  ]
+
+  try {
+    // Include all published WooCommerce product slugs so new competitions get
+    // pre-built pages without any code changes.
+    const { products } = await fetchWooProducts()
+    if (products.length > 0) {
+      const wooSlugs = products.map(p => p.slug).filter(Boolean)
+      const seen = new Set<string>(staticSlugs)
+      wooSlugs.forEach(s => seen.add(s))
+      return Array.from(seen).map(slug => ({ slug }))
+    }
+  } catch {
+    // Fall back to static slugs if WooCommerce is unreachable at build time
+  }
+
+  return staticSlugs.map(slug => ({ slug }))
 }

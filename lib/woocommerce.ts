@@ -32,6 +32,23 @@ export interface WooProduct {
   max_entries_percentage?: number
   /** WooCommerce native field: when true, product is limited to 1 per order (source of truth for single-entry products). */
   sold_individually?: boolean
+  /** ACF custom field: lifecycle status. Values: 'Coming Soon' | 'Live' | 'Sold Out' | 'Draw Pending' | 'Winner Announced' | 'Closed' */
+  competition_status?: string
+  /** ACF custom field: category type. Values: 'weekly' | 'monthly' | 'free' | 'special' */
+  competition_type?: string
+  /** ACF custom field: watch/product reference number (e.g. '116500LN'). */
+  watch_reference?: string
+  /**
+   * ACF image field: background image URL for the homepage hero.
+   * Populated when ACF returns a URL string or an image object with url/source_url.
+   */
+  hero_background_image?: string
+  /**
+   * Raw ACF image ID — set when ACF returns only an integer/numeric-string.
+   * Resolved asynchronously via WordPress media API in getAllActiveCompetitionsByType.
+   * Not exposed to the Competition object; used only as an intermediate during server render.
+   */
+  hero_background_image_id?: number
 }
 
 // ── Internal config check ────────────────────────────────────────────────────
@@ -95,6 +112,124 @@ async function wcFetch(endpoint: string): Promise<unknown> {
   }
 
   return res.json()
+}
+
+// ── ACF image field helpers ──────────────────────────────────────────────────
+
+interface AcfImageExtracted {
+  /** Resolved URL when ACF returns a URL string or an image object. */
+  url?: string
+  /** Numeric image attachment ID when ACF returns only an ID (needs secondary resolve). */
+  id?: number
+}
+
+/**
+ * Extract a usable URL and/or image ID from any ACF image field return format:
+ *
+ *  "Image URL"   → string URL → { url: "https://..." }
+ *  "Image Array" → object { url, source_url, ID, id } → { url: "https://..." }
+ *  "Image ID"    → integer or numeric string → { id: 123 }
+ *  false/null/"" → {} (empty — field not set)
+ *
+ * When only an ID is returned the caller must use resolveWpMediaUrl(id) to get the URL.
+ */
+function extractAcfImage(raw: unknown): AcfImageExtracted {
+  if (!raw || raw === false || raw === 0) return {}
+
+  // Number → image attachment ID
+  if (typeof raw === 'number') {
+    return Number.isInteger(raw) && raw > 0 ? { id: raw } : {}
+  }
+
+  if (typeof raw === 'string') {
+    const s = raw.trim()
+    if (!s) return {}
+    // Numeric string → image ID
+    if (/^\d+$/.test(s)) return { id: parseInt(s, 10) }
+    // URL-like string
+    if (s.startsWith('http') || s.startsWith('/')) return { url: s }
+  }
+
+  // Object (ACF Image Array / Object return format)
+  if (typeof raw === 'object' && raw !== null) {
+    const obj = raw as Record<string, unknown>
+
+    // Prefer explicit URL keys first
+    for (const key of ['url', 'source_url', 'guid']) {
+      const v = obj[key]
+      if (typeof v === 'string' && v.trim().startsWith('http')) return { url: v.trim() }
+    }
+    // guid may itself be an object { rendered: "..." }
+    if (typeof obj.guid === 'object' && obj.guid !== null) {
+      const g = (obj.guid as Record<string, unknown>).rendered
+      if (typeof g === 'string' && g.startsWith('http')) return { url: g }
+    }
+    // Fall back to ID inside the object
+    const idRaw = obj.ID ?? obj.id
+    if (typeof idRaw === 'number' && idRaw > 0) return { id: idRaw }
+    if (typeof idRaw === 'string' && /^\d+$/.test(idRaw)) return { id: parseInt(idRaw, 10) }
+  }
+
+  return {}
+}
+
+/**
+ * Resolve a WordPress media attachment ID to a source URL via the WP REST API.
+ * Used as a fallback when ACF returns an image ID instead of a full URL.
+ * Results cached for 1 hour (images rarely change).
+ */
+async function resolveWpMediaUrl(id: number): Promise<string | undefined> {
+  const config = getConfig()
+  if (!config) return undefined
+  try {
+    const url  = `${config.storeUrl}/wp-json/wp/v2/media/${id}`
+    const token = Buffer.from(`${config.key}:${config.secret}`).toString('base64')
+    const res  = await fetch(url, {
+      headers: { Authorization: `Basic ${token}` },
+      next: { revalidate: 3600 },
+    })
+    if (!res.ok) return undefined
+    const data = await res.json() as Record<string, unknown>
+    const src  = data.source_url
+    if (typeof src === 'string' && src.startsWith('http')) return src
+    // Fallback: guid.rendered
+    const guid = data.guid as Record<string, unknown> | undefined
+    if (typeof guid?.rendered === 'string' && (guid.rendered as string).startsWith('http')) {
+      return guid.rendered as string
+    }
+  } catch { /* network error — caller receives undefined */ }
+  return undefined
+}
+
+// ── Status / type normalisers ────────────────────────────────────────────────
+
+/**
+ * Normalise an ACF competition_status value to a consistent display-case string.
+ * Handles WordPress ACF variations: 'live', 'Live', 'coming_soon', 'Coming Soon', etc.
+ * Returns the normalised value, or the raw trimmed value if unrecognised (no silent data loss).
+ */
+function normalizeCompetitionStatus(raw: string): string {
+  const s = raw.toLowerCase().replace(/_/g, ' ').trim()
+  if (s === 'live')                                 return 'Live'
+  if (s === 'coming soon' || s === 'coming')        return 'Coming Soon'
+  if (s === 'sold out')                             return 'Sold Out'
+  if (s === 'draw pending' || s === 'draw')         return 'Draw Pending'
+  if (s === 'winner announced' || s === 'winner')   return 'Winner Announced'
+  if (s === 'closed')                               return 'Closed'
+  return raw.trim()
+}
+
+/**
+ * Normalise an ACF competition_type value to lowercase.
+ * 'free' is a legacy alias for 'starter' — normalised automatically.
+ */
+function normalizeCompetitionType(raw: string): string {
+  const s = raw.toLowerCase().trim()
+  if (s === 'starter' || s === 'free') return 'starter'
+  if (s === 'weekly')                  return 'weekly'
+  if (s === 'monthly')                 return 'monthly'
+  if (s === 'special')                 return 'special'
+  return s
 }
 
 // ── ACF / meta_data helpers ──────────────────────────────────────────────────
@@ -242,6 +377,40 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     soldIndividuallyRaw === false ? false :
     undefined
 
+  // competition_status (ACF Select field — e.g. 'Live', 'Sold Out', 'Coming Soon', etc.)
+  // Normalised immediately so all downstream comparisons use consistent display-case strings.
+  const rawCompStatus = acf.competition_status ?? getMetaValue(raw, 'competition_status')
+  const competitionStatus = (rawCompStatus != null && rawCompStatus !== '' && rawCompStatus !== false)
+    ? normalizeCompetitionStatus(String(rawCompStatus))
+    : undefined
+
+  // competition_type (ACF Select field — e.g. 'weekly', 'monthly', 'starter'/'free', 'special')
+  // 'free' is normalised to 'starter' for backward compatibility with existing WooCommerce products.
+  const rawCompType = acf.competition_type ?? getMetaValue(raw, 'competition_type')
+  const competitionType = (rawCompType != null && rawCompType !== '' && rawCompType !== false)
+    ? normalizeCompetitionType(String(rawCompType))
+    : undefined
+
+  // watch_reference (ACF Text field — e.g. '116500LN')
+  const rawWatchRef = acf.watch_reference ?? getMetaValue(raw, 'watch_reference')
+  const watchReference = (rawWatchRef != null && rawWatchRef !== '' && rawWatchRef !== false)
+    ? String(rawWatchRef).trim()
+    : undefined
+
+  // hero_background_image (ACF Image field — homepage hero background per product)
+  // Checked in both the acf object (requires acf-to-rest-api / ACF REST API support)
+  // and the meta_data array (raw WooCommerce meta, value format depends on ACF Return Format).
+  const rawHeroBg = acf.hero_background_image ?? getMetaValue(raw, 'hero_background_image')
+  const heroBgExtracted = extractAcfImage(rawHeroBg)
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      `[PWC hero_background_image] #${raw.id} "${raw.name}": ` +
+      `raw=${JSON.stringify(rawHeroBg)?.substring(0, 120)} ` +
+      `→ url=${heroBgExtracted.url ?? '(none)'}, id=${heroBgExtracted.id ?? '(none)'}`
+    )
+  }
+
   return {
     id:             Number(raw.id)             || 0,
     name:           String(raw.name            ?? ''),
@@ -263,6 +432,11 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     cash_alternative:       cashAlternative,
     max_entries_percentage: maxEntriesPercentage,
     sold_individually:      soldIndividually,
+    competition_status:        competitionStatus,
+    competition_type:          competitionType,
+    watch_reference:           watchReference,
+    hero_background_image:     heroBgExtracted.url,
+    hero_background_image_id:  heroBgExtracted.id,
   }
 }
 
@@ -275,7 +449,7 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
  */
 export async function fetchWooProducts(): Promise<{ products: WooProduct[]; error?: string }> {
   try {
-    const data = await wcFetch('products?status=publish&per_page=20')
+    const data = await wcFetch('products?status=publish&per_page=100')
     if (!Array.isArray(data)) {
       return { products: [], error: 'Unexpected response shape from WooCommerce API.' }
     }
@@ -364,9 +538,13 @@ export function mergeWooData(
   }
 
   // ── ACF product-info overrides ────────────────────────────────────────────
-  if (wooProduct.retail_value != null)     merged.retailValue     = wooProduct.retail_value
-  if (wooProduct.condition    != null)     merged.condition       = wooProduct.condition
-  if (wooProduct.cash_alternative != null) merged.cashAlternative = wooProduct.cash_alternative
+  if (wooProduct.retail_value        != null) merged.retailValue       = wooProduct.retail_value
+  if (wooProduct.condition           != null) merged.condition         = wooProduct.condition
+  if (wooProduct.cash_alternative    != null) merged.cashAlternative   = wooProduct.cash_alternative
+  if (wooProduct.competition_status  != null) merged.competitionStatus   = wooProduct.competition_status
+  if (wooProduct.competition_type    != null) merged.competitionType     = wooProduct.competition_type
+  if (wooProduct.watch_reference     != null) merged.reference           = wooProduct.watch_reference
+  if (wooProduct.hero_background_image != null) merged.heroBackgroundImage = wooProduct.hero_background_image
 
   // ── Correct Total Entries / Remaining logic ──────────────────────────────
   // totalEntries = ACF total_entries (fixed max, never changes as tickets sell)
@@ -468,6 +646,274 @@ export function mergeWooData(
   }
 
   return merged
+}
+
+// ── Dynamic competition builders ─────────────────────────────────────────────
+
+/**
+ * Build a minimal Competition object from a raw WooProduct.
+ * Used when a WooCommerce product has no matching static template in competition-data.ts.
+ * Skill challenge fields use shared defaults — override via ACF when needed.
+ */
+export function wooProductToCompetition(wooProduct: WooProduct): Competition {
+  const totalEntries  = wooProduct.total_entries ?? 500
+  // stock_quantity === null means WooCommerce stock tracking is disabled;
+  // treat as fully available (remaining = totalEntries) to avoid showing 0 tickets left.
+  const stockQty      = wooProduct.stock_quantity ?? totalEntries
+  const remaining     = Math.max(0, stockQty)
+  const sold          = Math.max(0, totalEntries - remaining)
+  const soldPct       = totalEntries > 0 ? Math.round((sold / totalEntries) * 1000) / 10 : 0
+  const parsedPrice   = parseFloat(wooProduct.price) || 0
+  const drawDateRaw   = wooProduct.draw_date ? parseWooDrawDate(wooProduct.draw_date) : ''
+  const maxPerUser    =
+    wooProduct.sold_individually === true
+      ? 1
+      : wooProduct.max_entries_percentage && totalEntries
+        ? Math.max(1, Math.floor(totalEntries * (wooProduct.max_entries_percentage / 100)))
+        : 100
+
+  return {
+    id:                    `woo-${wooProduct.id}`,
+    wooProductId:          wooProduct.id,
+    slug:                  wooProduct.slug,
+    title:                 wooProduct.name,
+    brand:                 wooProduct.name,
+    model:                 wooProduct.name,
+    shortName:             wooProduct.name,
+    reference:             wooProduct.watch_reference ?? '',
+    detail:                wooProduct.condition ?? '',
+    image:                 wooProduct.images[0]?.src ?? '',
+    heroImage:             wooProduct.images[0]?.src ?? '',
+    retailValue:           wooProduct.retail_value ?? 0,
+    condition:             wooProduct.condition,
+    entryPrice:            parsedPrice,
+    isFree:                parsedPrice === 0,
+    currency:              '£',
+    totalTickets:          totalEntries,
+    ticketsSold:           sold,
+    ticketsLeft:           remaining,
+    soldPercentage:        soldPct,
+    drawDate:              drawDateRaw,
+    drawDateDisplay:       drawDateRaw ? formatDrawDateDisplay(drawDateRaw) : 'Draw date coming soon',
+    cashAlternative:       wooProduct.cash_alternative ?? 0,
+    ticketOptions: [
+      { qty: 1,  popular: false },
+      { qty: 3,  popular: false },
+      { qty: 5,  popular: false },
+      { qty: 10, popular: true  },
+      { qty: 20, popular: false },
+    ],
+    maxTicketsPerPurchase: maxPerUser,
+    skillQuestion:         'Which Swiss manufacturer produces the Speedmaster Moonwatch?',
+    skillAnswers:          ['Omega', 'Rolex', 'Breitling', 'TAG Heuer'],
+    correctAnswer:         'Omega',
+    skillChallengeId:      'wc-id-001',
+    wooStockQuantity:      wooProduct.stock_quantity,
+    competitionStatus:     wooProduct.competition_status,
+    competitionType:       wooProduct.competition_type,
+    heroBackgroundImage:   wooProduct.hero_background_image,
+    checkoutUrl:           '/checkout',
+    ctaLink:               `/competitions/${wooProduct.slug}`,
+    recentPurchases:       [],
+    leaderboard:           [],
+  }
+}
+
+/**
+ * Fetch all published WooCommerce products and return the best active competition
+ * for a given competition_type ('weekly' | 'monthly' | 'free' | 'special').
+ *
+ * Selection logic:
+ *  1. Filter by competition_type.
+ *  2. Among those, prefer Live + stock > 0 → pick the nearest draw date.
+ *  3. If no Live product, fall back to the most recent Sold Out product.
+ *  4. If none, try Coming Soon.
+ *  5. If no WooCommerce match at all, return null (caller provides static fallback).
+ *
+ * The returned Competition is built from the matching WooProduct:
+ *  - If the product's ID matches a static template (competition-data.ts), mergeWooData is applied.
+ *  - Otherwise wooProductToCompetition() builds a Competition from pure WooCommerce data.
+ */
+export async function getActiveCompetitionByType(type: string): Promise<Competition | null> {
+  const { products, error } = await fetchWooProducts()
+  if (error || products.length === 0) return null
+
+  const typed = products.filter(p => p.competition_type === type)
+  if (typed.length === 0) return null
+
+  let selected: WooProduct | null = null
+
+  // Prefer Live. stock_quantity === null means stock tracking is off → treat as available.
+  const live = typed.filter(p =>
+    p.competition_status === 'Live' &&
+    (p.stock_quantity === null || p.stock_quantity > 0)
+  )
+
+  if (live.length > 0) {
+    // Among live products, pick the one with the nearest draw date
+    selected = live.reduce<WooProduct | null>((best, p) => {
+      if (!best) return p
+      const bestMs = best.draw_date ? new Date(parseWooDrawDate(best.draw_date)).getTime() : Infinity
+      const pMs    = p.draw_date    ? new Date(parseWooDrawDate(p.draw_date)).getTime()    : Infinity
+      return pMs < bestMs ? p : best
+    }, null)
+  }
+
+  if (!selected) {
+    // No live product — show latest Sold Out as a historical state
+    const soldOut = typed.filter(p => p.competition_status === 'Sold Out')
+    if (soldOut.length > 0) {
+      selected = soldOut[soldOut.length - 1]
+    }
+  }
+
+  if (!selected) {
+    // Try Coming Soon (next upcoming competition)
+    const comingSoon = typed.filter(p => p.competition_status === 'Coming Soon')
+    if (comingSoon.length > 0) selected = comingSoon[0]
+  }
+
+  if (!selected) return null
+
+  // Try to match the WooProduct against a static template by product ID
+  const staticComp = competitions.find(c => c.wooProductId === selected!.id)
+  if (staticComp) {
+    return mergeWooData(staticComp, selected)
+  }
+
+  // No static template — build a Competition entirely from WooCommerce data
+  return wooProductToCompetition(selected)
+}
+
+// ── Hero switcher: all active competitions grouped by type ───────────────────
+
+export type CompetitionType = 'starter' | 'weekly' | 'monthly' | 'special'
+
+export interface CompetitionsByType {
+  starter: Competition | null
+  weekly:  Competition | null
+  monthly: Competition | null
+  special: Competition | null
+}
+
+const HERO_TYPES: CompetitionType[] = ['starter', 'weekly', 'monthly', 'special']
+
+/**
+ * Fetch all published WooCommerce products once and return the best active
+ * competition for each of the four hero types (starter, weekly, monthly, special).
+ *
+ * Selection per type (Closed products are always excluded):
+ *  1. Live (stock_quantity > 0 OR null = tracking off) → nearest draw date.
+ *  2. Sold Out   → most recent.
+ *  3. Coming Soon → first found.
+ *  4. No match   → null (card hidden from switcher).
+ *
+ * Status and type values are normalised in toSafeProduct(), so comparisons here
+ * always use consistent display-case strings ('Live', 'Sold Out', etc.) and
+ * lowercase type slugs ('starter', 'weekly', 'monthly', 'special').
+ * 'free' competition_type is normalised to 'starter' automatically.
+ */
+export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByType> {
+  const result: CompetitionsByType = { starter: null, weekly: null, monthly: null, special: null }
+  const { products, error } = await fetchWooProducts()
+
+  if (process.env.NODE_ENV === 'development') {
+    if (error) {
+      console.error(`[PWC getAllActiveCompetitionsByType] WooCommerce fetch error: ${error}`)
+    }
+    console.log(`[PWC getAllActiveCompetitionsByType] ${products.length} published products fetched`)
+    for (const p of products) {
+      console.log(
+        `  #${p.id} "${p.name}"\n` +
+        `    competition_type:   ${p.competition_type   ?? '(unset)'}\n` +
+        `    competition_status: ${p.competition_status ?? '(unset)'}\n` +
+        `    stock_quantity:     ${p.stock_quantity     ?? '(null = tracking off)'}\n` +
+        `    stock_status:       ${p.stock_status}`
+      )
+    }
+  }
+
+  if (error || products.length === 0) return result
+
+  for (const type of HERO_TYPES) {
+    // After normalisation in toSafeProduct, competition_type is already 'starter'/'weekly'/etc.
+    const typed = products.filter(p =>
+      p.competition_type === type &&
+      p.competition_status !== 'Closed'
+    )
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[PWC] slot="${type}": ${typed.length} candidate(s) (excl. Closed)`)
+    }
+
+    if (typed.length === 0) continue
+
+    let selected: WooProduct | null = null
+
+    // Live: stock_quantity === null means stock tracking is disabled → treat as in-stock
+    const live = typed.filter(p =>
+      p.competition_status === 'Live' &&
+      (p.stock_quantity === null || p.stock_quantity > 0)
+    )
+    if (live.length > 0) {
+      selected = live.reduce<WooProduct | null>((best, p) => {
+        if (!best) return p
+        const bestMs = best.draw_date ? new Date(parseWooDrawDate(best.draw_date)).getTime() : Infinity
+        const pMs    = p.draw_date    ? new Date(parseWooDrawDate(p.draw_date)).getTime()    : Infinity
+        return pMs < bestMs ? p : best
+      }, null)
+    }
+
+    if (!selected) {
+      const soldOut = typed.filter(p => p.competition_status === 'Sold Out')
+      if (soldOut.length > 0) selected = soldOut[soldOut.length - 1]
+    }
+
+    if (!selected) {
+      const comingSoon = typed.filter(p => p.competition_status === 'Coming Soon')
+      if (comingSoon.length > 0) selected = comingSoon[0]
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        selected
+          ? `[PWC] slot="${type}": selected #${selected.id} "${selected.name}" (status=${selected.competition_status})`
+          : `[PWC] slot="${type}": no product selected`
+      )
+    }
+
+    if (!selected) continue
+
+    const staticComp = competitions.find(c => c.wooProductId === selected!.id)
+    let comp = staticComp
+      ? mergeWooData(staticComp, selected)
+      : wooProductToCompetition(selected)
+
+    // If ACF returned an image ID rather than a URL, resolve it now via WordPress media API.
+    // This handles ACF "Return Format: Image ID" and "Return Format: Image Array" stored as ID.
+    if (!comp.heroBackgroundImage && selected.hero_background_image_id) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[PWC] slot="${type}": resolving hero_background_image_id=${selected.hero_background_image_id} via WP media API`)
+      }
+      const resolvedUrl = await resolveWpMediaUrl(selected.hero_background_image_id)
+      if (resolvedUrl) {
+        comp = { ...comp, heroBackgroundImage: resolvedUrl }
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[PWC] slot="${type}": resolved hero background → ${resolvedUrl}`)
+        }
+      } else if (process.env.NODE_ENV === 'development') {
+        console.warn(`[PWC] slot="${type}": could not resolve image ID ${selected.hero_background_image_id} — check WP media API access`)
+      }
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[PWC] slot="${type}": heroBackgroundImage=${comp.heroBackgroundImage ?? '(none — will use CSS fallback)'}`)
+    }
+
+    result[type] = comp
+  }
+
+  return result
 }
 
 // ── Legacy helpers (still used by existing pages — keep unchanged) ────────────

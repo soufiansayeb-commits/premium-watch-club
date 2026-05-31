@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
+import { isSoldOut, getStatusLabel } from '@/lib/competition-status'
 import { getOptionLabel } from '@/lib/skill-challenge-config'
 import { useCart } from '@/context/CartContext'
 import ProgressSteps from './ProgressSteps'
@@ -15,6 +17,85 @@ interface Props {
 }
 
 export default function CompetitionEntryFlow({ competition }: Props) {
+  // ── Sold-out gate — blocks all entry steps ────────────────────────────────
+  if (isSoldOut(competition)) {
+    return (
+      <>
+        <ProgressSteps currentStep={1} />
+        <main id="entry-main">
+          <div className="entry-grid">
+            <WatchInfoPanel competition={competition} />
+            <div className="entry-right">
+              <div className="step-panel active" id="panel-step-1">
+                <div className="entry-card">
+                  <div className="entry-card-header" style={{ textAlign: 'center', padding: '40px 32px 24px' }}>
+                    <div
+                      style={{
+                        display: 'inline-block',
+                        padding: '6px 20px',
+                        background: 'rgba(18,12,4,0.92)',
+                        border: '1px solid rgba(212,175,55,0.3)',
+                        color: 'rgba(212,175,55,0.7)',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        letterSpacing: '0.2em',
+                        borderRadius: '2px',
+                        marginBottom: '20px',
+                      }}
+                    >
+                      {getStatusLabel(competition)}
+                    </div>
+                    <div className="ech-title" style={{ marginBottom: '12px' }}>{competition.title}</div>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6, maxWidth: '360px', margin: '0 auto' }}>
+                      All entries for this competition have been sold. The draw will be conducted among the registered entries.
+                    </p>
+                  </div>
+                  <div className="entry-card-body" style={{ textAlign: 'center', paddingBottom: '32px' }}>
+                    <div
+                      style={{
+                        display: 'inline-block',
+                        padding: '14px 40px',
+                        background: 'rgba(18,12,4,0.92)',
+                        border: '1px solid rgba(212,175,55,0.22)',
+                        color: 'rgba(212,175,55,0.45)',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        letterSpacing: '0.18em',
+                        borderRadius: '2px',
+                        cursor: 'not-allowed',
+                        marginBottom: '24px',
+                      }}
+                    >
+                      SOLD OUT
+                    </div>
+                    <div>
+                      <Link
+                        href="/"
+                        style={{
+                          display: 'inline-block',
+                          padding: '10px 24px',
+                          border: '1px solid var(--border-mid)',
+                          color: 'var(--text-muted)',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          letterSpacing: '0.1em',
+                          borderRadius: '2px',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        Browse Other Competitions
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </>
+    )
+  }
+
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedTicketQty, setSelectedTicketQty] = useState(1)
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)

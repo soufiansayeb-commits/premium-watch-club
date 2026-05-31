@@ -1,8 +1,6 @@
-import { getAllCompetitions } from '@/lib/competition-data'
-import { fetchWooProductById, mergeWooData } from '@/lib/woocommerce'
+import { getAllActiveCompetitionsByType } from '@/lib/woocommerce'
 import Header from '@/components/Header'
-import HomepageHero from '@/components/HomepageHero'
-import FreeCompHero from '@/components/FreeCompHero'
+import HomepageHeroContainer from '@/components/HomepageHeroContainer'
 import StatsBar from '@/components/StatsBar'
 import WinnersSection from '@/components/WinnersSection'
 import HowItWorks from '@/components/HowItWorks'
@@ -14,28 +12,26 @@ import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
 
 export default async function HomePage() {
-  const competitions = getAllCompetitions()
-  const paidComp = competitions[0] // wooProductId: 20
-  const freeComp = competitions[1] // wooProductId: 13
+  // Single fetch — groups all published WooCommerce products by competition_type.
+  const competitionsByType = await getAllActiveCompetitionsByType()
 
-  const [{ product: paidWooProduct }, { product: freeWooProduct }] = await Promise.all([
-    fetchWooProductById(paidComp.wooProductId),
-    fetchWooProductById(freeComp.wooProductId),
-  ])
-
-  const mergedPaidComp = paidWooProduct ? mergeWooData(paidComp, paidWooProduct) : paidComp
-  const mergedFreeComp = freeWooProduct ? mergeWooData(freeComp, freeWooProduct) : freeComp
+  // CompetitionsGrid needs both a weekly and a "secondary" competition.
+  // Use starter as the secondary (replaces old free comp slot).
+  const weeklyComp  = competitionsByType.weekly
+  const starterComp = competitionsByType.starter
 
   return (
     <>
       <Header />
-      <HomepageHero competition={mergedPaidComp} />
-      <FreeCompHero competition={mergedFreeComp} />
+      {/* One hero + switcher — replaces the old stacked HomepageHero + FreeCompHero */}
+      <HomepageHeroContainer competitionsByType={competitionsByType} />
       <StatsBar />
       <WinnersSection />
       <HowItWorks />
       <TrustBar />
-      <CompetitionsGrid paidComp={mergedPaidComp} freeComp={mergedFreeComp} />
+      {weeklyComp && starterComp && (
+        <CompetitionsGrid weeklyComp={weeklyComp} freeComp={starterComp} />
+      )}
       <JournalPreview />
       <NewsletterSection />
       <Footer />

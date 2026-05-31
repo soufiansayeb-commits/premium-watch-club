@@ -50,6 +50,25 @@ export interface Competition {
   skillChallengeId?: string;
   /** Stock quantity from WooCommerce — populated at page render time. */
   wooStockQuantity?: number | null;
+  /**
+   * ACF field: competition lifecycle status.
+   * Values: 'Coming Soon' | 'Live' | 'Sold Out' | 'Draw Pending' | 'Winner Announced' | 'Closed'
+   * Controls entry gates across homepage, competition page, and checkout.
+   */
+  competitionStatus?: string;
+  /**
+   * ACF field: competition category type.
+   * Values: 'weekly' | 'monthly' | 'free' | 'special'
+   * Used by homepage to select the correct active competition per section.
+   */
+  competitionType?: string;
+  /**
+   * ACF image field: background image URL for the homepage hero section.
+   * When present, overrides the default hero-bg-luxury.jpg CSS background.
+   * ACF may return an image object, a URL string, or an integer ID — all formats
+   * are normalised to a URL string in woocommerce.ts / toSafeProduct.
+   */
+  heroBackgroundImage?: string;
   checkoutUrl: string;
   ctaLink: string;
   recentPurchases: string[];
