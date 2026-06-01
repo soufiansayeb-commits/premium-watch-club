@@ -9,15 +9,17 @@ interface Props {
   competitionsByType: CompetitionsByType
 }
 
-const TYPE_ORDER: CompetitionType[] = ['starter', 'weekly', 'monthly', 'special']
+// Default hero priority: special first (AP X SWATCH / Special Drop), then Weekly, Monthly.
+// 'starter' is kept at the end as a failsafe in case the data-layer promotion did not run,
+// but result.starter is always null after getAllActiveCompetitionsByType returns.
+const TYPE_ORDER: CompetitionType[] = ['special', 'weekly', 'monthly', 'starter']
 
 /**
  * Pick the initial active competition type.
- * Priority: Live+enterable → Live+soldout → explicit Sold Out → any non-null non-Coming-Soon.
- * Coming Soon competitions are shown last (hero will display disabled state).
+ * Priority: Live+enterable (special first) → any non-Coming-Soon.
  */
 function resolveDefault(comps: CompetitionsByType): CompetitionType | null {
-  // Prefer a fully enterable Live competition
+  // Prefer a fully enterable Live competition — Special Drop has highest priority
   for (const t of TYPE_ORDER) {
     const c = comps[t]
     if (c && c.competitionStatus === 'Live' && c.ticketsLeft > 0) return t

@@ -8,11 +8,14 @@ interface CardConfig {
   tagline: string
 }
 
+// 'starter' is no longer a separate visible card — it is promoted to the 'special'
+// slot at the data layer (getAllActiveCompetitionsByType). The AP X SWATCH ROYAL POPP
+// (formerly Starter Drop) is displayed here as Special Drop regardless of whether its
+// WooCommerce competition_type is 'starter'/'free' or 'special'.
 const CARD_CONFIG: CardConfig[] = [
-  { type: 'starter', label: 'Starter Drop', tagline: 'Entry Level' },
-  { type: 'weekly',  label: 'Weekly Drop',  tagline: 'Every Week'  },
-  { type: 'monthly', label: 'Monthly Drop', tagline: 'Rare Pieces' },
   { type: 'special', label: 'Special Drop', tagline: 'Limited Edition' },
+  { type: 'weekly',  label: 'Weekly Drop',  tagline: 'Every Week'      },
+  { type: 'monthly', label: 'Monthly Drop', tagline: 'Rare Pieces'     },
 ]
 
 interface Props {
@@ -39,7 +42,12 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
           <div className="hs-rule-line" />
         </div>
 
-        <div className="hs-cards" role="group" aria-label="Competition types">
+        <div
+          className="hs-cards"
+          role="group"
+          aria-label="Competition types"
+          style={{ '--hs-count': visibleCards.length } as React.CSSProperties}
+        >
           {visibleCards.map(({ type, label, tagline }) => {
             const comp = competitionsByType[type]!
             const acfStatus  = comp.competitionStatus ?? 'Live'

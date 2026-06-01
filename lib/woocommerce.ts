@@ -225,15 +225,25 @@ function normalizeCompetitionStatus(raw: string): string {
 }
 
 /**
- * Normalise an ACF competition_type value to lowercase.
- * 'free' is a legacy alias for 'starter' — normalised automatically.
+ * Normalise an ACF competition_type value to a consistent lowercase slug.
+ *
+ * WooCommerce ACF select fields can store either the option value ("special")
+ * or the option label ("Special Drop") depending on how the field is configured.
+ * Both forms are handled here so a label change in WordPress never breaks
+ * the frontend slot mapping.
+ *
+ * Aliases handled:
+ *   'free' / 'starter drop'             → 'starter'
+ *   'weekly drop'                        → 'weekly'
+ *   'monthly drop'                       → 'monthly'
+ *   'special drop' / 'limited edition'  → 'special'
  */
 function normalizeCompetitionType(raw: string): string {
   const s = raw.toLowerCase().trim()
-  if (s === 'starter' || s === 'free') return 'starter'
-  if (s === 'weekly')                  return 'weekly'
-  if (s === 'monthly')                 return 'monthly'
-  if (s === 'special')                 return 'special'
+  if (s === 'starter' || s === 'free' || s === 'starter drop' || s === 'entry level') return 'starter'
+  if (s === 'weekly'  || s === 'weekly drop'  || s === 'every week')   return 'weekly'
+  if (s === 'monthly' || s === 'monthly drop' || s === 'rare pieces')  return 'monthly'
+  if (s === 'special' || s === 'special drop' || s === 'limited edition') return 'special'
   return s
 }
 
@@ -875,7 +885,15 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
       (p.stock_quantity === null || p.stock_quantity > 0)
     )
     if (liveWithStock.length > 0) {
-      selected = liveWithStock.reduce<WooProduct | null>((best, p) => {
+      // When multiple Live products share the same type (e.g. an old placeholder and the
+      // real product both marked 'special'), prefer products with a matching static template
+      // (identified by wooProductId in competition-data.ts). This ensures the known product
+      // always wins over anonymous placeholder products regardless of draw date order.
+      const hasTemplate = (p: WooProduct) => competitions.some(c => c.wooProductId === p.id)
+      const preferred   = liveWithStock.filter(hasTemplate)
+      const pool        = preferred.length > 0 ? preferred : liveWithStock
+
+      selected = pool.reduce<WooProduct | null>((best, p) => {
         if (!best) return p
         const bestMs = best.draw_date ? new Date(parseWooDrawDate(best.draw_date)).getTime() : Infinity
         const pMs    = p.draw_date    ? new Date(parseWooDrawDate(p.draw_date)).getTime()    : Infinity
@@ -946,6 +964,19 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
 
     result[type] = comp
   }
+
+  // ── Starter → Special promotion ──────────────────────────────────────────────
+  // 'starter' and 'special' are the same visitor-facing "Special Drop" slot.
+  // If the product's competition_type was not yet updated in WooCommerce (still
+  // 'starter'/'free') but the frontend card now uses type='special', promote the
+  // starter competition into the special slot so the hero card is never empty.
+  // Conversely, if both slots have data (old placeholder + real product moved to
+  // 'special'), the special slot already has the correct product via the
+  // static-template preference above, so starter is simply cleared.
+  if (!result.special && result.starter) {
+    result.special = result.starter
+  }
+  result.starter = null   // starter is no longer shown as a separate card
 
   return result
 }

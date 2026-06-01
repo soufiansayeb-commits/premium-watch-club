@@ -46,7 +46,8 @@ function getDropLabel(comp: Competition): string {
   }
 }
 
-function getBadgeClass(comp: Competition): string {
+function getBadgeClass(comp: Competition, soldOut: boolean): string {
+  if (soldOut) return 'cgc-badge-soldout'
   if (comp.isFree || comp.competitionType === 'starter') return 'cgc-badge-free'
   return 'cgc-badge-paid'
 }
@@ -67,16 +68,16 @@ function CompCard({ competition: c }: { competition: Competition }) {
   const imgRef  = useRef<HTMLDivElement>(null)
   const soldOut = isSoldOut(c)
   const label   = getDropLabel(c)
-  const badge   = getBadgeClass(c)
+  const badge   = getBadgeClass(c, soldOut)
 
   return (
-    <article className="cgc-card">
+    <article className={`cgc-card${soldOut ? ' cgc-card--soldout' : ''}`}>
       {/* image area */}
       <div className="cgc-img-wrap" ref={imgRef}>
         <div className="cgc-img-shine" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={c.heroImage} alt={c.title} className="cgc-watch-img" draggable={false} />
-        <div className={`cgc-badge ${badge}`}>{label}</div>
+        <div className={`cgc-badge ${badge}`}>{soldOut ? 'SOLD OUT' : label}</div>
         <div className="cgc-img-overlay" />
       </div>
 

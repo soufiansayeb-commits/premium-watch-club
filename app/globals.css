@@ -2392,7 +2392,9 @@ img { max-width: 100%; display: block; }
 /* card grid */
 .cgc-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* auto-fill: creates as many equal columns as fit — 2 cards → 2 cols,
+     3 cards → 3 cols, all equal width, no orphan centering needed. */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 28px;
 }
 
@@ -2474,6 +2476,40 @@ img { max-width: 100%; display: block; }
   color: var(--gold);
   border: 1px solid rgba(197,160,101,0.5);
   backdrop-filter: blur(6px);
+}
+.cgc-badge-soldout {
+  background: #8b1a1a;
+  color: #ffd0d0;
+  border: 1px solid rgba(220,60,60,0.45);
+}
+
+/* ── Sold-out card treatment ── */
+.cgc-card--soldout {
+  border-color: rgba(160,30,30,0.35);
+  background: rgba(22,8,8,0.82);
+}
+.cgc-card--soldout .cgc-img-wrap {
+  background: linear-gradient(145deg, #160808 0%, #1e0d0d 100%);
+}
+.cgc-card--soldout .cgc-img-overlay {
+  background: linear-gradient(to bottom, rgba(80,10,10,0.18) 0%, rgba(22,8,8,0.72) 100%);
+}
+.cgc-card--soldout .cgc-watch-img {
+  filter: drop-shadow(0 12px 32px rgba(0,0,0,0.7)) grayscale(0.35) brightness(0.85);
+}
+.cgc-card--soldout:hover {
+  border-color: rgba(200,40,40,0.5);
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(180,30,30,0.25),
+    0 0 30px rgba(140,20,20,0.1) inset;
+}
+.cgc-card--soldout .cgc-stats {
+  border-color: rgba(160,30,30,0.18);
+  background: rgba(120,15,15,0.06);
+}
+.cgc-card--soldout .cgc-stat-divider {
+  background: rgba(160,30,30,0.15);
 }
 
 /* card body */
@@ -5593,11 +5629,15 @@ footer {
   text-transform: uppercase;
 }
 
-/* ── Card row ── */
+/* ── Card row ──
+   --hs-count is set inline from JS (number of visible cards).
+   Each card has a max width of 280px; justify-content:center keeps
+   them balanced when fewer than 4 cards are visible. */
 .hs-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(var(--hs-count, 4), minmax(0, 280px));
   gap: 10px;
+  justify-content: center;
 }
 
 /* ── Individual card ──
