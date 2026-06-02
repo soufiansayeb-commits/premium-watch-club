@@ -63,6 +63,23 @@ export interface Competition {
    */
   competitionType?: string;
   /**
+   * ACF field: competition number (e.g. 25 → "Competition #25").
+   * Shown in the info strip beneath the homepage hero.
+   * Optional — strip omits the number gracefully when absent.
+   */
+  competitionNumber?: number;
+  /**
+   * ACF field: challenge_image URL — watch image shown in the skill challenge step.
+   * When present (with answerOptions), SkillChallenge uses ACF-driven mode instead
+   * of the hardcoded VISUAL_CHALLENGES config.
+   */
+  challengeImage?: string;
+  /**
+   * ACF field: answer_options textarea — one answer label per line, parsed to array.
+   * In ACF mode each label also serves as its own option ID.
+   */
+  answerOptions?: string[];
+  /**
    * ACF image field: background image URL for the homepage hero section.
    * When present, overrides the default hero-bg-luxury.jpg CSS background.
    * ACF may return an image object, a URL string, or an integer ID — all formats

@@ -223,7 +223,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: validItems.map(i => ({ id: i.wooProductId, qty: i.quantity })),
+          items: validItems.map(i => ({
+            id:          i.wooProductId,
+            qty:         i.quantity,
+            // Skill challenge data — saved as WooCommerce order item meta by WordPress
+            skillAnswer: i.selectedSkillAnswer  || undefined,
+            skillResult: i.isCorrectSkillAnswer != null
+              ? (i.isCorrectSkillAnswer ? 'Correct' : 'Incorrect')
+              : undefined,
+          })),
         }),
       })
 

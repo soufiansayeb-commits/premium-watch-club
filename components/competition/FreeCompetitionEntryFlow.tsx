@@ -32,9 +32,10 @@ export default function FreeCompetitionEntryFlow({ competition }: Props) {
   }
 
   function handleSkillContinue(isCorrect: boolean) {
+    const isAcfMode = !!competition.challengeImage && (competition.answerOptions?.length ?? 0) > 0
     const challengeId = competition.skillChallengeId ?? ''
     const answerLabel = selectedOptionId
-      ? getOptionLabel(challengeId, selectedOptionId)
+      ? (isAcfMode ? selectedOptionId : getOptionLabel(challengeId, selectedOptionId))
       : ''
 
     addItem({
@@ -88,7 +89,9 @@ export default function FreeCompetitionEntryFlow({ competition }: Props) {
                 competition={competition}
                 selectedQty={1}
                 selectedAnswer={selectedOptionId
-                  ? getOptionLabel(competition.skillChallengeId ?? '', selectedOptionId)
+                  ? (!!competition.challengeImage && (competition.answerOptions?.length ?? 0) > 0
+                      ? selectedOptionId
+                      : getOptionLabel(competition.skillChallengeId ?? '', selectedOptionId))
                   : null}
                 onBack={() => goToStep(2)}
               />

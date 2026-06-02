@@ -36,6 +36,23 @@ export interface WooProduct {
   competition_status?: string
   /** ACF custom field: category type. Values: 'weekly' | 'monthly' | 'free' | 'special' */
   competition_type?: string
+  /** ACF custom field: competition sequence number (e.g. 25 → "Competition #25"). */
+  competition_number?: number
+  /** ACF image field: watch image URL for the skill challenge. */
+  challenge_image?: string
+  /**
+   * Raw ACF image ID for challenge_image — set when ACF returns only an integer/numeric string.
+   * Resolved asynchronously via WordPress media API (same pattern as hero_background_image_id).
+   */
+  challenge_image_id?: number
+  /** ACF textarea field: one answer option per line. */
+  answer_options?: string[]
+  /**
+   * ACF text field: the correct answer for validation.
+   * SERVER-SIDE ONLY — parsed in toSafeProduct, used only by the validate API route.
+   * Never flows into the Competition interface or client components.
+   */
+  correct_answer?: string
   /** ACF custom field: watch/product reference number (e.g. '116500LN'). */
   watch_reference?: string
   /**
@@ -351,6 +368,25 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
   // draw_date: prefer ACF object field, fall back to meta_data array
   const acf = (raw.acf && typeof raw.acf === 'object') ? raw.acf as Record<string, unknown> : {}
 
+  // ── DIAGNOSTIC: dump everything relevant for ACF debugging ──────────────────
+  // This runs server-side — check your `npm run dev` terminal output.
+  if (process.env.NODE_ENV === 'development') {
+    const acfKeys = Object.keys(acf)
+    const metaKeys = Array.isArray(raw.meta_data)
+      ? (raw.meta_data as Record<string, unknown>[]).map(m => String(m.key ?? ''))
+      : []
+    console.log(
+      `\n[PWC DIAGNOSTIC] Product #${raw.id} "${raw.name}"\n` +
+      `  acf object keys  : ${acfKeys.length ? acfKeys.join(', ') : '(empty — ACF REST API not returning data!)'}\n` +
+      `  meta_data keys   : ${metaKeys.length ? metaKeys.join(', ') : '(empty)'}\n` +
+      `  acf.challenge_image  = ${JSON.stringify(acf.challenge_image)?.slice(0,120) ?? '(missing)'}\n` +
+      `  acf.answer_options   = ${JSON.stringify(acf.answer_options)?.slice(0,120) ?? '(missing)'}\n` +
+      `  acf.correct_answer   = ${JSON.stringify(acf.correct_answer)?.slice(0,80) ?? '(missing)'}\n` +
+      `  meta challenge_image = ${JSON.stringify((raw.meta_data as Record<string,unknown>[]|undefined)?.find(m=>(m as Record<string,unknown>).key==='challenge_image'))?.slice(0,120) ?? '(not in meta_data)'}\n` +
+      `  meta answer_options  = ${JSON.stringify((raw.meta_data as Record<string,unknown>[]|undefined)?.find(m=>(m as Record<string,unknown>).key==='answer_options'))?.slice(0,120) ?? '(not in meta_data)'}`
+    )
+  }
+
   const drawDateVal = acf.draw_date ?? getMetaValue(raw, 'draw_date')
   const drawDateRaw = (drawDateVal !== null && drawDateVal !== undefined && drawDateVal !== false)
     ? String(drawDateVal).trim()
@@ -412,6 +448,47 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     ? String(rawWatchRef).trim()
     : undefined
 
+  // competition_number (ACF Number field — e.g. 25 → "Competition #25" in the hero strip)
+  const rawCompNumber = acf.competition_number ?? getMetaValue(raw, 'competition_number')
+  const parsedCompNumber = rawCompNumber != null ? Number(rawCompNumber) : NaN
+  const competitionNumber = !isNaN(parsedCompNumber) && parsedCompNumber > 0
+    ? parsedCompNumber
+    : undefined
+
+  // challenge_image (ACF Image field — watch image for the skill challenge)
+  // Uses the same extraction pattern as hero_background_image:
+  //   • ACF "Image URL" return format  → string URL  → url set directly
+  //   • ACF "Image Array" return format → object      → url extracted from object
+  //   • ACF "Image ID" return format   → integer/str  → id stored, URL resolved async
+  const rawChallengeImg = acf.challenge_image ?? getMetaValue(raw, 'challenge_image')
+  const challengeImgExtracted = extractAcfImage(rawChallengeImg)
+
+  // answer_options (ACF Textarea — one option label per line)
+  // WordPress/ACF textareas use \r\n on most servers — split on all variants.
+  const rawAnswerOptions = acf.answer_options ?? getMetaValue(raw, 'answer_options')
+  const answerOptions = typeof rawAnswerOptions === 'string' && rawAnswerOptions.trim()
+    ? rawAnswerOptions.split(/\r?\n|\r/).map((l: string) => l.trim()).filter(Boolean)
+    : undefined
+
+  // correct_answer (ACF Text — server-side only, never exposed to client)
+  const rawCorrectAnswer = acf.correct_answer ?? getMetaValue(raw, 'correct_answer')
+  const correctAnswer = typeof rawCorrectAnswer === 'string' && rawCorrectAnswer.trim()
+    ? rawCorrectAnswer.trim()
+    : undefined
+
+  // ── Debug: log all three skill challenge ACF fields ──────────────────────────
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      `[PWC skill-challenge] #${raw.id} "${raw.name}"\n` +
+      `  challenge_image  raw : ${JSON.stringify(rawChallengeImg)?.slice(0, 160)}\n` +
+      `  challenge_image  url : ${challengeImgExtracted.url ?? '(none)'}\n` +
+      `  challenge_image  id  : ${challengeImgExtracted.id ?? '(none)'}\n` +
+      `  answer_options   raw : ${JSON.stringify(rawAnswerOptions)?.slice(0, 200)}\n` +
+      `  answer_options parsed: ${JSON.stringify(answerOptions)}\n` +
+      `  correct_answer       : ${correctAnswer ? '[SET — ' + correctAnswer.slice(0, 40) + ']' : '(not set)'}`
+    )
+  }
+
   // description (WooCommerce product description HTML — used for ProductEditorial)
   // Capped at 100 KB to guard against unexpectedly large descriptions.
   const rawDescription = raw.description
@@ -457,6 +534,11 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     competition_status:        competitionStatus,
     competition_type:          competitionType,
     watch_reference:           watchReference,
+    competition_number:        competitionNumber,
+    challenge_image:           challengeImgExtracted.url,
+    challenge_image_id:        challengeImgExtracted.id,
+    answer_options:            answerOptions,
+    correct_answer:            correctAnswer,
     hero_background_image:     heroBgExtracted.url,
     hero_background_image_id:  heroBgExtracted.id,
     description,
@@ -567,6 +649,10 @@ export function mergeWooData(
   if (wooProduct.competition_status  != null) merged.competitionStatus   = wooProduct.competition_status
   if (wooProduct.competition_type    != null) merged.competitionType     = wooProduct.competition_type
   if (wooProduct.watch_reference     != null) merged.reference           = wooProduct.watch_reference
+  if (wooProduct.competition_number  != null) merged.competitionNumber   = wooProduct.competition_number
+  if (wooProduct.challenge_image     != null) merged.challengeImage      = wooProduct.challenge_image
+  if (wooProduct.answer_options      != null) merged.answerOptions       = wooProduct.answer_options
+  // correct_answer intentionally NOT merged into Competition — server-side only
   if (wooProduct.hero_background_image != null) merged.heroBackgroundImage = wooProduct.hero_background_image
   if (wooProduct.description         != null) merged.wooDescription     = wooProduct.description
   // Always overwrite gallery with live WooCommerce images (static templates have none)
@@ -737,6 +823,10 @@ export function wooProductToCompetition(wooProduct: WooProduct): Competition {
     wooStockQuantity:      wooProduct.stock_quantity,
     competitionStatus:     wooProduct.competition_status,
     competitionType:       wooProduct.competition_type,
+    competitionNumber:     wooProduct.competition_number,
+    challengeImage:        wooProduct.challenge_image,
+    answerOptions:         wooProduct.answer_options,
+    // correct_answer intentionally excluded — server-side only
     heroBackgroundImage:   wooProduct.hero_background_image,
     wooDescription:        wooProduct.description,
     galleryImages:         wooProduct.images.length > 0 ? wooProduct.images : undefined,
@@ -811,6 +901,46 @@ export async function getActiveCompetitionByType(type: string): Promise<Competit
 
   // No static template — build a Competition entirely from WooCommerce data
   return wooProductToCompetition(selected)
+}
+
+// ── Shared media resolver ─────────────────────────────────────────────────────
+//
+// Resolves ACF image fields that returned a numeric ID instead of a URL.
+// Currently handles: hero_background_image_id, challenge_image_id.
+// Call after mergeWooData or wooProductToCompetition whenever image IDs may be pending.
+
+export async function resolveCompetitionMedia(
+  comp: Competition,
+  wooProduct: WooProduct,
+): Promise<Competition> {
+  let resolved = comp
+
+  // hero_background_image_id
+  if (!resolved.heroBackgroundImage && wooProduct.hero_background_image_id) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[PWC resolveCompetitionMedia] resolving hero_background_image_id=${wooProduct.hero_background_image_id}`)
+    }
+    const url = await resolveWpMediaUrl(wooProduct.hero_background_image_id)
+    if (url) resolved = { ...resolved, heroBackgroundImage: url }
+  }
+
+  // challenge_image_id
+  if (!resolved.challengeImage && wooProduct.challenge_image_id) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[PWC resolveCompetitionMedia] resolving challenge_image_id=${wooProduct.challenge_image_id}`)
+    }
+    const url = await resolveWpMediaUrl(wooProduct.challenge_image_id)
+    if (url) {
+      resolved = { ...resolved, challengeImage: url }
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[PWC resolveCompetitionMedia] challenge_image resolved → ${url}`)
+      }
+    } else if (process.env.NODE_ENV === 'development') {
+      console.warn(`[PWC resolveCompetitionMedia] could not resolve challenge_image_id=${wooProduct.challenge_image_id}`)
+    }
+  }
+
+  return resolved
 }
 
 // ── Hero switcher: all active competitions grouped by type ───────────────────
@@ -941,25 +1071,11 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
       ? mergeWooData(staticComp, selected)
       : wooProductToCompetition(selected)
 
-    // If ACF returned an image ID rather than a URL, resolve it now via WordPress media API.
-    // This handles ACF "Return Format: Image ID" and "Return Format: Image Array" stored as ID.
-    if (!comp.heroBackgroundImage && selected.hero_background_image_id) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[PWC] slot="${type}": resolving hero_background_image_id=${selected.hero_background_image_id} via WP media API`)
-      }
-      const resolvedUrl = await resolveWpMediaUrl(selected.hero_background_image_id)
-      if (resolvedUrl) {
-        comp = { ...comp, heroBackgroundImage: resolvedUrl }
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[PWC] slot="${type}": resolved hero background → ${resolvedUrl}`)
-        }
-      } else if (process.env.NODE_ENV === 'development') {
-        console.warn(`[PWC] slot="${type}": could not resolve image ID ${selected.hero_background_image_id} — check WP media API access`)
-      }
-    }
+    // Resolve any ACF image IDs that came back as integers instead of URLs.
+    comp = await resolveCompetitionMedia(comp, selected)
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[PWC] slot="${type}": heroBackgroundImage=${comp.heroBackgroundImage ?? '(none — will use CSS fallback)'}`)
+      console.log(`[PWC] slot="${type}": heroBackgroundImage=${comp.heroBackgroundImage ?? '(none)'} | challengeImage=${comp.challengeImage ?? '(none)'}`)
     }
 
     result[type] = comp

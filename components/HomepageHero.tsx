@@ -292,7 +292,10 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
 
       {/* Bottom data strip */}
       <div className="h2-strip">
-        Competition <span>#1</span> · <span>{c.totalTickets}</span> tickets total ·{' '}
+        {c.competitionNumber != null && (
+          <>Competition <span>#{c.competitionNumber}</span> · </>
+        )}
+        <span>{c.totalTickets}</span> tickets total ·{' '}
         <span>{c.soldPercentage}%</span> sold · Max <span>{c.maxTicketsPerPurchase}</span> tickets per member · Publicly streamed live draw
       </div>
     </section>

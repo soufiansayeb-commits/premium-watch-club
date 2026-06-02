@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'WOOCOMMERCE_STORE_URL not configured' }, { status: 503 })
   }
 
-  let items: Array<{ id: number; qty: number }>
+  let items: Array<{ id: number; qty: number; skillAnswer?: string; skillResult?: string }>
   try {
     const body = await req.json()
     items = body.items
@@ -26,9 +26,20 @@ export async function POST(req: NextRequest) {
   }
 
   // Validate: only positive integer product IDs and quantities ≥ 1
-  const validItems = items.filter(
-    (i) => Number.isInteger(i.id) && i.id > 0 && Number.isInteger(i.qty) && i.qty >= 1
-  )
+  const validItems = items
+    .filter((i) => Number.isInteger(i.id) && i.id > 0 && Number.isInteger(i.qty) && i.qty >= 1)
+    .map(i => ({
+      id:  i.id,
+      qty: i.qty,
+      // Sanitise skill fields: strings only, capped at 200 chars, no HTML
+      ...(typeof i.skillAnswer === 'string' && i.skillAnswer.trim()
+        ? { skillAnswer: i.skillAnswer.trim().slice(0, 200) }
+        : {}),
+      ...(i.skillResult === 'Correct' || i.skillResult === 'Incorrect'
+        ? { skillResult: i.skillResult }
+        : {}),
+    }))
+
   if (validItems.length === 0) {
     return NextResponse.json({ error: 'No valid items' }, { status: 400 })
   }

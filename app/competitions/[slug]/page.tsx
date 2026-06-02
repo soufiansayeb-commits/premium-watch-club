@@ -5,6 +5,7 @@ import {
   fetchWooProducts,
   mergeWooData,
   wooProductToCompetition,
+  resolveCompetitionMedia,
 } from '@/lib/woocommerce'
 import { notFound } from 'next/navigation'
 import Header from '@/components/Header'
@@ -24,9 +25,10 @@ export default async function CompetitionPage({ params }: Props) {
   const staticComp = getCompetitionBySlug(params.slug)
 
   if (staticComp) {
-    // Known competition — fetch live WooCommerce data and merge
+    // Known competition — fetch live WooCommerce data, merge, then resolve any image IDs
     const { product: wooProduct } = await fetchWooProductById(staticComp.wooProductId)
-    const mergedCompetition = wooProduct ? mergeWooData(staticComp, wooProduct) : staticComp
+    const merged = wooProduct ? mergeWooData(staticComp, wooProduct) : staticComp
+    const mergedCompetition = wooProduct ? await resolveCompetitionMedia(merged, wooProduct) : merged
 
     return (
       <>
@@ -45,7 +47,7 @@ export default async function CompetitionPage({ params }: Props) {
   const { product: wooProduct } = await fetchWooProductBySlug(params.slug)
   if (!wooProduct) notFound()
 
-  const competition = wooProductToCompetition(wooProduct)
+  const competition = await resolveCompetitionMedia(wooProductToCompetition(wooProduct), wooProduct)
 
   return (
     <>

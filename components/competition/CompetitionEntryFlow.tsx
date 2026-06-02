@@ -120,9 +120,12 @@ export default function CompetitionEntryFlow({ competition }: Props) {
     const qty = selectedTicketQty
     const price = competition.entryPrice
     const isFree = !!competition.isFree
+    const isAcfMode = !!competition.challengeImage && (competition.answerOptions?.length ?? 0) > 0
     const challengeId = competition.skillChallengeId ?? ''
+    // ACF mode: selectedOptionId IS the human-readable label (option text = option ID).
+    // Hardcoded mode: resolve label via getOptionLabel lookup.
     const answerLabel = selectedOptionId
-      ? getOptionLabel(challengeId, selectedOptionId)
+      ? (isAcfMode ? selectedOptionId : getOptionLabel(challengeId, selectedOptionId))
       : ''
 
     addItem({
@@ -179,7 +182,9 @@ export default function CompetitionEntryFlow({ competition }: Props) {
                 competition={competition}
                 selectedQty={selectedTicketQty}
                 selectedAnswer={selectedOptionId
-                  ? getOptionLabel(competition.skillChallengeId ?? '', selectedOptionId)
+                  ? (!!competition.challengeImage && (competition.answerOptions?.length ?? 0) > 0
+                      ? selectedOptionId
+                      : getOptionLabel(competition.skillChallengeId ?? '', selectedOptionId))
                   : null}
                 onBack={() => goToStep(2)}
               />
