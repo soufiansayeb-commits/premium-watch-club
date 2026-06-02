@@ -5737,6 +5737,45 @@ footer {
   background: linear-gradient(90deg, #8b1a1a, #cc3333, #8b1a1a);
 }
 
+/* ── Product image (absolutely positioned, top-right, behind text) ── */
+.hs-card__img {
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 52%;
+  max-width: 130px;
+  z-index: 0;
+  pointer-events: none;
+  object-fit: contain;
+  object-position: center right;
+  padding: 14px 10px 14px 0;
+  opacity: 0.52;
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,0.65));
+  /* Fade the left edge so text is never obscured */
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,1) 75%);
+  mask-image:         linear-gradient(to right, transparent 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,1) 75%);
+  transition: opacity 0.22s ease;
+}
+.hs-card:not(.hs-card--disabled):hover .hs-card__img {
+  opacity: 0.65;
+}
+.hs-card--active .hs-card__img {
+  opacity: 0.72;
+}
+/* Sold-out: desaturate and dim the image */
+.hs-card__img--soldout {
+  opacity: 0.28;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6)) grayscale(0.45) brightness(0.7);
+}
+
+/* Ensure all text/badge/price layers render above the image */
+.hs-card__badge,
+.hs-card__body,
+.hs-card__price,
+.hs-card__arrow {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── Status badge ── */
 .hs-card__badge {
   display: inline-flex;
@@ -5909,11 +5948,25 @@ footer {
   }
   .hs-cards::-webkit-scrollbar { display: none; }
   .hs-card {
-    min-width: 155px;
+    min-width: 160px;
     scroll-snap-align: start;
     flex-shrink: 0;
-    padding: 15px 12px 13px;
+    padding: 14px 12px 12px;
   }
-  .hs-card__label  { font-size: 13px; }
+  .hs-card__label  { font-size: 12px; }
   .hs-price__val   { font-size: 13px; }
+
+  /* Mobile image: smaller, more transparent, stronger left-fade so text is never obscured */
+  .hs-card__img {
+    width: 36%;
+    max-width: 62px;
+    opacity: 0.32;
+    padding: 10px 6px 10px 0;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.9) 85%);
+    mask-image:         linear-gradient(to right, transparent 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.9) 85%);
+  }
+  /* Keep sold-out image consistent on mobile */
+  .hs-card__img--soldout {
+    opacity: 0.18;
+  }
 }

@@ -86,6 +86,19 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
                 {/* Gold top accent bar (slides in on active) */}
                 <span className="hs-card__topbar" aria-hidden="true" />
 
+                {/* Product image — absolutely positioned top-right, behind text */}
+                {(comp.image || comp.heroImage) && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={comp.image || comp.heroImage}
+                    alt=""
+                    aria-hidden="true"
+                    className={`hs-card__img${isSoldOut ? ' hs-card__img--soldout' : ''}`}
+                    loading="lazy"
+                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                  />
+                )}
+
                 {/* Status badge */}
                 <span className={`hs-card__badge hs-badge--${slugify(displayStatus)}`}>
                   {isLive && <span className="hs-badge__dot" aria-hidden="true" />}
