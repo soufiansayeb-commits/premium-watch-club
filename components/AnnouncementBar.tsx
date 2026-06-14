@@ -1,39 +1,96 @@
-import { Competition } from '@/lib/competition-data'
+'use client'
 
-const TpStar = () => (
-  <div className="ab-tp-star">
-    <svg viewBox="0 0 20 20" fill="white">
-      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-    </svg>
-  </div>
-)
+import { useState, useEffect, useCallback, useRef } from 'react'
+import type { Announcement } from '@/lib/announcements'
 
 interface Props {
-  competition?: Competition
+  announcements: Announcement[]
 }
 
-export default function AnnouncementBar({ competition }: Props) {
-  const ticketsLeft = competition?.ticketsLeft ?? 399
-  const entryPrice  = competition ? `£${competition.entryPrice.toFixed(2)}` : '£5.95'
-  const drawDate    = competition?.drawDateDisplay ?? '30 May 2026'
-  const name        = competition?.shortName ?? 'Omega Speedmaster Moonwatch'
+export default function AnnouncementBar({ announcements }: Props) {
+  const [index, setIndex]   = useState(0)
+  const [visible, setVisible] = useState(true)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const total = announcements.length
+
+  const goTo = useCallback((next: number) => {
+    setVisible(false)
+    setTimeout(() => {
+      setIndex(next)
+      setVisible(true)
+    }, 220)
+  }, [])
+
+  const prev = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    goTo((index - 1 + total) % total)
+  }, [index, total, goTo])
+
+  const next = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current)
+    goTo((index + 1) % total)
+  }, [index, total, goTo])
+
+  // Auto-rotate every 5 s; cancels when user manually navigates
+  useEffect(() => {
+    if (total <= 1) return
+    timerRef.current = setTimeout(() => {
+      goTo((index + 1) % total)
+    }, 5000)
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [index, total, goTo])
+
+  if (total === 0) return null
+
+  const msg = announcements[index]
+  const inner = (
+    <span className={`pwc-ab-text${visible ? '' : ' pwc-ab-text--out'}`}>
+      <span className="pwc-ab-gem" aria-hidden="true" />
+      {msg.text}
+      <span className="pwc-ab-gem" aria-hidden="true" />
+    </span>
+  )
 
   return (
-    <div id="announce-bar">
-      <div className="ab-left">
-        <div className="ab-live-dot"></div>
-        <span>
-          <strong>Live Now:</strong> {name} — <strong>{entryPrice}</strong> per entry
-          {' · '}{ticketsLeft} tickets remaining · Draw closes {drawDate}
-        </span>
-      </div>
-      <div className="ab-right">
-        <div className="ab-tp-stars">
-          <TpStar /><TpStar /><TpStar /><TpStar /><TpStar />
+    <div className="pwc-ab" role="region" aria-label="Announcements">
+      <div className="pwc-ab-inner">
+
+        {total > 1 && (
+          <button className="pwc-ab-btn" onClick={prev} aria-label="Previous announcement" type="button">
+            <svg width="5" height="9" viewBox="0 0 5 9" fill="none" aria-hidden="true">
+              <path d="M4.5 1L1 4.5l3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+
+        <div className="pwc-ab-stage">
+          {msg.url ? (
+            <a href={msg.url} className="pwc-ab-link" tabIndex={0}>
+              {inner}
+            </a>
+          ) : (
+            inner
+          )}
         </div>
-        <div className="ab-divider"></div>
-        <span>4.8/5 · Trustpilot</span>
+
+        {total > 1 && (
+          <button className="pwc-ab-btn" onClick={next} aria-label="Next announcement" type="button">
+            <svg width="5" height="9" viewBox="0 0 5 9" fill="none" aria-hidden="true">
+              <path d="M.5 1L4 4.5.5 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+
       </div>
+
+      {total > 1 && (
+        <div className="pwc-ab-pips" aria-hidden="true">
+          {announcements.map((_, i) => (
+            <span key={i} className={`pwc-ab-pip${i === index ? ' pwc-ab-pip--on' : ''}`} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

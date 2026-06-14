@@ -12,12 +12,9 @@ import NewsletterSection from '@/components/NewsletterSection'
 import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
 
-export default async function HomePage() {
+export default async function SpecialLandingPage() {
   const competitionsByType = await getAllActiveCompetitionsByType()
 
-  // Current Competitions grid: show Live + Sold Out competitions.
-  // Coming Soon = excluded (nothing enterable yet).
-  // Closed = already excluded by getAllActiveCompetitionsByType (slot is null).
   const gridComps = (
     [
       competitionsByType.starter,
@@ -32,12 +29,11 @@ export default async function HomePage() {
   return (
     <>
       <Header />
-      <HomepageHeroContainer competitionsByType={competitionsByType} />
+      <HomepageHeroContainer competitionsByType={competitionsByType} defaultType="special" />
       <StatsBar />
       <HomepageWinners />
       <HowItWorks />
       <TrustBar />
-      {/* Current Competitions section — always rendered when any non-Coming-Soon comp exists */}
       <CompetitionsGrid competitions={gridComps} />
       <JournalPreview />
       <NewsletterSection />

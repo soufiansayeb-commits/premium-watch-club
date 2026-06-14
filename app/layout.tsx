@@ -3,17 +3,21 @@ import './globals.css'
 import AgeVerificationModal from '@/components/AgeVerificationModal'
 import { CartProvider } from '@/context/CartContext'
 import CartDrawer from '@/components/CartDrawer'
+import AnnouncementBar from '@/components/AnnouncementBar'
+import { getAnnouncements } from '@/lib/announcements'
 
 export const metadata: Metadata = {
   title: 'Premium Watch Club — Win Luxury Watches',
   description: 'Enter skill-based competitions to win your dream luxury watch. One competition at a time.',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const announcements = await getAnnouncements()
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -24,6 +28,7 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <CartProvider>
           <AgeVerificationModal />
+          <AnnouncementBar announcements={announcements} />
           {children}
           <CartDrawer />
         </CartProvider>

@@ -1,36 +1,22 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import Image from "next/image"
 
-const winners = [
-  {
-    name: "Alexander",
-    prize: "Rolex GMT Batman",
-    testimonial: "Winning felt unreal. The process was clear, and the watch arrived exactly as promised.",
-    image: "/assets/images/winners/alexander.png",
-  },
-  {
-    name: "Patrick",
-    prize: "John Mayer Daytona",
-    testimonial: "Premium Watch Club made the whole experience feel transparent and exciting from start to finish.",
-    image: "/assets/images/winners/patrick.png",
-  },
-  {
-    name: "Dan",
-    prize: "Rolex GMT Pepsi",
-    testimonial: "I joined for the thrill and ended up with a dream watch. Everything felt professional and verified.",
-    image: "/assets/images/winners/dan.png",
-  },
-]
+export interface CarouselWinner {
+  name:        string
+  prize:       string
+  testimonial: string
+  image:       string
+}
 
-const N = winners.length
-// Three copies for infinite loop: [0,1,2, 0,1,2, 0,1,2]
-const TRACK = [...winners, ...winners, ...winners]
 const GAP = 24 // px gap between cards
-const START = N  // start in middle copy (pos 3 = winner 0)
 
-export default function WinnersSection() {
+export default function WinnersSection({ winners }: { winners: CarouselWinner[] }) {
+  const N = winners.length
+  // Three copies for infinite loop: [0,1,2, 0,1,2, 0,1,2]
+  const TRACK = [...winners, ...winners, ...winners]
+  const START = N // start in middle copy
+
   const [pos, setPos] = useState(START)
   const [enabled, setEnabled] = useState(true)
   const [navigating, setNavigating] = useState(false)
@@ -81,6 +67,9 @@ export default function WinnersSection() {
     setNavigating(false)
   }
 
+  // No homepage winners configured → render nothing (keeps hooks order intact).
+  if (N === 0) return null
+
   // Desktop: show 3 cards → leftmost visible = pos-1
   // Mobile:  show 1 card  → visible = pos
   const offset = mobile ? 0 : 1
@@ -130,7 +119,8 @@ export default function WinnersSection() {
                   style={{ width: cardW > 0 ? cardW : undefined, flexShrink: 0 }}
                 >
                   <div className="wsc-photo-wrap">
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={winner.image}
                       alt={`${winner.name} — Winner of the ${winner.prize}`}
                       width={160}

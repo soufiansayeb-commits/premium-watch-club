@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { journalArticles } from '@/lib/journal-data'
+import { getJournalPosts } from '@/lib/wordpress-journal'
 
 const WatchFaceIcon = () => (
   <svg width="80" height="80" viewBox="0 0 120 120" fill="none" opacity="0.55">
@@ -15,22 +15,10 @@ const WatchFaceIcon = () => (
   </svg>
 )
 
-const DoubleWatchIcon = () => (
-  <svg width="80" height="64" viewBox="0 0 130 100" fill="none" opacity="0.5">
-    <circle cx="36" cy="50" r="30" stroke="#0A1F44" strokeWidth="1.5" />
-    <circle cx="36" cy="50" r="20" fill="white" stroke="#C5A065" strokeWidth="0.8" />
-    <circle cx="94" cy="50" r="30" stroke="#0A1F44" strokeWidth="1.5" />
-    <circle cx="94" cy="50" r="20" fill="white" stroke="#C5A065" strokeWidth="0.8" />
-    <rect x="34.5" y="34" width="3" height="18" rx="1.5" fill="#0A1F44" transform="rotate(-20 36 50)" />
-    <rect x="35" y="28" width="2" height="24" rx="1" fill="#0A1F44" transform="rotate(30 36 50)" />
-    <rect x="92.5" y="34" width="3" height="18" rx="1.5" fill="#0A1F44" transform="rotate(10 94 50)" />
-    <rect x="93" y="28" width="2" height="24" rx="1" fill="#0A1F44" transform="rotate(-25 94 50)" />
-  </svg>
-)
+export default async function JournalPreview() {
+  const posts = await getJournalPosts(3)
+  if (posts.length === 0) return null
 
-const placeholders = [<WatchFaceIcon key="a" />, <DoubleWatchIcon key="b" />]
-
-export default function JournalPreview() {
   return (
     <section id="journal" className="journal-section">
       <div className="container">
@@ -43,35 +31,41 @@ export default function JournalPreview() {
         </div>
 
         <div className="journal-grid">
-          {journalArticles.map((article, i) => (
-            <Link
-              key={article.slug}
-              href={`/journal/${article.slug}`}
-              className={`journal-card reveal${i > 0 ? ` d${i}` : ''}`}
-            >
-              <div className="journal-card-image">
-                {article.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={article.image} alt={article.title} />
-                ) : (
-                  <div className="journal-card-placeholder">
-                    {placeholders[(i - 1) % placeholders.length]}
-                  </div>
-                )}
-              </div>
-              <div className="journal-card-body">
-                <div className="journal-category">{article.category}</div>
-                <h3 className="journal-title">{article.title}</h3>
-                <p className="journal-excerpt">{article.excerpt}</p>
-                <div className="journal-meta">
-                  <span className="journal-read-time">{article.readTime}</span>
-                  <span className="journal-read-more">
-                    Read article <span aria-hidden>→</span>
-                  </span>
+          {posts.map((post, i) => {
+            // Prefer WP featured image; fall back to first product image
+            const cardImage = post.featuredImage ?? post.relatedProduct?.images[0] ?? null
+            const isProductImage = !post.featuredImage && !!cardImage
+
+            return (
+              <Link
+                key={post.slug}
+                href={`/journal/${post.slug}`}
+                className={`journal-card reveal${i > 0 ? ` d${i}` : ''}`}
+              >
+                <div className={`journal-card-image${isProductImage ? ' journal-card-image--product' : ' journal-card-image--editorial'}`}>
+                  {cardImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={cardImage} alt={post.title} />
+                  ) : (
+                    <div className="journal-card-placeholder">
+                      <WatchFaceIcon />
+                    </div>
+                  )}
                 </div>
-              </div>
-            </Link>
-          ))}
+                <div className="journal-card-body">
+                  <div className="journal-category">{post.category}</div>
+                  <h3 className="journal-title">{post.title}</h3>
+                  <p className="journal-excerpt">{post.excerpt}</p>
+                  <div className="journal-meta">
+                    <span className="journal-read-time">{post.dateFormatted}</span>
+                    <span className="journal-read-more">
+                      Read article <span aria-hidden>→</span>
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
         </div>
 
         <div className="journal-all-wrap">

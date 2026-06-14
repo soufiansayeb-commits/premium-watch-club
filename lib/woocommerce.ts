@@ -71,6 +71,48 @@ export interface WooProduct {
    * Not exposed to the Competition object; used only as an intermediate during server render.
    */
   hero_background_image_id?: number
+
+  // ── Past Winners / Winner Archive ACF fields ───────────────────────────────
+  /** Show this closed competition on the /past-winners page. */
+  show_on_past_winners?: boolean
+  /** Show this winner on the homepage winners carousel (requires winner_photo). */
+  show_on_homepage_winners?: boolean
+  /** e.g. 'archive_only' | 'full_proof' — how this winner is presented. */
+  winner_archive_type?: string
+  /** Winner display name, e.g. "A.K." */
+  winner_display_name?: string
+  /** Winner location, e.g. "London". */
+  winner_location?: string
+  /** ACF image: winner photo (resolved URL). */
+  winner_photo?: string
+  /** Pending ACF image ID for winner_photo (resolved async). */
+  winner_photo_id?: number
+  /** Winner testimonial / quote. */
+  winner_testimonial?: string
+  /** Draw number string, e.g. "024" (kept as string to preserve leading zeros). */
+  draw_number?: string
+  /** Prize value (number), e.g. 15000. */
+  prize_value?: number
+  /** Tickets sold for this closed draw. */
+  tickets_sold?: number
+  /** Total tickets for this closed draw (winner-archive field; falls back to total_entries). */
+  total_tickets?: number
+  /** Winning entry number, e.g. "417". */
+  winning_entry_number?: string
+  /** Public Live Draw recording URL (empty → no button). */
+  live_draw_url?: string
+  /** Draw certificate URL (empty → no button). */
+  draw_certificate_url?: string
+  /** e.g. 'no_public_proof' | 'verified' — controls proof button visibility. */
+  proof_status?: string
+  /** ACF image: dedicated Past Winners card image (resolved URL). */
+  past_winner_card_image?: string
+  /** Pending ACF image ID for past_winner_card_image (resolved async). */
+  past_winner_card_image_id?: number
+  /** Short quote for the homepage winners carousel. */
+  homepage_winner_quote?: string
+  /** Sort order for the homepage winners carousel (ascending). */
+  homepage_winner_order?: number
 }
 
 // ── Internal config check ────────────────────────────────────────────────────
@@ -200,7 +242,7 @@ function extractAcfImage(raw: unknown): AcfImageExtracted {
  * Used as a fallback when ACF returns an image ID instead of a full URL.
  * Results cached for 1 hour (images rarely change).
  */
-async function resolveWpMediaUrl(id: number): Promise<string | undefined> {
+export async function resolveWpMediaUrl(id: number): Promise<string | undefined> {
   const config = getConfig()
   if (!config) return undefined
   try {
@@ -510,6 +552,40 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     )
   }
 
+  // ── Past Winners / Winner Archive ACF fields ────────────────────────────────
+  // Generic readers (ACF object first, meta_data fallback). No hardcoding.
+  // NOTE: prefer a non-empty ACF value, otherwise fall back to meta_data — the
+  // ACF object can hold "" for a field while meta_data holds the real value, and
+  // `??` would not fall through an empty string.
+  const acfRaw  = (key: string): unknown => {
+    const a = acf[key]
+    if (a !== null && a !== undefined && a !== '' && a !== false) return a
+    return getMetaValue(raw, key)
+  }
+  const acfBool = (key: string): boolean => {
+    const v = acfRaw(key)
+    return v === true || v === 1 || v === '1' || v === 'yes' || v === 'true'
+  }
+  const acfStr  = (key: string): string | undefined => {
+    const v = acfRaw(key)
+    return (v !== null && v !== undefined && v !== '' && v !== false) ? String(v).trim() : undefined
+  }
+  // Integer parse that tolerates thousands separators ("15.000" / "15,000" → 15000).
+  const acfInt  = (key: string): number | undefined => {
+    const v = acfRaw(key)
+    if (v === null || v === undefined || v === '' || v === false) return undefined
+    const cleaned = String(v).replace(/[^\d]/g, '')
+    if (cleaned === '') return undefined
+    const n = parseInt(cleaned, 10)
+    return isNaN(n) ? undefined : n
+  }
+
+  // Winner photo: some products store the image under '_winner_photo' (the ACF
+  // field was named with a leading underscore), so fall back to that key when the
+  // normal 'winner_photo' value is empty. Value may be a URL, object, or attachment ID.
+  const winnerPhotoImg = extractAcfImage(acfRaw('winner_photo') ?? getMetaValue(raw, '_winner_photo'))
+  const cardImg        = extractAcfImage(acfRaw('past_winner_card_image') ?? getMetaValue(raw, '_past_winner_card_image'))
+
   return {
     id:             Number(raw.id)             || 0,
     name:           String(raw.name            ?? ''),
@@ -542,6 +618,29 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     hero_background_image:     heroBgExtracted.url,
     hero_background_image_id:  heroBgExtracted.id,
     description,
+
+    // ── Past Winners / Winner Archive ────────────────────────────────────────
+    show_on_past_winners:      acfBool('show_on_past_winners'),
+    // ACF field is named singular ('show_on_homepage_winner') — accept both.
+    show_on_homepage_winners:  acfBool('show_on_homepage_winner') || acfBool('show_on_homepage_winners'),
+    winner_archive_type:       acfStr('winner_archive_type'),
+    winner_display_name:       acfStr('winner_display_name'),
+    winner_location:           acfStr('winner_location'),
+    winner_photo:              winnerPhotoImg.url,
+    winner_photo_id:           winnerPhotoImg.id,
+    winner_testimonial:        acfStr('winner_testimonial'),
+    draw_number:               acfStr('draw_number'),
+    prize_value:               acfInt('prize_value'),
+    tickets_sold:              acfInt('tickets_sold'),
+    total_tickets:             acfInt('total_tickets'),
+    winning_entry_number:      acfStr('winning_entry_number'),
+    live_draw_url:             acfStr('live_draw_url'),
+    draw_certificate_url:      acfStr('draw_certificate_url'),
+    proof_status:              acfStr('proof_status'),
+    past_winner_card_image:    cardImg.url,
+    past_winner_card_image_id: cardImg.id,
+    homepage_winner_quote:     acfStr('homepage_winner_quote'),
+    homepage_winner_order:     acfInt('homepage_winner_order'),
   }
 }
 

@@ -10,7 +10,7 @@ import {
 import { notFound } from 'next/navigation'
 import Header from '@/components/Header'
 import CompetitionEntryFlow from '@/components/competition/CompetitionEntryFlow'
-import WinnersSection from '@/components/WinnersSection'
+import HomepageWinners from '@/components/HomepageWinners'
 import ProductEditorial from '@/components/competition/ProductEditorial'
 import NewsletterSection from '@/components/NewsletterSection'
 import ScrollReveal from '@/components/ScrollReveal'
@@ -34,7 +34,7 @@ export default async function CompetitionPage({ params }: Props) {
       <>
         <Header />
         <CompetitionEntryFlow competition={mergedCompetition} />
-        <WinnersSection />
+        <HomepageWinners />
         <ProductEditorial competition={mergedCompetition} />
         <NewsletterSection />
         <ScrollReveal />
@@ -53,7 +53,7 @@ export default async function CompetitionPage({ params }: Props) {
     <>
       <Header />
       <CompetitionEntryFlow competition={competition} />
-      <WinnersSection />
+      <HomepageWinners />
       <ProductEditorial competition={competition} />
       <NewsletterSection />
       <ScrollReveal />

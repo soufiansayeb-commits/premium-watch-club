@@ -114,26 +114,13 @@ export default function SkillChallenge({
 
           <div className="skill-card-body">
 
-            {/* Challenge image: blurred background + circular magnifier (same premium UI) */}
-            <div className="sch-image-wrap" aria-hidden="true">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={c.challengeImage}
-                alt=""
-                className="sch-image-bg"
-              />
-              <div className="sch-magnifier">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={c.challengeImage}
-                  alt=""
-                  className="sch-magnifier-img"
-                />
-              </div>
-              <div className="sch-image-hint">
-                <span>Study the detail</span>
-              </div>
-            </div>
+            {/* Challenge image: display uploaded Canva image as-is, no zoom/magnifier */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={c.challengeImage}
+              alt="Skill challenge"
+              className="sch-challenge-image"
+            />
 
             {/* Hardcoded question text — never changes */}
             <div className="skill-question">Which watch model is shown in the image?</div>

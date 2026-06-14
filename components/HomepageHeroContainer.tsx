@@ -1,25 +1,42 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { CompetitionType, CompetitionsByType } from '@/lib/woocommerce'
 import HomepageHero from './HomepageHero'
 import HeroSwitcher from './HeroSwitcher'
 
 interface Props {
   competitionsByType: CompetitionsByType
+  defaultType?: CompetitionType
 }
 
-// Default hero priority: special first (AP X SWATCH / Special Drop), then Weekly, Monthly.
-// 'starter' is kept at the end as a failsafe in case the data-layer promotion did not run,
-// but result.starter is always null after getAllActiveCompetitionsByType returns.
-const TYPE_ORDER: CompetitionType[] = ['special', 'weekly', 'monthly', 'starter']
+// Default hero priority: Weekly first, then Monthly, then Special.
+const TYPE_ORDER: CompetitionType[] = ['weekly', 'monthly', 'special', 'starter']
+
+// Map CompetitionType ↔ URL path for URL sync
+const TYPE_TO_PATH: Partial<Record<CompetitionType, string>> = {
+  weekly:  '/weekly',
+  monthly: '/monthly',
+  special: '/special',
+}
+const PATH_TO_TYPE: Record<string, CompetitionType> = {
+  '/weekly':  'weekly',
+  '/monthly': 'monthly',
+  '/special': 'special',
+}
 
 /**
  * Pick the initial active competition type.
- * Priority: Live+enterable (special first) → any non-Coming-Soon.
+ * If defaultType is provided (ad landing route) and that slot is not Coming Soon, use it.
+ * Otherwise: Live+enterable (Weekly first) → any non-Coming-Soon → first non-null.
  */
-function resolveDefault(comps: CompetitionsByType): CompetitionType | null {
-  // Prefer a fully enterable Live competition — Special Drop has highest priority
+function resolveDefault(comps: CompetitionsByType, defaultType?: CompetitionType): CompetitionType | null {
+  // Landing-route override: honour if the slot exists and is not Coming Soon
+  if (defaultType) {
+    const c = comps[defaultType]
+    if (c && c.competitionStatus !== 'Coming Soon') return defaultType
+  }
+  // Prefer a fully enterable Live competition — Weekly Drop has highest priority
   for (const t of TYPE_ORDER) {
     const c = comps[t]
     if (c && c.competitionStatus === 'Live' && c.ticketsLeft > 0) return t
@@ -45,17 +62,46 @@ function isSelectable(comp: NonNullable<CompetitionsByType[CompetitionType]>): b
   return comp.competitionStatus !== 'Coming Soon'
 }
 
-export default function HomepageHeroContainer({ competitionsByType }: Props) {
+export default function HomepageHeroContainer({ competitionsByType, defaultType }: Props) {
   const [activeType, setActiveType] = useState<CompetitionType | null>(
-    () => resolveDefault(competitionsByType)
+    () => resolveDefault(competitionsByType, defaultType)
   )
 
   const activeCompetition = activeType ? competitionsByType[activeType] : null
+
+  // Sync URL to active type on mount (handles / → /weekly) and on each change.
+  // Uses history API directly — no Next.js navigation, no re-fetch, no page flash.
+  useEffect(() => {
+    if (!activeType) return
+    const targetPath = TYPE_TO_PATH[activeType]
+    if (!targetPath) return
+    if (window.location.pathname !== targetPath) {
+      // replaceState on mount so visiting / doesn't add a history entry
+      window.history.replaceState(null, '', targetPath)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps — intentionally only on mount
+
+  // Handle browser back/forward — keep active tab in sync with URL
+  useEffect(() => {
+    function onPopState() {
+      const type = PATH_TO_TYPE[window.location.pathname]
+      if (!type) return
+      const comp = competitionsByType[type]
+      if (comp && isSelectable(comp)) setActiveType(type)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [competitionsByType])
 
   function handleSelect(type: CompetitionType) {
     const comp = competitionsByType[type]
     if (!comp || !isSelectable(comp)) return
     setActiveType(type)
+    // Update URL without navigation — pushState so back button returns to previous tab
+    const path = TYPE_TO_PATH[type]
+    if (path && window.location.pathname !== path) {
+      window.history.pushState(null, '', path)
+    }
   }
 
   const switcher = (

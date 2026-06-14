@@ -17,8 +17,7 @@ export default function Footer() {
               <ul>
                 <li><Link href="/competitions/omega-speedmaster-moonwatch">Current Draw</Link></li>
                 <li><Link href="/#how">How It Works</Link></li>
-                <li><Link href="/#winners">Past Winners</Link></li>
-                <li><Link href="/competitions/closed">Closed Draws</Link></li>
+                <li><Link href="/past-winners">Past Winners</Link></li>
               </ul>
             </div>
             <div className="footer-col">

@@ -3,7 +3,7 @@ import { fetchWooProductById, mergeWooData } from '@/lib/woocommerce'
 import { notFound } from 'next/navigation'
 import Header from '@/components/Header'
 import CompetitionEntryFlow from '@/components/competition/CompetitionEntryFlow'
-import WinnersSection from '@/components/WinnersSection'
+import HomepageWinners from '@/components/HomepageWinners'
 import ProductEditorial from '@/components/competition/ProductEditorial'
 import NewsletterSection from '@/components/NewsletterSection'
 import ScrollReveal from '@/components/ScrollReveal'
@@ -25,7 +25,7 @@ export default async function FreeCompetitionPage() {
     <>
       <Header />
       <CompetitionEntryFlow competition={mergedCompetition} />
-      <WinnersSection />
+      <HomepageWinners />
       <ProductEditorial competition={mergedCompetition} />
       <NewsletterSection />
       <ScrollReveal />

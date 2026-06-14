@@ -13,9 +13,9 @@ interface CardConfig {
 // (formerly Starter Drop) is displayed here as Special Drop regardless of whether its
 // WooCommerce competition_type is 'starter'/'free' or 'special'.
 const CARD_CONFIG: CardConfig[] = [
-  { type: 'special', label: 'Special Drop', tagline: 'Limited Edition' },
   { type: 'weekly',  label: 'Weekly Drop',  tagline: 'Every Week'      },
   { type: 'monthly', label: 'Monthly Drop', tagline: 'Rare Pieces'     },
+  { type: 'special', label: 'Special Drop', tagline: 'Limited Edition' },
 ]
 
 interface Props {
