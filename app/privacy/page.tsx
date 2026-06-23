@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 
 export const metadata = {
   title: 'Privacy Policy — Premium Watch Club',
+  description: 'Read how Premium Watch Club collects, uses, and protects your personal data when you enter our skill-based luxury watch prize competitions and draws.',
 }
 
 const sections = [

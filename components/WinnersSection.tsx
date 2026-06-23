@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
+import Image from "next/image"
 
 export interface CarouselWinner {
   name:        string
@@ -119,13 +120,13 @@ export default function WinnersSection({ winners }: { winners: CarouselWinner[] 
                   style={{ width: cardW > 0 ? cardW : undefined, flexShrink: 0 }}
                 >
                   <div className="wsc-photo-wrap">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={winner.image}
                       alt={`${winner.name} — Winner of the ${winner.prize}`}
-                      width={160}
-                      height={160}
+                      fill
                       className="wsc-photo"
+                      style={{ objectFit: 'cover' }}
+                      sizes="120px"
                     />
                   </div>
                   <p className="wsc-label">Winner of the</p>

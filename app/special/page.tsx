@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getAllActiveCompetitionsByType } from '@/lib/woocommerce'
 import type { Competition } from '@/lib/competition-data'
 import Header from '@/components/Header'
@@ -8,9 +9,13 @@ import HowItWorks from '@/components/HowItWorks'
 import TrustBar from '@/components/TrustBar'
 import JournalPreview from '@/components/JournalPreview'
 import CompetitionsGrid from '@/components/CompetitionsGrid'
-import NewsletterSection from '@/components/NewsletterSection'
 import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
+
+export const metadata: Metadata = {
+  title: 'Special Edition Luxury Watch Competitions | Premium Watch Club',
+  description: 'Win rare and limited edition luxury watches in our special competitions. Exceptional timepieces from Rolex, Omega and more, one competition at a time.',
+}
 
 export default async function SpecialLandingPage() {
   const competitionsByType = await getAllActiveCompetitionsByType()
@@ -36,7 +41,6 @@ export default async function SpecialLandingPage() {
       <TrustBar />
       <CompetitionsGrid competitions={gridComps} />
       <JournalPreview />
-      <NewsletterSection />
       <Footer />
       <ScrollReveal />
     </>

@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 
 export const metadata = {
   title: 'Competition Terms & Conditions — Premium Watch Club',
+  description: 'Read the full terms and conditions for entering Premium Watch Club\'s skill-based luxury watch competitions, including eligibility, draws, and prize delivery.',
 }
 
 const sections = [

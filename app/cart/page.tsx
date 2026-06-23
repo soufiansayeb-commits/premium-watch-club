@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -149,11 +150,12 @@ export default function CartPage() {
                 {items.map((item) => (
                   <div key={item.competitionId} className="cp-item-card">
                     {item.image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={item.image}
                         alt={item.title}
                         className="cp-item-img"
+                        width={140}
+                        height={160}
                         draggable={false}
                       />
                     )}

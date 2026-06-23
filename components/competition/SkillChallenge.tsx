@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Competition } from '@/lib/competition-data'
 import { getChallenge, getOptionLabel } from '@/lib/skill-challenge-config'
 import { trackEvent } from '@/lib/analytics'
@@ -115,12 +116,15 @@ export default function SkillChallenge({
           <div className="skill-card-body">
 
             {/* Challenge image: display uploaded Canva image as-is, no zoom/magnifier */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={c.challengeImage}
-              alt="Skill challenge"
-              className="sch-challenge-image"
-            />
+            <div className="sch-challenge-image" style={{ position: 'relative' }}>
+              <Image
+                src={c.challengeImage!}
+                alt="Skill challenge"
+                fill
+                style={{ objectFit: 'contain' }}
+                sizes="320px"
+              />
+            </div>
 
             {/* Hardcoded question text — never changes */}
             <div className="skill-question">Which watch model is shown in the image?</div>
@@ -193,11 +197,23 @@ export default function SkillChallenge({
           <div className="skill-card-body">
 
             <div className="sch-image-wrap" aria-hidden="true">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={challenge.image} alt="" className="sch-image-bg" />
+              <Image
+                src={challenge.image}
+                alt="Competition skill question image"
+                fill
+                className="sch-image-bg"
+                style={{ objectFit: 'cover' }}
+                sizes="(max-width: 640px) 100vw, 480px"
+              />
               <div className="sch-magnifier">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={challenge.image} alt="" className="sch-magnifier-img" />
+                <Image
+                  src={challenge.image}
+                  alt=""
+                  width={415}
+                  height={415}
+                  className="sch-magnifier-img"
+                  sizes="415px"
+                />
               </div>
               <div className="sch-image-hint">
                 <span>Study the detail</span>

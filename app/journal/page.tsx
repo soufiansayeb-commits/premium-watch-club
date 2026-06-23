@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -123,8 +124,14 @@ export default async function JournalIndexPage() {
                   <Link href={`/journal/${lead.slug}`} className="ji-lead">
                     <div className={`ji-lead-img${isProduct ? ' ji-lead-img--contain' : ''}`}>
                       {src ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={src} alt={lead.title} />
+                        <Image
+                          src={src}
+                          alt={lead.title}
+                          fill
+                          style={{ objectFit: isProduct ? 'contain' : 'cover' }}
+                          sizes="(max-width: 860px) 100vw, 50vw"
+                          priority
+                        />
                       ) : (
                         <div className="ji-lead-ph"><WatchFaceIcon /></div>
                       )}
@@ -151,8 +158,13 @@ export default async function JournalIndexPage() {
                       <Link key={post.slug} href={`/journal/${post.slug}`} className="ji-card">
                         <div className={`ji-card-img${isProduct ? ' ji-card-img--contain' : ''}`}>
                           {src ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={src} alt={post.title} />
+                            <Image
+                              src={src}
+                              alt={post.title}
+                              fill
+                              style={{ objectFit: isProduct ? 'contain' : 'cover' }}
+                              sizes="(max-width: 560px) 100vw, (max-width: 860px) 50vw, 33vw"
+                            />
                           ) : (
                             <div className="ji-card-ph"><WatchFaceIcon /></div>
                           )}

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import type { CompetitionType, CompetitionsByType } from '@/lib/woocommerce'
 
 interface CardConfig {
@@ -88,15 +89,18 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
 
                 {/* Product image — absolutely positioned top-right, behind text */}
                 {(comp.image || comp.heroImage) && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={comp.image || comp.heroImage}
-                    alt=""
-                    aria-hidden="true"
-                    className={`hs-card__img${isSoldOut ? ' hs-card__img--soldout' : ''}`}
-                    loading="lazy"
-                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-                  />
+                  <div className="hs-card__img-wrap">
+                    <Image
+                      src={(comp.image || comp.heroImage) as string}
+                      alt=""
+                      aria-hidden="true"
+                      fill
+                      className={`hs-card__img${isSoldOut ? ' hs-card__img--soldout' : ''}`}
+                      sizes="130px"
+                      loading="lazy"
+                      onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                    />
+                  </div>
                 )}
 
                 {/* Status badge */}

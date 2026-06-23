@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useCart } from '@/context/CartContext'
 import { trackEvent } from '@/lib/analytics'
 import type { CartItem } from '@/lib/cartStore'
@@ -168,11 +169,12 @@ export default function CartDrawer() {
                   <div className="cd-item">
                     {item.image && (
                       <div className="cd-item-img-wrap">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={item.image}
                           alt={item.title}
+                          fill
                           className="cd-item-img"
+                          style={{ objectFit: 'cover' }}
                           draggable={false}
                         />
                       </div>

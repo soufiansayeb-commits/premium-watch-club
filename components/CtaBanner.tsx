@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 
@@ -113,11 +114,14 @@ export default function CtaBanner({ competition: c }: Props) {
         <div className="cd-right">
           <div className="cd-watch-stage">
             <div className="cd-watch-glow" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={c.heroImage}
               alt={c.title}
               className="cd-watch-img"
+              width={680}
+              height={680}
+              style={{ width: '100%', height: 'auto' }}
+              sizes="340px"
               draggable={false}
             />
 

@@ -113,6 +113,13 @@ export interface WooProduct {
   homepage_winner_quote?: string
   /** Sort order for the homepage winners carousel (ascending). */
   homepage_winner_order?: number
+  /**
+   * Public-facing prize/watch title for archive products.
+   * WooCommerce product title is used for admin organisation only (e.g. "PAST WINNER 001").
+   * This ACF field holds the real display name (e.g. "Rolex GMT Pepsi").
+   * If empty, falls back to the WooCommerce product title.
+   */
+  past_winner_public_prize_title?: string
 }
 
 // ── Internal config check ────────────────────────────────────────────────────
@@ -125,6 +132,10 @@ function getConfig(): { storeUrl: string; key: string; secret: string } | null {
 }
 
 // ── Core fetch helper (server-side only) ─────────────────────────────────────
+// Hard cap on how long we wait for WooCommerce before treating it as a failure.
+// Without this a hanging upstream stalls the whole server render.
+const WC_FETCH_TIMEOUT_MS = 10_000
+
 async function wcFetch(endpoint: string): Promise<unknown> {
   const config = getConfig()
   if (!config) {
@@ -144,6 +155,7 @@ async function wcFetch(endpoint: string): Promise<unknown> {
         Authorization: `Basic ${basicToken}`,
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(WC_FETCH_TIMEOUT_MS),
       // Next.js ISR: revalidate frequently in dev so stale product config changes
       // (price, sold_individually, ACF fields) are always reflected immediately.
       next: { revalidate: process.env.NODE_ENV === 'development' ? 5 : 60 },
@@ -157,7 +169,10 @@ async function wcFetch(endpoint: string): Promise<unknown> {
     const separator = endpoint.includes('?') ? '&' : '?'
     const qsUrl = `${url}${separator}consumer_key=${key}&consumer_secret=${secret}`
     try {
-      res = await fetch(qsUrl, { next: { revalidate: 60 } })
+      res = await fetch(qsUrl, {
+        signal: AbortSignal.timeout(WC_FETCH_TIMEOUT_MS),
+        next: { revalidate: 60 },
+      })
     } catch (networkErr) {
       throw new Error(`Network error (query-auth retry): ${(networkErr as Error).message}`)
     }
@@ -586,6 +601,67 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
   const winnerPhotoImg = extractAcfImage(acfRaw('winner_photo') ?? getMetaValue(raw, '_winner_photo'))
   const cardImg        = extractAcfImage(acfRaw('past_winner_card_image') ?? getMetaValue(raw, '_past_winner_card_image'))
 
+  // ── Resolve past_winner_public_prize_title (with underscore-prefix fallback) ────────
+  // WordPress/ACF stores the VALUE under the bare key ("past_winner_public_prize_title").
+  // Some setups return it with a leading underscore in meta_data, so we check both.
+  const pastWinnerPublicTitle =
+    acfStr('past_winner_public_prize_title') ??
+    acfStr('_past_winner_public_prize_title') ??
+    (() => {
+      // Broadest fallback: scan every meta_data entry for any key that looks like
+      // "past_winner_public_prize_title" regardless of prefix/case differences.
+      if (!Array.isArray(raw.meta_data)) return undefined
+      for (const m of raw.meta_data as Record<string, unknown>[]) {
+        const k = String(m.key ?? '').replace(/^_+/, '').toLowerCase()
+        if (k === 'past_winner_public_prize_title') {
+          const v = m.value
+          if (v !== null && v !== undefined && v !== '' && v !== false) return String(v).trim()
+        }
+      }
+      return undefined
+    })()
+
+  // ── Archive-product diagnostic (dev only) ─────────────────────────────────────
+  // Fires for any product that looks like an archive entry so you can verify exactly
+  // what the WooCommerce REST API is returning for past_winner_public_prize_title.
+  if (process.env.NODE_ENV === 'development') {
+    const isArchive =
+      String(raw.name ?? '').toUpperCase().includes('PAST WINNER') ||
+      acfBool('show_on_past_winners') ||
+      acfBool('show_on_homepage_winner') ||
+      acfBool('show_on_homepage_winners')
+
+    if (isArchive) {
+      const allMetaKeys = Array.isArray(raw.meta_data)
+        ? (raw.meta_data as Record<string, unknown>[]).map(m => String((m as Record<string, unknown>).key ?? ''))
+        : []
+      const winnerMeta = Array.isArray(raw.meta_data)
+        ? (raw.meta_data as Record<string, unknown>[]).filter(m => {
+            const k = String((m as Record<string, unknown>).key ?? '').toLowerCase()
+            return k.includes('past_winner') || k.includes('public_title') || k.includes('winner') || k.includes('archive')
+          })
+        : []
+
+      console.log(
+        `\n[PWC ARCHIVE TITLE DEBUG] #${raw.id} "${raw.name}"\n` +
+        `  ── ACF object ──────────────────────────────────────────────────────────\n` +
+        `  acf keys total              : ${Object.keys(acf).length} ${Object.keys(acf).length === 0 ? '⚠ ACF REST API not returning data!' : ''}\n` +
+        `  acf.past_winner_public_prize_title = ${JSON.stringify(acf['past_winner_public_prize_title'])}\n` +
+        `  acf._past_winner_public_prize_title= ${JSON.stringify(acf['_past_winner_public_prize_title'])}\n` +
+        `  ── meta_data ───────────────────────────────────────────────────────────\n` +
+        `  meta_data keys total        : ${allMetaKeys.length}\n` +
+        `  winner/archive meta entries :\n` +
+        (winnerMeta.length
+          ? winnerMeta.map(m => `    key=${JSON.stringify((m as Record<string,unknown>).key)}  value=${JSON.stringify((m as Record<string,unknown>).value)?.slice(0,120)}`).join('\n')
+          : '    (none — no meta_data key contains "past_winner", "public_title", "winner", or "archive")') + '\n' +
+        `  ── Result ──────────────────────────────────────────────────────────────\n` +
+        `  pastWinnerPublicTitle       : ${JSON.stringify(pastWinnerPublicTitle)}\n` +
+        `  title will display as       : "${pastWinnerPublicTitle ?? String(raw.name ?? '')}"\n` +
+        `  ────────────────────────────────────────────────────────────────────────`
+      )
+    }
+  }
+
   return {
     id:             Number(raw.id)             || 0,
     name:           String(raw.name            ?? ''),
@@ -641,6 +717,7 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     past_winner_card_image_id: cardImg.id,
     homepage_winner_quote:     acfStr('homepage_winner_quote'),
     homepage_winner_order:     acfInt('homepage_winner_order'),
+    past_winner_public_prize_title:  pastWinnerPublicTitle,
   }
 }
 
@@ -652,15 +729,22 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
  * Server-side only.
  */
 export async function fetchWooProducts(): Promise<{ products: WooProduct[]; error?: string }> {
-  try {
-    const data = await wcFetch('products?status=publish&per_page=100')
-    if (!Array.isArray(data)) {
-      return { products: [], error: 'Unexpected response shape from WooCommerce API.' }
+  // One retry: a single transient hiccup (timeout, 5xx, brief network blip) should
+  // not be allowed to surface as an empty product list — that poisons the ISR cache
+  // with the "New Drops Coming Soon" empty hero. See getAllActiveCompetitionsByType.
+  let lastError = ''
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const data = await wcFetch('products?status=publish&per_page=100')
+      if (!Array.isArray(data)) {
+        return { products: [], error: 'Unexpected response shape from WooCommerce API.' }
+      }
+      return { products: (data as Record<string, unknown>[]).map(toSafeProduct) }
+    } catch (err) {
+      lastError = (err as Error).message
     }
-    return { products: (data as Record<string, unknown>[]).map(toSafeProduct) }
-  } catch (err) {
-    return { products: [], error: (err as Error).message }
   }
+  return { products: [], error: lastError }
 }
 
 /**
@@ -1090,7 +1174,15 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
     }
   }
 
-  if (error || products.length === 0) return result
+  // A failed fetch must NOT collapse into the empty "Coming Soon" state: doing so
+  // lets a transient WooCommerce hiccup get cached by ISR and shown to everyone for
+  // the rest of the revalidate window. Throw instead — during ISR revalidation Next.js
+  // keeps serving the last successfully-rendered page, so the hero never disappears.
+  // A genuinely empty store (successful fetch, zero products) still returns below.
+  if (error) {
+    throw new Error(`[PWC] WooCommerce fetch failed, keeping last good page: ${error}`)
+  }
+  if (products.length === 0) return result
 
   for (const type of HERO_TYPES) {
     // After normalisation in toSafeProduct, competition_type is already 'starter'/'weekly'/etc.

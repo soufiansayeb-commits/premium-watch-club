@@ -4,6 +4,7 @@ import Footer from '@/components/Footer'
 
 export const metadata = {
   title: 'Member Sign In — Premium Watch Club',
+  description: 'Sign in to your Premium Watch Club account to manage your details, track competition entries, review your order history, and follow live prize draws.',
 }
 
 export default function SignInPage() {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut } from '@/lib/competition-status'
@@ -197,11 +198,15 @@ export default function FreeCompHero({ competition }: Props) {
           <div className="fc-center">
             <div className="fc-watch-stage">
               <div className="fc-watch-glow" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={c.heroImage}
                 alt={c.title}
                 className="fc-watch-img"
+                width={800}
+                height={800}
+                style={{ width: '100%', height: 'auto' }}
+                sizes="(max-width: 900px) 320px, 480px"
+                priority
                 draggable={false}
               />
             </div>

@@ -8,6 +8,7 @@ import {
   getRelatedJournalPosts,
 } from '@/lib/wordpress-journal'
 import { parseArticle } from '@/lib/journal-sections'
+import { JsonLd } from '@/components/JsonLd'
 
 export async function generateStaticParams() {
   const posts = await getJournalPosts()
@@ -35,8 +36,19 @@ export default async function JournalArticlePage({ params }: { params: { slug: s
   const relatedPosts = await getRelatedJournalPosts(params.slug, 3)
   const article      = parseArticle(post.content)
 
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://premiumwatchclub.com' },
+      { '@type': 'ListItem', position: 2, name: 'Journal', item: 'https://premiumwatchclub.com/journal' },
+      { '@type': 'ListItem', position: 3, name: post.title, item: `https://premiumwatchclub.com/journal/${params.slug}` },
+    ],
+  }
+
   return (
     <>
+      <JsonLd data={breadcrumbSchema} />
       <Header />
       <main>
         <JournalEditorial

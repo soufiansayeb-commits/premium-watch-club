@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { getJournalPosts } from '@/lib/wordpress-journal'
 
@@ -44,8 +45,13 @@ export default async function JournalPreview() {
               >
                 <div className={`journal-card-image${isProductImage ? ' journal-card-image--product' : ' journal-card-image--editorial'}`}>
                   {cardImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={cardImage} alt={post.title} />
+                    <Image
+                      src={cardImage}
+                      alt={post.title}
+                      fill
+                      style={{ objectFit: isProductImage ? 'contain' : 'cover' }}
+                      sizes="(max-width: 700px) 100vw, (max-width: 1100px) 33vw, 360px"
+                    />
                   ) : (
                     <div className="journal-card-placeholder">
                       <WatchFaceIcon />

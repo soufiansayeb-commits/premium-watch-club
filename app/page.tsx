@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { getAllActiveCompetitionsByType } from '@/lib/woocommerce'
 import type { Competition } from '@/lib/competition-data'
 import Header from '@/components/Header'
@@ -6,11 +7,18 @@ import StatsBar from '@/components/StatsBar'
 import HomepageWinners from '@/components/HomepageWinners'
 import HowItWorks from '@/components/HowItWorks'
 import TrustBar from '@/components/TrustBar'
+import ComparisonSection from '@/components/ComparisonSection'
+import TestimonialTabs from '@/components/TestimonialTabs'
 import JournalPreview from '@/components/JournalPreview'
+import HomeFaqSection from '@/components/HomeFaqSection'
 import CompetitionsGrid from '@/components/CompetitionsGrid'
-import NewsletterSection from '@/components/NewsletterSection'
 import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
+
+export const metadata: Metadata = {
+  title: 'Premium Watch Club — Win Luxury Watches in Skill-Based Competitions',
+  description: 'Enter skill-based competitions to win luxury watches from Rolex, Omega and more. One competition at a time, with a free postal entry route available.',
+}
 
 export default async function HomePage() {
   const competitionsByType = await getAllActiveCompetitionsByType()
@@ -37,10 +45,12 @@ export default async function HomePage() {
       <HomepageWinners />
       <HowItWorks />
       <TrustBar />
+      <ComparisonSection />
+      <TestimonialTabs />
       {/* Current Competitions section — always rendered when any non-Coming-Soon comp exists */}
       <CompetitionsGrid competitions={gridComps} />
       <JournalPreview />
-      <NewsletterSection />
+      <HomeFaqSection />
       <Footer />
       <ScrollReveal />
     </>

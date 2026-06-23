@@ -3,6 +3,7 @@ import Footer from '@/components/Footer'
 
 export const metadata = {
   title: 'Contact Us — Premium Watch Club',
+  description: 'Get in touch with Premium Watch Club support for help with competition entries, accounts, payments, or winner enquiries. We reply within 24–48 business hours.',
 }
 
 export default function ContactPage() {

@@ -13,6 +13,7 @@ import type { WooProduct } from './woocommerce'
 export interface PastWinner {
   id:                    number
   slug:                  string
+  /** Public display title. For archive products this is `past_winner_public_prize_title`; falls back to WooCommerce product name. */
   title:                 string
   productImage:          string | null
   galleryImages:         string[]
@@ -99,10 +100,23 @@ async function mapPastWinner(p: WooProduct): Promise<PastWinner> {
   // proof_status only matters for the "Archive Winner" label when no URL exists.
   const hasProof = !!p.live_draw_url || !!p.draw_certificate_url
 
+  // For archive products the WooCommerce name is admin-only (e.g. "PAST WINNER 001").
+  // Use the ACF public title field instead; fall back to the product name only if unset.
+  const publicTitle = p.past_winner_public_prize_title || p.name
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(
+      `[PWC mapPastWinner] #${p.id} "${p.name}"\n` +
+      `  past_winner_public_prize_title = ${JSON.stringify(p.past_winner_public_prize_title)}\n` +
+      `  → publicTitle resolved   = "${publicTitle}"` +
+      (p.past_winner_public_prize_title ? '' : '  ⚠ ACF field missing — showing WooCommerce product name')
+    )
+  }
+
   return {
     id:                    p.id,
     slug:                  p.slug,
-    title:                 p.name,
+    title:                 publicTitle,
     productImage,
     galleryImages,
     cardImage,

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useCart } from '@/context/CartContext'
 
@@ -17,11 +18,13 @@ export default function Header() {
     <nav id="nav">
       <div className="nav-inner">
         <Link href="/" className="nav-logo" onClick={closeMenu}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/brand-assets/pwc-logo-nav.png"
             alt="Premium Watch Club"
             className="nav-logo-img"
+            width={300}
+            height={200}
+            priority
           />
         </Link>
 
@@ -30,7 +33,7 @@ export default function Header() {
           <li><Link href="/#how" onClick={closeMenu}>How It Works</Link></li>
           <li><Link href="/past-winners" onClick={closeMenu}>Past Winners</Link></li>
           <li><Link href="/#journal" onClick={closeMenu}>Journal</Link></li>
-          <li><Link href="/faq" onClick={closeMenu}>FAQ</Link></li>
+          <li><Link href="/about" onClick={closeMenu}>About Us</Link></li>
         </ul>
 
         <div className="nav-right">

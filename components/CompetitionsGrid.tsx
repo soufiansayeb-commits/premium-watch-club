@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut } from '@/lib/competition-status'
@@ -75,8 +76,15 @@ function CompCard({ competition: c }: { competition: Competition }) {
       {/* image area */}
       <div className="cgc-img-wrap" ref={imgRef}>
         <div className="cgc-img-shine" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={c.heroImage} alt={c.title} className="cgc-watch-img" draggable={false} />
+        <Image
+          src={c.heroImage}
+          alt={c.title}
+          fill
+          className="cgc-watch-img"
+          style={{ objectFit: 'contain' }}
+          sizes="(max-width: 480px) 100vw, (max-width: 900px) 50vw, 360px"
+          draggable={false}
+        />
         <div className={`cgc-badge ${badge}`}>{soldOut ? 'SOLD OUT' : label}</div>
         <div className="cgc-img-overlay" />
       </div>
@@ -171,6 +179,7 @@ export default function CompetitionsGrid({ competitions }: Props) {
   return (
     <section id="competitions-grid">
       <div className="cgc-bg-base" />
+      <div className="cgc-bg-waves" />
       <div className="cgc-bg-grid" />
       <div className="cgc-bg-glow-left" />
       <div className="cgc-bg-glow-right" />

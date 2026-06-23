@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, Fragment } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import type { JournalPost, RelatedProduct } from '@/lib/wordpress-journal'
 import type { ArticleSection } from '@/lib/journal-sections'
@@ -78,8 +79,7 @@ export default function JournalEditorial({ post, product, relatedPosts, sections
           <div className="je-gmain">
             {gallery.map((src, i) => (
               <div key={i} className={`je-glayer${activeImg === i ? ' on' : ''}`}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt={`${product.title} — view ${i + 1}`} />
+                <Image src={src} alt={`${product.title} — view ${i + 1}`} fill sizes="(max-width: 900px) 90vw, 540px" />
               </div>
             ))}
           </div>
@@ -95,8 +95,7 @@ export default function JournalEditorial({ post, product, relatedPosts, sections
                 aria-label={`View image ${i + 1}`}
                 aria-pressed={activeImg === i}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" />
+                <Image src={src} alt={`${product.title} — thumbnail ${i + 1}`} fill sizes="78px" />
               </button>
             ))}
           </div>
@@ -291,7 +290,7 @@ export default function JournalEditorial({ post, product, relatedPosts, sections
           padding:12px 14px 12px 14px; border-radius:3px; box-shadow:0 24px 60px rgba(7,19,48,.5);
           border-top:2px solid var(--gold); transition:transform .42s cubic-bezier(.22,.68,0,1); max-width:560px; }
         .je-sticky.on { transform:translate(-50%, 0); }
-        .je-sticky-img { width:52px; height:52px; flex-shrink:0; background:#fff; border-radius:2px; padding:5px; display:flex; align-items:center; justify-content:center; }
+        .je-sticky-img { position:relative; width:52px; height:52px; flex-shrink:0; background:#fff; border-radius:2px; padding:5px; display:flex; align-items:center; justify-content:center; }
         .je-sticky-img img { max-width:100%; max-height:100%; object-fit:contain; mix-blend-mode:multiply; }
         .je-sticky-info { min-width:0; }
         .je-sticky-label { font-family:'Jost',sans-serif; font-size:8.5px; font-weight:600; letter-spacing:.2em; text-transform:uppercase; color:var(--gold-soft); }
@@ -344,8 +343,7 @@ export default function JournalEditorial({ post, product, relatedPosts, sections
         </div>
         <div className={`je-hero-img${!post.featuredImage ? ' je-hero-img--contain' : ''}`}>
           {heroImage && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={heroImage} alt={post.title} />
+            <Image src={heroImage} alt={post.title} fill sizes="(max-width: 900px) 100vw, 50vw" priority />
           )}
           {product && <span className="je-hero-badge">{product.competitionLabel}</span>}
         </div>
@@ -429,8 +427,7 @@ export default function JournalEditorial({ post, product, relatedPosts, sections
                   <Link key={rp.slug} href={`/journal/${rp.slug}`} className="je-rcard">
                     <div className={`je-rcard-img${isProductImg ? ' je-rcard-img--contain' : ''}`}>
                       {img && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={img} alt={rp.title} />
+                        <Image src={img} alt={rp.title} fill sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw" />
                       )}
                     </div>
                     <div className="je-rcard-body">
@@ -451,8 +448,7 @@ export default function JournalEditorial({ post, product, relatedPosts, sections
         <div className={`je-sticky${showSticky ? ' on' : ''}`} aria-hidden={!showSticky}>
           {product.images[0] && (
             <div className="je-sticky-img">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={product.images[0]} alt="" />
+              <Image src={product.images[0]} alt={product.title} fill sizes="52px" />
             </div>
           )}
           <div className="je-sticky-info">

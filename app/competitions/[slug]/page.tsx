@@ -12,12 +12,75 @@ import Header from '@/components/Header'
 import CompetitionEntryFlow from '@/components/competition/CompetitionEntryFlow'
 import HomepageWinners from '@/components/HomepageWinners'
 import ProductEditorial from '@/components/competition/ProductEditorial'
-import NewsletterSection from '@/components/NewsletterSection'
+import ComparisonSection from '@/components/ComparisonSection'
+import TestimonialTabs from '@/components/TestimonialTabs'
+import HomeFaqSection from '@/components/HomeFaqSection'
 import ScrollReveal from '@/components/ScrollReveal'
-import CompetitionFooter from '@/components/CompetitionFooter'
+import Footer from '@/components/Footer'
+import { JsonLd } from '@/components/JsonLd'
+import type { Competition } from '@/lib/competition-data'
 
 interface Props {
   params: { slug: string }
+}
+
+function buildCompetitionSchemas(competition: Competition, slug: string) {
+  const image = competition.galleryImages?.[0]?.src ?? competition.heroImage
+
+  const productSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: competition.title,
+    image,
+    description: competition.description ?? `Enter to win a ${competition.title} worth ${competition.currency}${competition.retailValue.toLocaleString('en-GB')}.`,
+    offers: {
+      '@type': 'Offer',
+      price: String(competition.entryPrice),
+      priceCurrency: 'GBP',
+      availability: competition.ticketsLeft > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/SoldOut',
+    },
+  }
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://premiumwatchclub.com' },
+      { '@type': 'ListItem', position: 2, name: competition.title, item: `https://premiumwatchclub.com/competitions/${slug}` },
+    ],
+  }
+
+  return { productSchema, breadcrumbSchema }
+}
+
+export async function generateMetadata({ params }: Props) {
+  // Mirrors the data-fetching logic in the page component below — Next.js
+  // dedupes identical fetch() calls within a single request, so this costs
+  // nothing extra over the page render itself.
+  const staticComp = getCompetitionBySlug(params.slug)
+
+  let competition
+  if (staticComp) {
+    const { product: wooProduct } = await fetchWooProductById(staticComp.wooProductId)
+    const merged = wooProduct ? mergeWooData(staticComp, wooProduct) : staticComp
+    competition = wooProduct ? await resolveCompetitionMedia(merged, wooProduct) : merged
+  } else {
+    const { product: wooProduct } = await fetchWooProductBySlug(params.slug)
+    if (!wooProduct) return {}
+    competition = await resolveCompetitionMedia(wooProductToCompetition(wooProduct), wooProduct)
+  }
+
+  if (!competition) return {}
+
+  const ogImage = competition.galleryImages?.[0]?.src ?? competition.heroImage
+
+  return {
+    title: `${competition.title} — Win for ${competition.currency}${competition.entryPrice} — Premium Watch Club`,
+    description: `Enter to win a ${competition.title} worth ${competition.currency}${competition.retailValue.toLocaleString('en-GB')} for just ${competition.currency}${competition.entryPrice} a ticket. Draw: ${competition.drawDateDisplay}.`,
+    openGraph: ogImage ? { images: [{ url: ogImage }] } : undefined,
+  }
 }
 
 export default async function CompetitionPage({ params }: Props) {
@@ -29,16 +92,21 @@ export default async function CompetitionPage({ params }: Props) {
     const { product: wooProduct } = await fetchWooProductById(staticComp.wooProductId)
     const merged = wooProduct ? mergeWooData(staticComp, wooProduct) : staticComp
     const mergedCompetition = wooProduct ? await resolveCompetitionMedia(merged, wooProduct) : merged
+    const { productSchema, breadcrumbSchema } = buildCompetitionSchemas(mergedCompetition, params.slug)
 
     return (
       <>
+        <JsonLd data={productSchema} />
+        <JsonLd data={breadcrumbSchema} />
         <Header />
         <CompetitionEntryFlow competition={mergedCompetition} />
         <HomepageWinners />
         <ProductEditorial competition={mergedCompetition} />
-        <NewsletterSection />
+        <ComparisonSection />
+        <TestimonialTabs />
+        <HomeFaqSection />
         <ScrollReveal />
-        <CompetitionFooter />
+        <Footer />
       </>
     )
   }
@@ -48,16 +116,20 @@ export default async function CompetitionPage({ params }: Props) {
   if (!wooProduct) notFound()
 
   const competition = await resolveCompetitionMedia(wooProductToCompetition(wooProduct), wooProduct)
+  const { productSchema, breadcrumbSchema } = buildCompetitionSchemas(competition, params.slug)
 
   return (
     <>
+      <JsonLd data={productSchema} />
+      <JsonLd data={breadcrumbSchema} />
       <Header />
       <CompetitionEntryFlow competition={competition} />
       <HomepageWinners />
       <ProductEditorial competition={competition} />
-      <NewsletterSection />
+      <ComparisonSection />
+      <HomeFaqSection />
       <ScrollReveal />
-      <CompetitionFooter />
+      <Footer />
     </>
   )
 }

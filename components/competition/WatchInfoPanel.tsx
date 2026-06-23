@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Competition } from '@/lib/competition-data'
 import LiveActivity from '@/components/LiveActivity'
 
@@ -29,10 +30,14 @@ export default function WatchInfoPanel({ competition: c }: Props) {
       <div className="watch-image-card">
         <div className="watch-image-wrap">
           <div className="watch-image-badge">Current Prize</div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={productImage}
             alt={c.title}
+            width={640}
+            height={640}
+            style={{ width: '100%', height: 'auto' }}
+            sizes="(max-width: 700px) 90vw, 320px"
+            priority
           />
         </div>
         <div className="watch-image-caption">
