@@ -1,10 +1,4 @@
-const TpStar = () => (
-  <div className="tp-star">
-    <svg viewBox="0 0 20 20" fill="white">
-      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-    </svg>
-  </div>
-)
+import Image from 'next/image'
 
 export default function TrustBar() {
   return (
@@ -12,7 +6,7 @@ export default function TrustBar() {
       <div className="container">
         <div className="trust-inner reveal">
           <div className="trust-left">
-            <div className="trust-tagline">Built on <em>transparency</em><br />and trust</div>
+            <div className="trust-tagline">Built on <em>transparency</em><br className="trust-br" /> and trust</div>
             <p className="trust-sub">Every watch sourced from authorised dealers. Every draw publicly streamed and independently verified. Every winner photographed and documented.</p>
             <p className="trust-rd-line">
               Every winner is{' '}
@@ -45,16 +39,21 @@ export default function TrustBar() {
           </div>
         </div>
         <div className="trust-tp reveal">
-          <div className="tp-badge">
-            <div className="tp-word">Excellent</div>
-            <div className="tp-stars-row">
-              <TpStar /><TpStar /><TpStar /><TpStar /><TpStar />
-            </div>
-          </div>
-          <div className="tp-divider"></div>
-          <div className="tp-score">4.8 / 5</div>
-          <div className="tp-divider"></div>
-          <div className="tp-count">Based on 1,247 verified reviews</div>
+          <p className="tp-count">Based on 1,247 reviews</p>
+          <Image
+            src="/brand-assets/trustpilot-stars.png"
+            alt="Rated 5 out of 5"
+            width={935}
+            height={180}
+            className="tp-stars-img"
+          />
+          <Image
+            src="/brand-assets/trustpilot-wordmark.png"
+            alt="Trustpilot"
+            width={935}
+            height={236}
+            className="tp-wordmark-img"
+          />
         </div>
       </div>
     </section>

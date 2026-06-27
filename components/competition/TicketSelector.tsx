@@ -106,7 +106,7 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
           <div className="ech-title">{c.title}</div>
           <div className="ech-price-line">
             {isFree ? (
-              <><strong style={{ color: 'var(--green)' }}>Free entry</strong> — no purchase required</>
+              <><strong style={{ color: 'var(--green)' }}>Free entry</strong>, no purchase required</>
             ) : (
               <><strong>{fmt(c.entryPrice)}</strong> per entry</>
             )}
@@ -278,7 +278,7 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
           <div className="ecf-text">
             {isFree ? 'Free entry · ' : 'Secure checkout · '}
             A skill-based question is required. Your answer will be recorded with your entry.
-            This is a skill competition — <Link href="/terms">view full terms</Link>. 18+ only.
+            This is a skill competition. <Link href="/terms">View full terms</Link>. 18+ only.
           </div>
         </div>
 

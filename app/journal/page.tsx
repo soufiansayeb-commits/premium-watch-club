@@ -109,7 +109,7 @@ export default async function JournalIndexPage() {
             <div className="ji-eyebrow">The Journal</div>
             <h1 className="ji-h1">Stories, guides &amp; watch culture</h1>
             <p className="ji-sub">
-              Collector guides, winner stories and the watches behind every drop — from the PWC editorial team.
+              Collector guides, winner stories and the watches behind every drop, from the PWC editorial team.
             </p>
           </div>
 

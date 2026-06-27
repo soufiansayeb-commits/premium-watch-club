@@ -157,7 +157,7 @@ export const competitions: Competition[] = [
     shortName: 'Omega Speedmaster Moonwatch',
     reference: '310.30.42.50.01.001',
     detail: 'Hesalite Crystal · Calibre 3861',
-    description: 'One competition. One watch. Limited entries only. Secure your chance to own the Speedmaster Professional Moonwatch — for free.',
+    description: 'One competition. One watch. Limited entries only. Secure your chance to own the Speedmaster Professional Moonwatch, for free.',
     image: '/assets/images/omega-speedmaster-correct.avif',
     heroImage: '/assets/images/omega-speedmaster-correct.avif',
     retailValue: 6100,

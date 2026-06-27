@@ -60,7 +60,7 @@ export default function CtaBanner({ competition: c }: Props) {
 
           <p className="cd-sub">
             One competition. One watch. {c.totalTickets} entries only.
-            Secure your chance to own the {c.model} — for just {c.currency}{c.entryPrice.toFixed(2)}.
+            Secure your chance to own the {c.model} for just {c.currency}{c.entryPrice.toFixed(2)}.
           </p>
 
           {/* pill row */}

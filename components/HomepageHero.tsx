@@ -120,7 +120,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
               <div className="h2-prog-live">
                 <span className="h2-prog-live-dot" />
                 <span className="h2-prog-label">
-                  {c.soldPercentage}% SOLD — {c.ticketsLeft} TICKETS LEFT
+                  {c.soldPercentage}% SOLD, {c.ticketsLeft} TICKETS LEFT
                 </span>
               </div>
             </div>
@@ -288,6 +288,118 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
         {/* Mobile-only ticker — below competition details */}
         <div className="act-ticker-mobile-wrap">
           <LiveActivity key={`mob-${c.wooProductId}`} productId={c.wooProductId} />
+        </div>
+
+      </div>
+
+      {/* ════════════════════════════════════════════════════════
+          MOBILE HERO — product-first, conversion-first.
+          Hidden on desktop (≥681px) via CSS; the .h2-inner grid above
+          is hidden on mobile. Reuses the SAME dynamic competition data
+          (c.*), countdown state (time/closed) and sold-out logic, so
+          nothing here is hardcoded and both views stay in sync.
+      ════════════════════════════════════════════════════════ */}
+      <div className="h2-mobile">
+
+        {/* Status eyebrow — reflects live / sold out / coming soon */}
+        <div className="h2m-eyebrow">
+          {!soldOut && !isComingSoon && <span className="h2m-dot" aria-hidden="true" />}
+          <span>
+            {isComingSoon
+              ? 'COMING SOON · NOTIFY ME'
+              : soldOut
+                ? 'SOLD OUT · DRAW PENDING'
+                : 'LIVE DRAW · CLOSING SOON'}
+          </span>
+        </div>
+
+        {/* 1 — Watch name. "Win the" is fixed copy; the watch name stays
+            dynamic from WooCommerce. text-wrap:balance keeps long names tidy. */}
+        <h1 className="h2m-title">Win the <span className="h2m-title-name">{c.title}</span></h1>
+
+        {/* 2 — Short explainer */}
+        <p className="h2m-explainer">
+          A skill-based watch competition. Answer one question for your chance to win.
+        </p>
+
+        {/* 3 — Watch image (the hook, shown early) */}
+        <div className="h2m-watch">
+          <div className="h2m-watch-glow" aria-hidden="true" />
+          <Image
+            src={c.heroImage}
+            alt={c.title}
+            className="h2m-watch-img"
+            width={800}
+            height={800}
+            sizes="(max-width: 680px) 80vw, 320px"
+            priority
+            draggable={false}
+          />
+        </div>
+
+        {/* 4 — CTA + price */}
+        <div className="h2m-cta-wrap">
+          {isComingSoon ? (
+            <button disabled aria-disabled="true" className="h2m-cta h2m-cta--disabled">
+              COMING SOON
+            </button>
+          ) : soldOut ? (
+            <button disabled aria-disabled="true" className="h2m-cta h2m-cta--disabled">
+              SOLD OUT
+            </button>
+          ) : (
+            <Link href={c.ctaLink} className="h2m-cta">
+              <span>SECURE YOUR ENTRY</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </Link>
+          )}
+          <div className="h2m-price">
+            {c.isFree || c.entryPrice === 0
+              ? <><strong style={{ color: 'var(--green)' }}>FREE</strong> entry</>
+              : <>From <strong>{c.currency}{c.entryPrice.toFixed(2)}</strong> per entry</>
+            }
+          </div>
+        </div>
+
+        {/* 5 — Tickets left / progress (supporting urgency) */}
+        {!isComingSoon && (
+          <div className="h2m-progress">
+            <div className="h2m-prog-label">
+              <span>{c.soldPercentage}% sold</span>
+              <span className="h2m-prog-left">{c.ticketsLeft} tickets left</span>
+            </div>
+            <div className="h2m-prog-track">
+              <div
+                className="h2m-prog-fill"
+                style={{ width: progVisible ? `${c.soldPercentage}%` : '0%' }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 6 — Countdown (below the main hierarchy) */}
+        {!isComingSoon && (
+          closed ? (
+            <div className="h2m-countdown h2m-countdown--closed">Competition Closed</div>
+          ) : (
+            <div className="h2m-countdown" aria-label="Time remaining">
+              <div className="h2m-cd-block"><span className="h2m-cd-num">{time.d}</span><span className="h2m-cd-lbl">Days</span></div>
+              <div className="h2m-cd-block"><span className="h2m-cd-num">{time.h}</span><span className="h2m-cd-lbl">Hrs</span></div>
+              <div className="h2m-cd-block"><span className="h2m-cd-num">{time.m}</span><span className="h2m-cd-lbl">Min</span></div>
+              <div className="h2m-cd-block"><span className="h2m-cd-num">{time.s}</span><span className="h2m-cd-lbl">Sec</span></div>
+            </div>
+          )
+        )}
+
+        {/* 7 — Trust line (only supportable claims) */}
+        <div className="h2m-trust">
+          <span>Skill-based</span>
+          <span className="h2m-trust-sep" aria-hidden="true">•</span>
+          <span>{c.totalTickets} entries max</span>
+          <span className="h2m-trust-sep" aria-hidden="true">•</span>
+          <span>Live-streamed draw</span>
         </div>
 
       </div>

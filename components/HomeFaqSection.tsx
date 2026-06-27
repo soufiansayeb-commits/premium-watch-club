@@ -16,7 +16,7 @@ export default function HomeFaqSection() {
             <span className="home-faq-eyebrow">✦ Good to know</span>
             <h2 className="home-faq-title" id="home-faq-title">Questions,<br/>answered</h2>
             <p className="home-faq-sub">
-              Everything worth knowing before you enter — clear and on the record.
+              Everything worth knowing before you enter, clear and on the record.
             </p>
           </header>
 

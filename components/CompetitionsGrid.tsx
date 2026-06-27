@@ -194,7 +194,7 @@ export default function CompetitionsGrid({ competitions }: Props) {
             </span>
             <h2 className="cgc-heading">Current Competitions</h2>
             <p className="cgc-subhead">
-              One competition. One watch. Limited entries — secure yours before the draw closes.
+              One competition. One watch. Limited entries, secure yours before the draw closes.
             </p>
           </div>
           <div className="cgc-header-rule" />

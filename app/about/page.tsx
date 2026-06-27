@@ -8,9 +8,9 @@ export const metadata: Metadata = {
 }
 
 const VALUES: { title: string; body: string }[] = [
-  { title: 'Trust', body: 'Clear mechanics, public draws and nothing hidden — the way it should be.' },
+  { title: 'Trust', body: 'Clear mechanics, public draws and nothing hidden, the way it should be.' },
   { title: 'Curation', body: 'Watches only, selected with intent. No clutter, no filler prizes.' },
-  { title: 'Fairness', body: 'Limited, skill-based entry pools — not high-volume raffles.' },
+  { title: 'Fairness', body: 'Limited, skill-based entry pools, not high-volume raffles.' },
   { title: 'Winner proof', body: 'Real winners, archived and verifiable. Proof over promises.' },
   { title: 'Luxury culture', body: 'Built for people who genuinely care about fine watchmaking.' },
 ]
@@ -32,7 +32,7 @@ export default function AboutPage() {
             <p className="about-intro">
               Premium Watch Club is a premium watch competition platform built around curated drops,
               skill-based entry and mechanics you can actually follow. We exist to make winning a fine
-              watch feel legitimate, fair and genuinely premium — from the first click to the live draw.
+              watch feel legitimate, fair and genuinely premium, from the first click to the live draw.
             </p>
           </div>
         </section>
@@ -45,7 +45,7 @@ export default function AboutPage() {
               <span className="about-kicker">✦ Our thesis</span>
               <h2 className="about-h2">A better way to compete for premium watches</h2>
               <p className="about-p">
-                Most competition sites optimise for volume — huge entry pools, unclear odds and prizes
+                Most competition sites optimise for volume: huge entry pools, unclear odds and prizes
                 that change by the day. We took the opposite view. Premium Watch Club is built on smaller,
                 deliberate drops, transparent skill-based entry and a single category we truly care about:
                 watches. Fewer entries, clearer logic, a more serious experience.

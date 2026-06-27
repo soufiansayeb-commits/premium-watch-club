@@ -7,7 +7,7 @@ const steps = [
     num: '01',
     title: 'Select Your Entry',
     detail: '1 – 20 entries per draw',
-    desc: 'Choose your number of entries for the competition. More entries increase your chances of winning — you decide your level of commitment.',
+    desc: 'Choose your number of entries for the competition. More entries increase your chances of winning, you decide your level of commitment.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <rect x="2" y="7" width="20" height="14" rx="2"/>
@@ -20,8 +20,8 @@ const steps = [
   {
     num: '02',
     title: 'Answer the Question',
-    detail: 'Skill-based — not a lottery',
-    desc: 'A focused question on watchmaking or horology. Your knowledge is your entry — this is what makes PWC a legal, skill-based competition in the UK and EU.',
+    detail: 'Skill-based, not a lottery',
+    desc: 'A focused question on watchmaking or horology. Your knowledge is your entry, this is what makes PWC a legal, skill-based competition in the UK and EU.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="10"/>
@@ -47,7 +47,7 @@ const steps = [
     num: '04',
     title: 'Watch the Live Draw',
     detail: 'Live. Verified. Transparent.',
-    desc: 'Every draw is streamed live, independently witnessed and recorded. The winner is contacted within the hour — the footage is kept on permanent record.',
+    desc: 'Every draw is streamed live, independently witnessed and recorded. The winner is contacted within the hour, the footage is kept on permanent record.',
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="10"/>
@@ -87,7 +87,7 @@ export default function HowItWorks() {
           <div className="section-eyebrow">The Process</div>
           <h2 className="hiw-title">Four steps to your dream watch</h2>
           <p className="hiw-subtitle">
-            A skill-based competition — not a lottery. Answer a question on horology and take home the prize.
+            A skill-based competition, not a lottery. Answer a question on horology and take home the prize.
           </p>
         </motion.div>
 

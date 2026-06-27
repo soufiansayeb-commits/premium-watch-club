@@ -13,7 +13,7 @@ export const journalArticles: JournalArticle[] = [
     category: 'Guide',
     title: 'The Omega Speedmaster: why the Moonwatch endures',
     excerpt:
-      'From the Apollo programme to present day — why the Speedmaster Professional remains the definitive tool watch and the most coveted chronograph of our generation.',
+      'From the Apollo programme to present day, why the Speedmaster Professional remains the definitive tool watch and the most coveted chronograph of our generation.',
     image: '/assets/images/omega-speedmaster-hero.png',
     readTime: '4 min read',
   },

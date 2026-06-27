@@ -97,12 +97,12 @@ export default function PrivacyPage() {
               <h2>7. Your Rights</h2>
               <p>Under UK GDPR, you have the following rights regarding your personal data:</p>
               <ul>
-                <li><strong>Right of access</strong> — you may request a copy of the personal data we hold about you</li>
-                <li><strong>Right to rectification</strong> — you may request correction of inaccurate or incomplete data</li>
-                <li><strong>Right to erasure</strong> — you may request deletion of your data in certain circumstances</li>
-                <li><strong>Right to restriction</strong> — you may request that we limit how we process your data</li>
-                <li><strong>Right to data portability</strong> — you may request your data in a machine-readable format</li>
-                <li><strong>Right to object</strong> — you may object to processing based on legitimate interests or direct marketing</li>
+                <li><strong>Right of access</strong>: you may request a copy of the personal data we hold about you</li>
+                <li><strong>Right to rectification</strong>: you may request correction of inaccurate or incomplete data</li>
+                <li><strong>Right to erasure</strong>: you may request deletion of your data in certain circumstances</li>
+                <li><strong>Right to restriction</strong>: you may request that we limit how we process your data</li>
+                <li><strong>Right to data portability</strong>: you may request your data in a machine-readable format</li>
+                <li><strong>Right to object</strong>: you may object to processing based on legitimate interests or direct marketing</li>
               </ul>
               <p>To exercise any of these rights, please contact us as set out below. We will respond within 30 days. You also have the right to lodge a complaint with the Information Commissioner&apos;s Office (ICO) at ico.org.uk.</p>
             </section>

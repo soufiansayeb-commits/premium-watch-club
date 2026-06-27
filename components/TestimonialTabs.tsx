@@ -191,8 +191,7 @@ export default function TestimonialTabs() {
 
       </div>
 
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Jost:wght@300;400;500;600;700&display=swap');
+      <style dangerouslySetInnerHTML={{ __html: `
 
         .tt-s {
           /* soft sage/mint — Grüns family, muted for a premium PWC feel */
@@ -215,7 +214,7 @@ export default function TestimonialTabs() {
           margin: 0 0 8px;
         }
         .tt-stars {
-          color: #00844F; letter-spacing: 1px; font-size: 20px; line-height: 1;
+          color: #00B77F; letter-spacing: 1px; font-size: 20px; line-height: 1;
         }
         .tt-rating-stars { font-size: 23px; }
         .tt-rating-num {
@@ -315,7 +314,7 @@ export default function TestimonialTabs() {
         @media (max-width: 480px) {
           .tt-s { padding: 64px 16px 72px; }
         }
-      `}</style>
+      ` }} />
     </section>
   )
 }

@@ -46,7 +46,7 @@ export default function Footer() {
               </form>
             )}
 
-            <p className="footer-join-fine">No spam — just drops, draws and winners. 18+ only.</p>
+            <p className="footer-join-fine">No spam, just drops, draws and winners. 18+ only.</p>
           </div>
 
           <div className="footer-cols">
@@ -92,7 +92,7 @@ export default function Footer() {
         <div className="footer-meta">
           <div className="footer-meta-brand">
             <span className="footer-logo-name">Premium Watch Club</span>
-            <p className="footer-desc">A curated destination for watch collectors. One competition at a time — done properly.</p>
+            <p className="footer-desc">A curated destination for watch collectors. One competition at a time, done properly.</p>
           </div>
 
           <p className="footer-legal">Premium Watch Club is a skill-based competition platform. Promoter: PWC Ltd, registered in England &amp; Wales. A correct answer to a skill question is required to win. All competitions are subject to full terms and conditions available on request. 18+ only. Please compete responsibly.</p>

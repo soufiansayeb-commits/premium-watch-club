@@ -106,7 +106,7 @@ export default function SkillChallenge({
         <div className="skill-card">
 
           <div className="skill-card-header">
-            <div className="sch-eyebrow">STEP 2 OF 3 — REQUIRED TO ENTER</div>
+            <div className="sch-eyebrow">STEP 2 OF 3 · REQUIRED TO ENTER</div>
             <div className="sch-title">Identify the watch</div>
             <div className="sch-sub">
               Study the image below and select the correct watch model. Your answer will be recorded with your entry.
@@ -187,7 +187,7 @@ export default function SkillChallenge({
         <div className="skill-card">
 
           <div className="skill-card-header">
-            <div className="sch-eyebrow">STEP 2 OF 3 — REQUIRED TO ENTER</div>
+            <div className="sch-eyebrow">STEP 2 OF 3 · REQUIRED TO ENTER</div>
             <div className="sch-title">Identify the watch</div>
             <div className="sch-sub">
               Study the image below and select the correct watch model. Your answer will be recorded with your entry.
@@ -281,7 +281,7 @@ export default function SkillChallenge({
     <div className="step-panel active" id="panel-step-2">
       <div className="skill-card">
         <div className="skill-card-header">
-          <div className="sch-eyebrow">Step 2 of 3 — Required to Enter</div>
+          <div className="sch-eyebrow">Step 2 of 3 · Required to Enter</div>
           <div className="sch-title">Skill-Based Question</div>
           <div className="sch-sub">
             Answer the skill-based question below. Your selected answer will be recorded with your entry.
@@ -310,7 +310,7 @@ export default function SkillChallenge({
           </div>
 
           <div className="skill-notice">
-            You must select an answer to proceed. All entries are recorded — only entries with the correct answer are eligible for the prize draw.
+            You must select an answer to proceed. All entries are recorded, only entries with the correct answer are eligible for the prize draw.
           </div>
 
           <div className="skill-actions">

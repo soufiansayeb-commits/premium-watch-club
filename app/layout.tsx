@@ -12,7 +12,7 @@ const organizationSchema = {
   '@type': 'Organization',
   name: 'Premium Watch Club',
   url: 'https://premiumwatchclub.com',
-  logo: 'https://premiumwatchclub.com/brand-assets/pwc-logo.png',
+  logo: 'https://premiumwatchclub.com/brand-assets/pwc-logo-wordmark-gold.png',
 }
 
 export const metadata: Metadata = {
@@ -41,7 +41,7 @@ export default async function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:ital,wght@0,500;0,700;0,800;0,900;1,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:ital,wght@0,500;0,700;0,800;0,900;1,600&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body suppressHydrationWarning>
         <JsonLd data={organizationSchema} />

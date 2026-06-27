@@ -17,13 +17,33 @@ export default function Header() {
   return (
     <nav id="nav">
       <div className="nav-inner">
+        {/* Hamburger — first in DOM so it anchors the LEFT zone on mobile (grid).
+            Hidden on desktop, where the layout stays logo → links → right cluster. */}
+        <button
+          className={`hamburger${menuOpen ? ' is-open' : ''}`}
+          id="hamburger"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(o => !o)}
+        >
+          {menuOpen ? (
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <>
+              <span></span><span></span><span></span>
+            </>
+          )}
+        </button>
+
         <Link href="/" className="nav-logo" onClick={closeMenu}>
           <Image
-            src="/brand-assets/pwc-logo-nav.png"
+            src="/brand-assets/pwc-logo-wordmark-gold.png"
             alt="Premium Watch Club"
             className="nav-logo-img"
-            width={300}
-            height={200}
+            width={1447}
+            height={341}
             priority
           />
         </Link>
@@ -52,23 +72,6 @@ export default function Header() {
           </button>
 
           <Link href="/#competitions-grid" className="btn-nav-enter">Enter Now</Link>
-
-          <button
-            className={`hamburger${menuOpen ? ' is-open' : ''}`}
-            id="hamburger"
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            onClick={() => setMenuOpen(o => !o)}
-          >
-            {menuOpen ? (
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-                <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            ) : (
-              <>
-                <span></span><span></span><span></span>
-              </>
-            )}
-          </button>
         </div>
       </div>
     </nav>

@@ -13,7 +13,7 @@ export const faqs: FaqItem[] = [
   },
   {
     question: 'Is this a lottery?',
-    answer: 'No. Premium Watch Club competitions are skill-based competitions, not lotteries. A mandatory knowledge question must be answered correctly for any entry to be valid. This distinguishes our competitions from games of chance and means they are not regulated by the Gambling Commission. A free postal entry route is also available — please contact us for details.',
+    answer: 'No. Premium Watch Club competitions are skill-based competitions, not lotteries. A mandatory knowledge question must be answered correctly for any entry to be valid. This distinguishes our competitions from games of chance and means they are not regulated by the Gambling Commission. A free postal entry route is also available, please contact us for details.',
   },
   {
     question: 'Why is there a skill question?',

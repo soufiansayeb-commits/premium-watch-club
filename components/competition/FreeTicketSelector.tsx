@@ -211,7 +211,7 @@ export default function FreeTicketSelector({ competition: c, onContinue }: Props
             <div className="ech-title">{c.title}</div>
             <div className="ech-price-line">
               <strong style={{ color: 'var(--green)' }}>Free entry</strong>
-              <span style={{ marginLeft: 6 }}>— no purchase required</span>
+              <span style={{ marginLeft: 6 }}>, no purchase required</span>
             </div>
           </div>
 
@@ -294,7 +294,7 @@ export default function FreeTicketSelector({ competition: c, onContinue }: Props
             </svg>
             <div className="ecf-text">
               Secure entry · A correct skill-based answer is required to win.
-              This is a skill competition — <Link href="/terms">view full terms</Link>. 18+&nbsp;only.
+              This is a skill competition. <Link href="/terms">View full terms</Link>. 18+&nbsp;only.
             </div>
           </div>
 

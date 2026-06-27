@@ -84,9 +84,9 @@ export default function WinnersSection({ winners }: { winners: CarouselWinner[] 
       <div className="container">
         <div className="section-header reveal">
           <div className="section-eyebrow">Hall of Honour</div>
-          <h2 className="section-headline">What our winners say</h2>
+          <h2 className="section-headline">Meet our winners</h2>
           <p className="section-sub">
-            Every draw is live. Every winner is verified. Every watch is real — sourced from authorised dealers.
+            Every completed draw is archived with winner details, prize value and draw information.
           </p>
         </div>
       </div>

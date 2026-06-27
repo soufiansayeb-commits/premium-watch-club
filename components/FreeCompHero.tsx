@@ -117,7 +117,7 @@ export default function FreeCompHero({ competition }: Props) {
                 <div className="fc-prog-live">
                   <span className="fc-prog-live-dot" />
                   <span className="fc-prog-label">
-                    {c.soldPercentage}% CLAIMED — {c.ticketsLeft} REMAINING
+                    {c.soldPercentage}% CLAIMED, {c.ticketsLeft} REMAINING
                   </span>
                 </div>
                 <span className="fc-prog-count">{c.ticketsSold} of {c.totalTickets} tickets</span>
