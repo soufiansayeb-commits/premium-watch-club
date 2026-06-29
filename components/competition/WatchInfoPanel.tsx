@@ -1,6 +1,9 @@
+'use client'
+
+import { useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { Competition } from '@/lib/competition-data'
-import LiveActivity from '@/components/LiveActivity'
+import TrustpilotProof from '@/components/TrustpilotProof'
 
 interface Props {
   competition: Competition
@@ -22,34 +25,164 @@ function formatCondition(raw: string): string {
 
 export default function WatchInfoPanel({ competition: c }: Props) {
   const fmt = (n: number) => `${c.currency}${n.toLocaleString('en-GB')}`
-  // Prefer the WooCommerce gallery/featured image; fall back to the static template image.
-  const productImage = c.galleryImages?.[0]?.src ?? c.image
+
+  // All WooCommerce gallery images (index 0 = featured product image).
+  // Fallback to static image, then heroImage so single-image products work.
+  const images: { src: string; alt: string }[] =
+    c.galleryImages && c.galleryImages.length > 0
+      ? c.galleryImages
+      : c.image
+        ? [{ src: c.image, alt: c.title }]
+        : [{ src: c.heroImage, alt: c.title }]
+
+  const total = images.length
+  const [idx, setIdx] = useState(0)
+  // Ref-based debounce — transition is handled entirely by CSS (no setState needed for fade)
+  const busy = useRef(false)
+  const dragRef = useRef<{ startX: number } | null>(null)
+
+  const goTo = useCallback((next: number) => {
+    if (busy.current || next === idx) return
+    busy.current = true
+    setIdx(next)
+    setTimeout(() => { busy.current = false }, 520)
+  }, [idx])
+
+  const prev = useCallback(() => goTo((idx - 1 + total) % total), [goTo, idx, total])
+  const next = useCallback(() => goTo((idx + 1) % total), [goTo, idx, total])
+
+  const onPointerDown = (e: React.PointerEvent) => { dragRef.current = { startX: e.clientX } }
+  const onPointerUp   = (e: React.PointerEvent) => {
+    if (!dragRef.current) return
+    const dx = e.clientX - dragRef.current.startX
+    if (Math.abs(dx) > 40) dx < 0 ? next() : prev()
+    dragRef.current = null
+  }
+
+  // Strip any leading "Ref." the WooCommerce field may already include, so the
+  // displayed label is always a single clean "Ref. <number>".
+  const refDisplay = (c.reference ?? '').replace(/^\s*ref\.?\s*/i, '')
 
   return (
     <div className="entry-left">
+
+      {/* ── Mobile-only head: Trustpilot proof + clean product title above gallery ──
+          Desktop hides this (the buy box carries the title + Trustpilot there). */}
+      <div className="wip-mobile-head">
+        <TrustpilotProof className="tp-proof--mobile" />
+        <h1 className="wip-mobile-title">
+          Win the <span className="wip-mobile-title-name">{c.title}</span>
+        </h1>
+      </div>
+
       <div className="watch-image-card">
-        <div className="watch-image-wrap">
-          <div className="watch-image-badge">Current Prize</div>
-          <Image
-            src={productImage}
-            alt={c.title}
-            width={640}
-            height={640}
-            style={{ width: '100%', height: 'auto' }}
-            sizes="(max-width: 700px) 90vw, 320px"
-            priority
-          />
+
+        {/* ── Main gallery frame — fixed 1:1, PE3-style crossfade ── */}
+        <div className="wip-main-frame">
+
+          {/* All images pre-rendered as opacity layers — no layout shift on switch.
+              First image = featured product cutout → contain (never crop the watch).
+              Gallery images (index > 0) → cover, filling the whole frame edge-to-edge. */}
+          {images.map((img, i) => {
+            const isCutout = i === 0
+            return (
+              <div
+                key={img.src}
+                className={`wip-layer${i === idx ? ' wip-layer--active' : ''}`}
+              >
+                <div className={`wip-layer-inner${isCutout ? ' wip-layer-inner--contain' : ''}`}>
+                  <Image
+                    src={img.src}
+                    alt={img.alt || c.title}
+                    fill
+                    style={{
+                      objectFit: isCutout ? 'contain' : 'cover',
+                      objectPosition: 'center',
+                    }}
+                    sizes="(max-width: 700px) 90vw, 340px"
+                    priority={i === 0}
+                    draggable={false}
+                  />
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Transparent swipe surface on top of images, below arrows */}
+          {total > 1 && (
+            <div
+              className="wip-swipe-surface"
+              onPointerDown={onPointerDown}
+              onPointerUp={onPointerUp}
+              style={{ cursor: 'grab', userSelect: 'none' }}
+            />
+          )}
+
+          {/* Left / right arrows */}
+          {total > 1 && (
+            <>
+              <button
+                className="wip-carousel-btn wip-carousel-btn--prev"
+                onClick={prev}
+                aria-label="Previous image"
+                type="button"
+              >
+                <svg width="8" height="14" viewBox="0 0 8 14" fill="none" aria-hidden="true">
+                  <path d="M7 1L1 7l6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <button
+                className="wip-carousel-btn wip-carousel-btn--next"
+                onClick={next}
+                aria-label="Next image"
+                type="button"
+              >
+                <svg width="8" height="14" viewBox="0 0 8 14" fill="none" aria-hidden="true">
+                  <path d="M1 1l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </>
+          )}
         </div>
+
+        {/* ── Thumbnail strip — centered, only when multiple images ── */}
+        {total > 1 && (
+          <div className="wip-thumbs" role="list" aria-label="Product images">
+            {images.map((img, i) => {
+              const isCutout = i === 0
+              return (
+                <button
+                  key={img.src}
+                  role="listitem"
+                  className={`wip-thumb${i === idx ? ' wip-thumb--active' : ''}`}
+                  onClick={() => goTo(i)}
+                  aria-label={`View image ${i + 1} of ${total}`}
+                  aria-pressed={i === idx}
+                  type="button"
+                >
+                  <Image
+                    src={img.src}
+                    alt={img.alt || c.title}
+                    fill
+                    style={{
+                      objectFit: isCutout ? 'contain' : 'cover',
+                      objectPosition: 'center',
+                    }}
+                    sizes="80px"
+                  />
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         <div className="watch-image-caption">
           <div>
             <div className="wic-title">{c.title}</div>
-            <div className="wic-ref">Ref. {c.reference}</div>
+            <div className="wic-ref">Ref. {refDisplay}</div>
           </div>
         </div>
       </div>
-
-      {/* Real order activity — renders only when matching WooCommerce orders exist */}
-      <LiveActivity productId={c.wooProductId} />
 
       <div className="watch-info-card">
         <div className="wic-section-title">Watch &amp; Competition Information</div>

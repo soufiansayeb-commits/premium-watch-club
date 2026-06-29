@@ -3,6 +3,13 @@
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut } from '@/lib/competition-status'
+import TrustpilotProof from '@/components/TrustpilotProof'
+import {
+  getBundleDiscountPercent,
+  bundleLineTotal,
+  fullLineTotal,
+  bundleSaving,
+} from '@/lib/ticket-bundles'
 
 type Badge = 'MOST POPULAR' | 'BEST ODDS' | null
 const BADGES: Record<number, Badge> = { 10: 'MOST POPULAR', 20: 'BEST ODDS' }
@@ -56,7 +63,11 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
   const allowedMaxQty = Math.min(c.maxTicketsPerPurchase, entriesRemaining)
   const showSlider = allowedMaxQty > 1
 
-  const subtotal = selectedQty * c.entryPrice
+  // Bundle-aware totals (discount enforced server-side by pwc-ticket-bundle-discounts.php;
+  // these mirror it for display via lib/ticket-bundles.ts).
+  const subtotal     = bundleLineTotal(c.entryPrice, selectedQty)
+  const fullSubtotal = fullLineTotal(c.entryPrice, selectedQty)
+  const subtotalSave = bundleSaving(c.entryPrice, selectedQty)
   // Odds based on current entries sold (WWC model):
   //   entriesSold = totalTickets − entriesRemaining
   //   currentPool = entriesSold + selectedQty  (pool after your selection joins)
@@ -94,14 +105,14 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
 
   function priceLabel(qty: number): string {
     if (isFree) return 'FREE'
-    return fmt(qty * c.entryPrice)
+    return fmt(bundleLineTotal(c.entryPrice, qty))
   }
 
   return (
     <div className="step-panel active" id="panel-step-1">
       <div className="entry-card">
 
-        <div className="entry-card-header">
+        <div className="entry-card-header entry-card-header--main">
           <div className="ech-eyebrow">Win the Prize</div>
           <div className="ech-title">{c.title}</div>
           <div className="ech-price-line">
@@ -134,6 +145,9 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
               const effectiveQty = Math.min(opt.qty, allowedMaxQty)
               const bundlePool = entriesSold + effectiveQty
               const bundleOdds = Math.max(1, Math.ceil(bundlePool / effectiveQty))
+              // Bundle discount (paid comps only — free comps show FREE, no savings)
+              const savePct  = isFree ? 0 : getBundleDiscountPercent(opt.qty)
+              const fullCost = isFree ? 0 : fullLineTotal(c.entryPrice, opt.qty)
 
               return (
                 <div
@@ -170,6 +184,14 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                   <span className={`bc-price${isFree ? ' bc-price-free' : ''}`}>
                     {priceLabel(opt.qty)}
                   </span>
+                  {savePct > 0 ? (
+                    <span className="bc-save">
+                      <span className="bc-save-full">{fmt(fullCost)}</span>
+                      <span className="bc-save-pct">Save {savePct}%</span>
+                    </span>
+                  ) : (
+                    <span className="bc-save bc-save-empty" aria-hidden="true" />
+                  )}
                   <span className="bc-odds">1 in {bundleOdds}</span>
                 </div>
               )
@@ -256,8 +278,16 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                 <div className="sr-per">{fmt(c.entryPrice)} &times; {selectedQty}</div>
               )}
             </div>
-            <div className={`sr-amount${isFree ? ' sr-amount-free' : ''}`}>
-              {isFree ? 'FREE' : fmt(subtotal)}
+            <div className="sr-right">
+              {!isFree && subtotalSave > 0 && (
+                <span className="sr-full">{fmt(fullSubtotal)}</span>
+              )}
+              <div className={`sr-amount${isFree ? ' sr-amount-free' : ''}`}>
+                {isFree ? 'FREE' : fmt(subtotal)}
+              </div>
+              {!isFree && subtotalSave > 0 && (
+                <span className="sr-save">You save {fmt(subtotalSave)} ({getBundleDiscountPercent(selectedQty)}%)</span>
+              )}
             </div>
           </div>
 
@@ -270,15 +300,20 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
           </button>
         </div>
 
+        {/* Desktop-only Trustpilot proof inside the buy box */}
+        <TrustpilotProof className="tp-proof--buybox" />
+
         <div className="entry-card-footer">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, opacity: 0.5 }}>
-            <rect x="2" y="5" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
-            <path d="M5 5V4a2 2 0 014 0v1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }} aria-hidden="true">
+            <path d="M9 2L3 5v4c0 3.31 2.58 6.41 6 7.17C12.42 15.41 15 12.31 15 9V5L9 2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+            <path d="M6.5 9l1.5 1.5 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           <div className="ecf-text">
-            {isFree ? 'Free entry · ' : 'Secure checkout · '}
-            A skill-based question is required. Your answer will be recorded with your entry.
-            This is a skill competition. <Link href="/terms">View full terms</Link>. 18+ only.
+            Every winner is{' '}
+            <a href="https://www.randomdraws.com/" target="_blank" rel="noopener noreferrer">
+              independently verified by RandomDraws
+            </a>
+            <span className="ecf-legal">Skill competition · 18+ · <Link href="/terms">Full terms</Link></span>
           </div>
         </div>
 

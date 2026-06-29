@@ -73,11 +73,12 @@ img { max-width: 100%; display: block; }
 ════════════════════════════════ */
 .pwc-ab {
   position: relative;
-  background: #0D0B09;
-  border-bottom: 1px solid rgba(197,160,101,0.18);
+  /* Warm champagne — premium light offer bar */
+  background: linear-gradient(180deg, #F6EDD9 0%, #EFE2C6 100%);
+  border-bottom: 1px solid rgba(168,133,78,0.32);
   z-index: 1000;
-  /* Subtle gold sheen at very bottom */
-  box-shadow: 0 1px 0 0 rgba(197,160,101,0.08);
+  /* Soft lift to separate from the page below */
+  box-shadow: 0 1px 0 0 rgba(255,255,255,0.5) inset, 0 2px 10px rgba(168,133,78,0.10);
 }
 .pwc-ab-inner {
   display: flex;
@@ -105,7 +106,7 @@ img { max-width: 100%; display: block; }
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: #D4B07A;
+  color: var(--navy);
   white-space: nowrap;
   transition: opacity 0.22s ease, transform 0.22s ease;
   opacity: 1;
@@ -124,62 +125,46 @@ img { max-width: 100%; display: block; }
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: #D4B07A;
+  color: var(--navy);
   text-decoration: none;
   white-space: nowrap;
   transition: color 0.18s ease;
 }
-.pwc-ab-link:hover { color: var(--gold-light); }
+.pwc-ab-link:hover { color: var(--gold-dark); }
 /* Gold diamond gem separator */
 .pwc-ab-gem {
   display: inline-block;
   width: 4px;
   height: 4px;
-  background: var(--gold);
+  background: var(--gold-dark);
   transform: rotate(45deg);
-  opacity: 0.55;
+  opacity: 0.9;
   flex-shrink: 0;
 }
-/* Chevron nav buttons */
+/* Chevron nav buttons — clear, clickable navy pills */
 .pwc-ab-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   flex-shrink: 0;
-  background: none;
-  border: none;
   cursor: pointer;
-  color: rgba(197,160,101,0.45);
-  border-radius: 4px;
-  transition: color 0.18s ease, background 0.18s ease;
+  color: var(--navy);
+  background: rgba(10,31,68,0.06);
+  border: 1px solid rgba(10,31,68,0.16);
+  border-radius: 50%;
+  transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease;
   padding: 0;
 }
 .pwc-ab-btn:hover {
-  color: var(--gold);
-  background: rgba(197,160,101,0.08);
+  color: #F6EDD9;
+  background: var(--navy);
+  border-color: var(--navy);
 }
-/* Progress pip dots */
-.pwc-ab-pips {
-  position: absolute;
-  bottom: 5px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-.pwc-ab-pip {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(197,160,101,0.2);
-  transition: background 0.2s ease, transform 0.2s ease;
-}
-.pwc-ab-pip--on {
-  background: var(--gold);
-  transform: scale(1.3);
+.pwc-ab-btn:focus-visible {
+  outline: 2px solid var(--gold-dark);
+  outline-offset: 2px;
 }
 @media (max-width: 480px) {
   .pwc-ab-text,
@@ -263,25 +248,25 @@ img { max-width: 100%; display: block; }
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background:
     linear-gradient(110deg,
-      rgba(4, 8, 26, 0.97) 0%,
-      rgba(4, 8, 26, 0.90) 28%,
-      rgba(4, 8, 26, 0.65) 48%,
-      rgba(4, 8, 26, 0.38) 65%,
-      rgba(4, 8, 26, 0.20) 80%,
-      rgba(4, 8, 26, 0.40) 100%
+      rgba(4, 8, 26, 0.80) 0%,
+      rgba(4, 8, 26, 0.70) 28%,
+      rgba(4, 8, 26, 0.48) 48%,
+      rgba(4, 8, 26, 0.26) 65%,
+      rgba(4, 8, 26, 0.12) 80%,
+      rgba(4, 8, 26, 0.28) 100%
     ),
     linear-gradient(to bottom,
-      rgba(4, 8, 26, 0.35) 0%,
+      rgba(4, 8, 26, 0.22) 0%,
       transparent 18%,
       transparent 78%,
-      rgba(4, 8, 26, 0.65) 100%
+      rgba(4, 8, 26, 0.48) 100%
     );
 }
 
 /* Cinematic edge vignette */
 .h2-bg-vignette {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  background: radial-gradient(ellipse at 52% 50%, transparent 48%, rgba(2, 5, 18, 0.55) 100%);
+  background: radial-gradient(ellipse at 52% 50%, transparent 52%, rgba(2, 5, 18, 0.35) 100%);
 }
 
 /* Gold top accent rule */
@@ -377,7 +362,7 @@ img { max-width: 100%; display: block; }
 .h2-cd-num {
   font-family: var(--font-serif);
   font-size: 38px; font-weight: 700;
-  color: var(--gold); line-height: 1;
+  color: var(--text-on-dark); line-height: 1;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
@@ -447,6 +432,8 @@ img { max-width: 100%; display: block; }
   margin-bottom: 30px;
   animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.12s both;
 }
+/* "Win the" prefix — same style as headline, no extra treatment needed */
+.h2-headline-prefix { display: inline; }
 
 /* CTA button */
 .h2-cta-btn {
@@ -4058,6 +4045,103 @@ img { max-width: 100%; display: block; }
   width: 100%; max-width: 320px; margin: 0 auto;
   filter: drop-shadow(0 20px 48px rgba(0,0,0,0.18));
 }
+/* ── PDP Gallery — WatchInfoPanel ── */
+
+/* Main image frame: locked 1:1, consistent across all watches */
+/* ── PDP Product Gallery — PE3-style crossfade ── */
+
+/* Fixed 1:1 frame — never changes size regardless of image source */
+.wip-main-frame {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(145deg, #F8F7F5 0%, #EDEBE7 100%);
+  overflow: hidden;
+  border-radius: 5px 5px 0 0;
+}
+
+/* Each image is pre-rendered as an absolute layer; only the active one is visible */
+.wip-layer {
+  position: absolute; inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.50s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+.wip-layer--active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 1;
+}
+/* Default (gallery/lifestyle images): fill the entire frame, no inset */
+.wip-layer-inner {
+  position: absolute;
+  inset: 0;
+}
+/* Product cutout (first image): contain treatment with breathing room so a
+   transparent isolated watch PNG is never cropped badly */
+.wip-layer-inner--contain {
+  inset: 22px;
+}
+
+/* Transparent surface to capture swipe events without blocking images */
+.wip-swipe-surface {
+  position: absolute; inset: 0; z-index: 3;
+}
+
+/* Arrow navigation */
+.wip-carousel-btn {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  background: rgba(255,255,255,0.88);
+  border: 1px solid rgba(10,31,68,0.14);
+  border-radius: 50%;
+  cursor: pointer; z-index: 6;
+  color: var(--navy);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  padding: 0;
+  backdrop-filter: blur(4px);
+}
+.wip-carousel-btn--prev { left: 12px; }
+.wip-carousel-btn--next { right: 12px; }
+.wip-carousel-btn:hover {
+  background: var(--navy); border-color: var(--navy); color: #fff;
+}
+.wip-carousel-btn:focus-visible {
+  outline: 2px solid var(--gold); outline-offset: 2px;
+}
+
+/* Thumbnail strip — centered group, scrollable if many */
+.wip-thumbs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-light);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.wip-thumbs::-webkit-scrollbar { display: none; }
+.wip-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 68px; height: 68px;
+  background: var(--bg-off-white);
+  border: 2px solid var(--border-light);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 4px;
+  transition: border-color 0.15s ease, transform 0.18s cubic-bezier(0.22,0.68,0,1.2);
+}
+.wip-thumb:hover {
+  border-color: rgba(10,31,68,0.35);
+  transform: translateY(-1px);
+}
+.wip-thumb--active {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 1px var(--navy);
+}
 .watch-placeholder {
   width: 240px; height: 240px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -4260,6 +4344,30 @@ img { max-width: 100%; display: block; }
   color: var(--gold-dark);
   font-weight: 500;
 }
+/* ── Bundle savings (red discount, Wolf Watch Club style) ── */
+.bc-save {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  margin-top: 4px;
+  min-height: 30px;            /* reserves space so 1-ticket card height matches */
+  justify-content: center;
+}
+.bc-save-empty { min-height: 30px; }
+.bc-save-full {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-color: rgba(122,122,140,0.6);
+}
+.bc-save-pct {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #C0392B;              /* red — discount accent */
+  text-transform: uppercase;
+}
 
 /* ── Odds Panel ── */
 .odds-panel {
@@ -4421,8 +4529,11 @@ img { max-width: 100%; display: block; }
 }
 .sr-left { font-size: 13px; color: var(--text-mid); }
 .sr-left span { color: var(--text-muted); font-size: 12px; }
+.sr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.sr-full { font-size: 12px; color: var(--text-muted); text-decoration: line-through; }
 .sr-amount { font-family: var(--font-serif); font-size: 24px; font-weight: 700; color: var(--text-dark); }
 .sr-amount-free { color: var(--green); }
+.sr-save { font-size: 11px; font-weight: 700; color: #C0392B; letter-spacing: 0.02em; }
 .sr-per { font-size: 12px; color: var(--text-muted); margin-top: 2px; text-align: right; }
 .btn-continue {
   width: 100%; padding: 16px 24px;
@@ -4448,8 +4559,29 @@ img { max-width: 100%; display: block; }
   background: var(--bg-off-white);
   display: flex; align-items: center; gap: 8px;
 }
-.ecf-text { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
-.ecf-text a { color: var(--gold-dark); text-decoration: underline; }
+.entry-card-footer svg { color: var(--green); }
+.ecf-text { font-size: 12px; color: var(--text-mid); line-height: 1.5; font-weight: 600; }
+/* RandomDraws verification link — green trust accent */
+.ecf-text a { color: var(--green); text-decoration: underline; font-weight: 700; }
+.ecf-legal { display: block; font-size: 10.5px; color: var(--text-muted); font-weight: 400; margin-top: 3px; letter-spacing: 0.02em; }
+.ecf-legal a { color: var(--text-muted); font-weight: 400; }
+
+/* ── Trustpilot proof (PDP buy box + mobile head) ── */
+/* Horizontal lockup: logo (incl. 5 stars) in line with the review count. */
+.tp-proof {
+  display: flex; flex-direction: row; align-items: center; justify-content: center;
+  gap: 12px; flex-wrap: wrap;
+}
+.tp-proof-logo { width: auto; height: 34px; }   /* asset already includes 5 stars */
+.tp-proof-count { font-size: 12px; color: var(--text-muted); letter-spacing: 0.01em; }
+/* Desktop: shown inside the buy box, above the footer trust line */
+.tp-proof--buybox {
+  display: flex;
+  padding: 18px 24px 0;
+}
+/* Mobile head (Trustpilot + clean product title) — hidden on desktop */
+.wip-mobile-head { display: none; }
+.tp-proof--mobile { display: none; }
 
 /* ── STEP 2: Skill Challenge ── */
 .skill-card {
@@ -4875,12 +5007,33 @@ img { max-width: 100%; display: block; }
   .footer-meta-end { grid-column: 1 / -1; align-items: flex-start; flex-direction: row; justify-content: space-between; width: 100%; }
   .footer-policies { justify-content: flex-start; }
   .entry-grid { grid-template-columns: 1fr; display: flex; flex-direction: column; gap: 0; }
-  /* Mobile order: watch image → ticket selector → watch info */
+  /* Mobile order: Trustpilot + title → watch image → ticket selector → watch info */
   .entry-left { position: static; display: contents; }
+  .wip-mobile-head {
+    display: block; order: 0;
+    text-align: center;
+    padding: 2px 4px 16px;
+    width: 100%; box-sizing: border-box;
+  }
+  .tp-proof--mobile { display: flex; margin-bottom: 16px; }
+  .tp-proof--mobile .tp-proof-logo { height: 36px; }
+  .wip-mobile-title {
+    font-family: var(--font-serif);
+    font-size: clamp(26px, 7.6vw, 34px);
+    font-weight: 700; line-height: 1.1; letter-spacing: -0.02em;
+    color: var(--text-dark);
+    text-wrap: balance;
+  }
+  .wip-mobile-ref { font-size: 12px; color: var(--text-muted); margin-top: 7px; letter-spacing: 0.04em; }
+  /* Desktop buy-box Trustpilot is redundant on mobile (already shown up top) */
+  .tp-proof--buybox { display: none; }
   .watch-image-card { order: 1; margin-bottom: 8px; width: 100%; }
   .entry-right { order: 2; }
   .watch-info-card { order: 3; margin-top: 20px; width: 100%; box-sizing: border-box; }
-  .watch-image-wrap { aspect-ratio: 16 / 9; }
+  /* The clean "Win the [name]" title already sits above the gallery on mobile,
+     so the buy-box header would duplicate the title + price. Hide it; the card
+     body (Select your tickets) keeps its own top padding so spacing stays clean. */
+  .entry-card-header--main { display: none; }
   .nav-links { display: none; }
   .hamburger { display: flex; }
 }
@@ -7158,7 +7311,6 @@ img { max-width: 100%; display: block; }
     letter-spacing: 0.08em;
     line-height: 1.35;
   }
-  .pwc-ab-pips { bottom: 3px; }
 }
 
 /* ── TASK 2: Header — hamburger left · logo centered · cart + Enter right ── */
@@ -7329,6 +7481,11 @@ img { max-width: 100%; display: block; }
   color: rgba(245,244,240,0.6);
 }
 .h2m-trust-sep { color: rgba(197,160,101,0.5); }
+/* Eyebrow variant that sits tight above the timer blocks */
+.h2m-eyebrow--timer {
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
 
 @media (max-width: 680px) {
   /* Hide the desktop 3-column grid, show the product-first mobile stack */

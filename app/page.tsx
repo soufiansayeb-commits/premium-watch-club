@@ -6,7 +6,7 @@ import HomepageHeroContainer from '@/components/HomepageHeroContainer'
 import StatsBar from '@/components/StatsBar'
 import HomepageWinners from '@/components/HomepageWinners'
 import HowItWorks from '@/components/HowItWorks'
-import TrustBar from '@/components/TrustBar'
+import SummerSaleOffer from '@/components/SummerSaleOffer'
 import ComparisonSection from '@/components/ComparisonSection'
 import TestimonialTabs from '@/components/TestimonialTabs'
 import JournalPreview from '@/components/JournalPreview'
@@ -44,7 +44,7 @@ export default async function HomePage() {
       <StatsBar />
       <HomepageWinners />
       <HowItWorks />
-      <TrustBar />
+      <SummerSaleOffer special={competitionsByType.special} weekly={competitionsByType.weekly} />
       <ComparisonSection />
       <TestimonialTabs />
       {/* Current Competitions section — always rendered when any non-Coming-Soon comp exists */}

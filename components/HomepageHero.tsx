@@ -82,9 +82,9 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
 
           <div className="h2-eyebrow">
             <span className="h2-pulse-dot" />
-            <span>LIVE DRAW</span>
+            <span>LIVE COMPETITION</span>
             <span className="h2-eyebrow-sep">·</span>
-            <span>CLOSING SOON</span>
+            <span>ENTRIES CLOSE IN</span>
           </div>
 
           {closed ? (
@@ -132,7 +132,9 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
             </div>
           </div>
 
-          <h1 className="h2-headline">{c.title}</h1>
+          <h1 className="h2-headline">
+            <span className="h2-headline-prefix">Win the </span>{c.title}
+          </h1>
 
           {isComingSoon ? (
             <button
@@ -301,20 +303,14 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
       ════════════════════════════════════════════════════════ */}
       <div className="h2-mobile">
 
-        {/* Status eyebrow — reflects live / sold out / coming soon */}
-        <div className="h2m-eyebrow">
-          {!soldOut && !isComingSoon && <span className="h2m-dot" aria-hidden="true" />}
-          <span>
-            {isComingSoon
-              ? 'COMING SOON · NOTIFY ME'
-              : soldOut
-                ? 'SOLD OUT · DRAW PENDING'
-                : 'LIVE DRAW · CLOSING SOON'}
-          </span>
-        </div>
+        {/* Top eyebrow — only for sold-out and coming-soon states */}
+        {(soldOut || isComingSoon) && (
+          <div className="h2m-eyebrow">
+            <span>{isComingSoon ? 'COMING SOON · NOTIFY ME' : 'SOLD OUT · DRAW PENDING'}</span>
+          </div>
+        )}
 
-        {/* 1 — Watch name. "Win the" is fixed copy; the watch name stays
-            dynamic from WooCommerce. text-wrap:balance keeps long names tidy. */}
+        {/* 1 — Watch name */}
         <h1 className="h2m-title">Win the <span className="h2m-title-name">{c.title}</span></h1>
 
         {/* 2 — Short explainer */}
@@ -322,7 +318,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
           A skill-based watch competition. Answer one question for your chance to win.
         </p>
 
-        {/* 3 — Watch image (the hook, shown early) */}
+        {/* 3 — Watch image */}
         <div className="h2m-watch">
           <div className="h2m-watch-glow" aria-hidden="true" />
           <Image
@@ -363,7 +359,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
           </div>
         </div>
 
-        {/* 5 — Tickets left / progress (supporting urgency) */}
+        {/* 5 — Tickets left / progress */}
         {!isComingSoon && (
           <div className="h2m-progress">
             <div className="h2m-prog-label">
@@ -379,7 +375,15 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
           </div>
         )}
 
-        {/* 6 — Countdown (below the main hierarchy) */}
+        {/* 6 — Live label directly above the timer (live state only) */}
+        {!isComingSoon && !soldOut && !closed && (
+          <div className="h2m-eyebrow h2m-eyebrow--timer">
+            <span className="h2m-dot" aria-hidden="true" />
+            <span>LIVE COMPETITION · ENTRIES CLOSE IN</span>
+          </div>
+        )}
+
+        {/* 7 — Countdown */}
         {!isComingSoon && (
           closed ? (
             <div className="h2m-countdown h2m-countdown--closed">Competition Closed</div>
@@ -393,7 +397,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
           )
         )}
 
-        {/* 7 — Trust line (only supportable claims) */}
+        {/* 8 — Trust line */}
         <div className="h2m-trust">
           <span>Skill-based</span>
           <span className="h2m-trust-sep" aria-hidden="true">•</span>

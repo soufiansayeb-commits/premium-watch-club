@@ -32,12 +32,12 @@ export default function AnnouncementBar({ announcements }: Props) {
     goTo((index + 1) % total)
   }, [index, total, goTo])
 
-  // Auto-rotate every 5 s; cancels when user manually navigates
+  // Auto-rotate every 10 s; cancels when user manually navigates
   useEffect(() => {
     if (total <= 1) return
     timerRef.current = setTimeout(() => {
       goTo((index + 1) % total)
-    }, 5000)
+    }, 10000)
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [index, total, goTo])
 
@@ -58,8 +58,8 @@ export default function AnnouncementBar({ announcements }: Props) {
 
         {total > 1 && (
           <button className="pwc-ab-btn" onClick={prev} aria-label="Previous announcement" type="button">
-            <svg width="5" height="9" viewBox="0 0 5 9" fill="none" aria-hidden="true">
-              <path d="M4.5 1L1 4.5l3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true">
+              <path d="M6 1L1 6l5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         )}
@@ -76,21 +76,13 @@ export default function AnnouncementBar({ announcements }: Props) {
 
         {total > 1 && (
           <button className="pwc-ab-btn" onClick={next} aria-label="Next announcement" type="button">
-            <svg width="5" height="9" viewBox="0 0 5 9" fill="none" aria-hidden="true">
-              <path d="M.5 1L4 4.5.5 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden="true">
+              <path d="M1 1l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         )}
 
       </div>
-
-      {total > 1 && (
-        <div className="pwc-ab-pips" aria-hidden="true">
-          {announcements.map((_, i) => (
-            <span key={i} className={`pwc-ab-pip${i === index ? ' pwc-ab-pip--on' : ''}`} />
-          ))}
-        </div>
-      )}
     </div>
   )
 }

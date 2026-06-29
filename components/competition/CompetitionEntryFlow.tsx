@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut, getStatusLabel } from '@/lib/competition-status'
 import { getOptionLabel } from '@/lib/skill-challenge-config'
+import { bundleLineTotal } from '@/lib/ticket-bundles'
 import { useCart } from '@/context/CartContext'
 import ProgressSteps from './ProgressSteps'
 import WatchInfoPanel from './WatchInfoPanel'
@@ -135,7 +136,7 @@ export default function CompetitionEntryFlow({ competition }: Props) {
       wooProductId: competition.wooProductId,
       quantity: qty,
       price,
-      total: qty * price,
+      total: bundleLineTotal(price, qty),
       currency: competition.currency,
       selectedSkillAnswer: answerLabel,
       skillQuestion: competition.skillQuestion,

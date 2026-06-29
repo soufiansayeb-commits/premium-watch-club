@@ -16,6 +16,7 @@ import {
   getWooCart,
 } from '@/lib/woocommerce-cart'
 import { trackEvent } from '@/lib/analytics'
+import { bundleLineTotal } from '@/lib/ticket-bundles'
 
 const CHECKOUT_FLAG_KEY = 'pwc_checkout_initiated'
 
@@ -98,9 +99,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return {
           ...item,
           quantity: wooItem.quantity,
-          // Derive total from live price, not stale isFreeCompetition flag.
-          // If price is 0, total is 0 naturally; no special flag needed.
-          total: parseFloat((item.price * wooItem.quantity).toFixed(2)),
+          // Derive total from live price + bundle discount, not stale flags.
+          // bundleLineTotal returns 0 when price is 0 (free comps), so no special-casing.
+          total: bundleLineTotal(item.price, wooItem.quantity),
           wooCartItemKey: wooItem.key,
         }
       })
@@ -161,8 +162,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const updated: CartItem = {
             ...item,
             quantity: qty,
-            // Derive total from live price — if price is 0, total is 0 naturally.
-            total: parseFloat((item.price * qty).toFixed(2)),
+            // Derive total from live price + bundle discount (0 for free comps).
+            total: bundleLineTotal(item.price, qty),
           }
           // Best-effort: update WooCommerce if we already have the cart item key
           if (item.wooCartItemKey) {

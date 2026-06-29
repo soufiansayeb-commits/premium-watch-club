@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { useCart } from '@/context/CartContext'
+import { bundleLineTotal } from '@/lib/ticket-bundles'
 import { trackEvent } from '@/lib/analytics'
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -119,7 +120,7 @@ export default function CheckoutStep({
       return {
         ...item,
         quantity: qty,
-        total: parseFloat((item.price * qty).toFixed(2)),
+        total: bundleLineTotal(item.price, qty),
       }
     }
     return item
