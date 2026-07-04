@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import { getAllActiveCompetitionsByType } from '@/lib/woocommerce'
+import { getActiveOffer, resolveOfferCtaHref } from '@/lib/offer'
 import type { Competition } from '@/lib/competition-data'
 import Header from '@/components/Header'
+import OfferBar from '@/components/OfferBar'
 import HomepageHeroContainer from '@/components/HomepageHeroContainer'
 import StatsBar from '@/components/StatsBar'
 import HomepageWinners from '@/components/HomepageWinners'
@@ -18,7 +20,11 @@ export const metadata: Metadata = {
 }
 
 export default async function WeeklyLandingPage() {
-  const competitionsByType = await getAllActiveCompetitionsByType()
+  const [competitionsByType, offer] = await Promise.all([
+    getAllActiveCompetitionsByType(),
+    getActiveOffer(),
+  ])
+  const offerCtaHref = resolveOfferCtaHref(offer, competitionsByType.special, competitionsByType.weekly)
 
   const gridComps = (
     [
@@ -34,6 +40,7 @@ export default async function WeeklyLandingPage() {
   return (
     <>
       <Header />
+      <OfferBar offer={offer} ctaHref={offerCtaHref} />
       <HomepageHeroContainer competitionsByType={competitionsByType} defaultType="weekly" />
       <StatsBar />
       <HomepageWinners />

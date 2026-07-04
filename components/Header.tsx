@@ -52,8 +52,8 @@ export default function Header() {
           <li><Link href="/#competitions-grid" onClick={closeMenu}>Competitions</Link></li>
           <li><Link href="/#how" onClick={closeMenu}>How It Works</Link></li>
           <li><Link href="/past-winners" onClick={closeMenu}>Past Winners</Link></li>
-          <li><Link href="/#journal" onClick={closeMenu}>Journal</Link></li>
-          <li><Link href="/about" onClick={closeMenu}>About Us</Link></li>
+          <li><Link href="/journal" onClick={closeMenu}>Journal</Link></li>
+          <li><Link href="/about-us" onClick={closeMenu}>About Us</Link></li>
         </ul>
 
         <div className="nav-right">

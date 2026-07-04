@@ -107,16 +107,17 @@ export const competitions: Competition[] = [
   {
     id: 'comp-001',
     wooProductId: 20, // WooCommerce product ID — paid competition (Rolex Cosmograph Daytona)
-    slug: 'omega-speedmaster-moonwatch',
-    title: 'Omega Speedmaster Moonwatch',
-    brand: 'Omega',
-    model: 'Speedmaster Professional Moonwatch',
-    shortName: 'Omega Speedmaster Moonwatch',
-    reference: '310.30.42.50.01.001',
-    detail: 'Hesalite Crystal · Calibre 3861',
+    slug: 'rolex-cosmograph-daytona',
+    title: 'Rolex Cosmograph Daytona',
+    brand: 'Rolex',
+    model: 'Cosmograph Daytona',
+    shortName: 'Rolex Cosmograph Daytona',
+    reference: '116500LN',
+    detail: 'Oystersteel · Calibre 4130',
+    // Images below are static fallbacks — WooCommerce gallery images take precedence at render time
     image: '/assets/images/omega-speedmaster-correct.avif',
     heroImage: '/assets/images/omega-speedmaster-correct.avif',
-    retailValue: 6100,
+    retailValue: 14000,
     entryPrice: 5.95,
     currency: '£',
     totalTickets: 500,
@@ -125,7 +126,7 @@ export const competitions: Competition[] = [
     soldPercentage: 20.2,
     drawDate: '2026-05-30T23:59:00',
     drawDateDisplay: '30 May 2026, 23:59 BST',
-    cashAlternative: 5000,
+    cashAlternative: 12000,
     ticketOptions: [
       { qty: 1,  popular: false },
       { qty: 3,  popular: false },
@@ -134,12 +135,13 @@ export const competitions: Competition[] = [
       { qty: 20, popular: false },
     ],
     maxTicketsPerPurchase: 165, // static fallback — overridden by ACF max_entries_percentage (33% of 500)
-    skillQuestion: 'Which Swiss manufacturer produces the Speedmaster Moonwatch?',
-    skillAnswers: ['Omega', 'Rolex', 'Breitling', 'TAG Heuer'],
-    correctAnswer: 'Omega',
+    // Skill fields below are static fallbacks — ACF challenge_image + answer_options take precedence
+    skillQuestion: 'Which Swiss manufacturer produces the Rolex Cosmograph Daytona?',
+    skillAnswers: ['Rolex', 'Omega', 'Breitling', 'TAG Heuer'],
+    correctAnswer: 'Rolex',
     skillChallengeId: 'wc-id-001',
     checkoutUrl: '/checkout',
-    ctaLink: '/competitions/omega-speedmaster-moonwatch',
+    ctaLink: '/competitions/weekly',
     recentPurchases: ['London', 'Amsterdam', 'Edinburgh'],
     leaderboard: [
       { name: 'J.T.', location: 'London',    tickets: 10 },
@@ -184,7 +186,7 @@ export const competitions: Competition[] = [
     correctAnswer: 'Omega',
     skillChallengeId: 'wc-id-001',
     checkoutUrl: '/checkout',
-    ctaLink: '/competitions/free-omega-speedmaster-moonwatch',
+    ctaLink: '/competitions/special',
     recentPurchases: ['London', 'Amsterdam', 'Edinburgh'],
     leaderboard: [
       { name: 'J.T.', location: 'London',    tickets: 1 },

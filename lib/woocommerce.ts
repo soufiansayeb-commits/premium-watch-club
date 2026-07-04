@@ -1014,7 +1014,10 @@ export function wooProductToCompetition(wooProduct: WooProduct): Competition {
     wooDescription:        wooProduct.description,
     galleryImages:         wooProduct.images.length > 0 ? wooProduct.images : undefined,
     checkoutUrl:           '/checkout',
-    ctaLink:               `/competitions/${wooProduct.slug}`,
+    ctaLink:               wooProduct.competition_type === 'weekly'  ? '/competitions/weekly'
+                         : wooProduct.competition_type === 'monthly' ? '/competitions/monthly'
+                         : wooProduct.competition_type === 'special' ? '/competitions/special'
+                         : `/competitions/${wooProduct.slug}`,
     recentPurchases:       [],
     leaderboard:           [],
   }

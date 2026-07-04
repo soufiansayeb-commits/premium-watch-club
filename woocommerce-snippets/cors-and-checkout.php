@@ -20,8 +20,8 @@
 
 add_action( 'init', function () {
     $allowed_origins = [
-        'https://your-nextjs-domain.vercel.app',  // ← CHANGE THIS to your actual domain
-        'http://localhost:3000',                   // local development
+        'https://premiumwatchclub.com',
+        'http://localhost:3000',  // local development only — ignored in production by CORS rules
     ];
 
     $origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';

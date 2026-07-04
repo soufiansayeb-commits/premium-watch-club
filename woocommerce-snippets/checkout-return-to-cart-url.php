@@ -1,77 +1,46 @@
 <?php
 /**
- * PWC — Fix "Return to Cart" link on WooCommerce Blocks checkout
+ * PWC — Checkout: hide "Return to Cart" button + notice cleanup
  *
  * HOW TO INSTALL:
- *   Code Snippets plugin → Add New → paste this file → Save & Activate
+ *   Code Snippets plugin → find "PWC Checkout Return to Cart URL" → Edit →
+ *   replace the entire content with this file → Save & Activate.
  *
  * WHAT THIS DOES:
- *   WooCommerce Blocks renders "Return to cart" via React, so the standard
- *   woocommerce_cart_url PHP filter does not reliably update the rendered link.
- *   This snippet injects a tiny JS (checkout page only) that finds the anchor
- *   and rewrites its href to the PWC frontend cart page.
- *
- * TO UPDATE FOR PRODUCTION:
- *   Change the URL in PWC_RETURN_TO_CART_URL below to your Vercel/live domain.
+ *   1. Hides the "Return to Cart" button on checkout (Blocks + classic).
+ *      Customers use the browser back button instead. Place Order is unaffected.
+ *   2. Hides success/info notice banners on cart and checkout pages.
+ *      Payment errors (.is-error) and validation messages are NOT hidden.
  */
 
-// ── Change this URL when you go live ─────────────────────────────────────────
-// Local dev:  http://localhost:3000/cart
-// Production: https://your-vercel-domain.com/cart  ← update before going live
-define( 'PWC_RETURN_TO_CART_URL', 'https://premium-watch-club-vvl3.vercel.app/cart' );
-// ─────────────────────────────────────────────────────────────────────────────
+// Constant kept for woocommerce_cart_url filter below.
+define( 'PWC_RETURN_TO_CART_URL', 'https://premiumwatchclub.com/cart' );
 
-// ── Hide success/info notices on cart and checkout pages ─────────────────────
-// Hides "added to cart" and "quantity changed" banners.
-// Payment errors (.is-error) and form validation messages are NOT hidden.
+// Keep the WooCommerce cart URL pointing to the frontend (used internally by Woo).
+add_filter( 'woocommerce_cart_url', function () {
+    return PWC_RETURN_TO_CART_URL;
+} );
 
 add_action( 'wp_head', function () {
     if ( ! is_checkout() && ! is_cart() ) return;
     ?>
     <style>
-    /* Classic WooCommerce notices */
+    /* ── Hide "Return to Cart" button — WooCommerce Blocks checkout ── */
+    .wc-block-components-checkout-return-to-cart-button { display: none !important; }
+
+    /* ── Hide "Return to Cart" — classic WooCommerce checkout ── */
+    .woocommerce-checkout .wc-backward,
+    .woocommerce-checkout .woocommerce-cart-link { display: none !important; }
+
+    /* ── Classic WooCommerce notices ── */
     .woocommerce-notices-wrapper .woocommerce-message,
     .woocommerce-notices-wrapper .woocommerce-info { display: none !important; }
 
-    /* WooCommerce Blocks notice banners */
+    /* ── WooCommerce Blocks notice banners ── */
     .wc-block-components-notice-banner.is-success,
     .wc-block-components-notice-banner.is-info,
     .wc-block-store-notices .wc-block-components-notice-banner.is-success,
     .wc-block-store-notices .wc-block-components-notice-banner.is-info { display: none !important; }
     </style>
-    <?php
-} );
-
-add_action( 'wp_footer', function () {
-    if ( ! is_checkout() ) return;
-    $url = esc_js( PWC_RETURN_TO_CART_URL );
-    ?>
-    <script>
-    (function () {
-        var TARGET_URL = '<?php echo $url; ?>';
-
-        function patchLink() {
-            // WooCommerce Blocks renders: <a class="wc-block-components-checkout-return-to-cart-button" ...>
-            var link = document.querySelector(
-                'a.wc-block-components-checkout-return-to-cart-button'
-            );
-            if ( link && link.href !== TARGET_URL ) {
-                link.href = TARGET_URL;
-            }
-        }
-
-        // Run once after DOM is ready (catches server-side-rendered HTML)
-        if ( document.readyState === 'loading' ) {
-            document.addEventListener( 'DOMContentLoaded', patchLink );
-        } else {
-            patchLink();
-        }
-
-        // Also watch for React re-renders (Blocks can re-render the link after
-        // address changes or shipping updates)
-        var observer = new MutationObserver( patchLink );
-        observer.observe( document.body, { childList: true, subtree: true } );
-    })();
-    </script>
     <?php
 } );

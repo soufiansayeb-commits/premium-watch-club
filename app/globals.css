@@ -7466,7 +7466,7 @@ img { max-width: 100%; display: block; }
 }
 .h2m-cd-lbl {
   font-size: 8.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
-  color: rgba(197,160,101,0.7);
+  color: rgba(255,255,255,0.85);
 }
 .h2m-countdown--closed {
   width: 100%; max-width: 360px; text-align: center;
@@ -7695,9 +7695,9 @@ img { max-width: 100%; display: block; }
   object-fit: contain;
 }
 
-/* TASK 4: strong green tickets-left / sold progress bar (matches desktop) */
+/* green tickets-left text matches progress bar fill */
 .h2m-prog-label { color: #34c76a; }
-.h2m-prog-left  { color: var(--gold); }
+.h2m-prog-left  { color: #34c76a; }
 .h2m-prog-track { height: 7px; background: rgba(255,255,255,0.09); }
 .h2m-prog-fill {
   background: linear-gradient(90deg, #1e9b50, #34c76a, #6ee7a0);

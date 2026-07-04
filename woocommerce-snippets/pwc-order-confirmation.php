@@ -21,7 +21,7 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 if ( ! defined( 'PWC_FRONTEND_URL' ) ) {
-	define( 'PWC_FRONTEND_URL', 'http://localhost:3000' ); // ← change for production
+	define( 'PWC_FRONTEND_URL', 'https://premiumwatchclub.com' );
 }
 function pwc_oc_frontend() {
 	return rtrim( PWC_FRONTEND_URL, '/' );
@@ -349,6 +349,35 @@ function pwc_oc_redirect() {
 		exit;
 	}
 }
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * 5b. CHECKOUT PAGE back-button guard
+ *     Fires only on the WooCommerce checkout page (not order-received, not pay).
+ *     When a customer presses the browser back button while on the checkout form,
+ *     redirect them to the branded homepage instead of the handoff URL or a
+ *     broken empty-cart checkout state.
+ *     Does NOT interfere with payment gateway redirects or form submission.
+ * ─────────────────────────────────────────────────────────────────────────── */
+add_action( 'wp_footer', function () {
+	if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) return;
+	if ( pwc_oc_is_received() ) return;
+	if ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'order-pay' ) ) return;
+	?>
+	<script>
+	(function () {
+		// Only arm the guard once the checkout form is present (not on payment gateways).
+		if ( ! document.querySelector( 'form.woocommerce-checkout, .wc-block-checkout' ) ) return;
+		try {
+			history.pushState( null, '', location.href );
+			window.addEventListener( 'popstate', function () {
+				window.location.replace( <?php echo wp_json_encode( pwc_oc_frontend() . '/' ); ?> );
+			} );
+		} catch ( e ) {}
+	})();
+	</script>
+	<?php
+} );
 
 
 /* ───────────────────────────────────────────────────────────────────────────

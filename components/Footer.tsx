@@ -53,7 +53,7 @@ export default function Footer() {
             <div className="footer-col">
               <h4>Competition</h4>
               <ul>
-                <li><Link href="/competitions/omega-speedmaster-moonwatch">Current Draw</Link></li>
+                <li><Link href="/weekly">Current Draw</Link></li>
                 <li><Link href="/#how">How It Works</Link></li>
                 <li><Link href="/past-winners">Past Winners</Link></li>
               </ul>
@@ -62,7 +62,7 @@ export default function Footer() {
               <h4>Information</h4>
               <ul>
                 <li><Link href="/terms">Competition Terms</Link></li>
-                <li><Link href="/#faq">FAQs</Link></li>
+                <li><Link href="/about-us">About Us</Link></li>
                 <li><Link href="/privacy">Privacy Policy</Link></li>
                 <li><Link href="/contact">Contact Us</Link></li>
               </ul>
@@ -70,10 +70,10 @@ export default function Footer() {
             <div className="footer-col">
               <h4>Editorial</h4>
               <ul>
-                <li><Link href="/#journal">Journal</Link></li>
-                <li><Link href="/#journal">Watch Guides</Link></li>
-                <li><Link href="/#journal">Brand Heritage</Link></li>
-                <li><Link href="/#journal">Collecting Advice</Link></li>
+                <li><Link href="/journal">Journal</Link></li>
+                <li><Link href="/journal">Watch Guides</Link></li>
+                <li><Link href="/journal">Brand Heritage</Link></li>
+                <li><Link href="/journal">Collecting Advice</Link></li>
               </ul>
             </div>
             <div className="footer-col">
@@ -112,7 +112,7 @@ export default function Footer() {
             <div className="footer-policies">
               <Link href="/terms">Terms</Link>
               <Link href="/privacy">Privacy</Link>
-              <Link href="/#faq">FAQs</Link>
+              <Link href="/about-us">About Us</Link>
               <span className="footer-copy">© {new Date().getFullYear()} Premium Watch Club</span>
             </div>
           </div>
