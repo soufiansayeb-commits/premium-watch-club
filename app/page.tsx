@@ -7,11 +7,12 @@ import OfferBar from '@/components/OfferBar'
 import HomepageHeroContainer from '@/components/HomepageHeroContainer'
 import StatsBar from '@/components/StatsBar'
 import HomepageWinners from '@/components/HomepageWinners'
-import HowItWorks from '@/components/HowItWorks'
 import OfferSection from '@/components/OfferSection'
+import HowItWorksInteractive from '@/components/HowItWorksInteractive'
 import ComparisonSection from '@/components/ComparisonSection'
 import TestimonialTabs from '@/components/TestimonialTabs'
 import JournalPreview from '@/components/JournalPreview'
+import WhyNotBuyIt from '@/components/WhyNotBuyIt'
 import HomeFaqSection from '@/components/HomeFaqSection'
 import CompetitionsGrid from '@/components/CompetitionsGrid'
 import Footer from '@/components/Footer'
@@ -55,18 +56,19 @@ export default async function HomePage() {
       <HomepageHeroContainer competitionsByType={competitionsByType} />
       <StatsBar />
       <HomepageWinners />
-      <HowItWorks />
       <OfferSection
         offer={offer}
         special={competitionsByType.special}
         weekly={competitionsByType.weekly}
         ctaHref={offerCtaHref}
       />
+      <HowItWorksInteractive ctaHref={offerCtaHref} />
       <ComparisonSection />
       <TestimonialTabs />
       {/* Current Competitions section — always rendered when any non-Coming-Soon comp exists */}
       <CompetitionsGrid competitions={gridComps} />
       <JournalPreview />
+      <WhyNotBuyIt ctaHref="#competitions-grid" />
       <HomeFaqSection />
       <Footer />
       <ScrollReveal />

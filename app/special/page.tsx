@@ -5,12 +5,14 @@ import Header from '@/components/Header'
 import HomepageHeroContainer from '@/components/HomepageHeroContainer'
 import StatsBar from '@/components/StatsBar'
 import HomepageWinners from '@/components/HomepageWinners'
-import HowItWorks from '@/components/HowItWorks'
 import TrustBar from '@/components/TrustBar'
+import HowItWorksInteractive from '@/components/HowItWorksInteractive'
 import JournalPreview from '@/components/JournalPreview'
+import WhyNotBuyIt from '@/components/WhyNotBuyIt'
 import CompetitionsGrid from '@/components/CompetitionsGrid'
 import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
+import { routes } from '@/lib/routes'
 
 export const metadata: Metadata = {
   title: 'Special Edition Luxury Watch Competitions | Premium Watch Club',
@@ -37,9 +39,10 @@ export default async function SpecialLandingPage() {
       <HomepageHeroContainer competitionsByType={competitionsByType} defaultType="special" />
       <StatsBar />
       <HomepageWinners />
-      <HowItWorks />
       <TrustBar />
+      <HowItWorksInteractive ctaHref={routes.competitionSpecial} />
       <CompetitionsGrid competitions={gridComps} />
+      <WhyNotBuyIt ctaHref={routes.competitionSpecial} />
       <JournalPreview />
       <Footer />
       <ScrollReveal />

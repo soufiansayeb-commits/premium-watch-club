@@ -13,8 +13,11 @@ import Header from '@/components/Header'
 import CompetitionEntryFlow from '@/components/competition/CompetitionEntryFlow'
 import HomepageWinners from '@/components/HomepageWinners'
 import ProductEditorial from '@/components/competition/ProductEditorial'
+import LeaderboardRewards from '@/components/LeaderboardRewards'
+import HowItWorksInteractive from '@/components/HowItWorksInteractive'
 import ComparisonSection from '@/components/ComparisonSection'
 import TestimonialTabs from '@/components/TestimonialTabs'
+import WhyNotBuyIt from '@/components/WhyNotBuyIt'
 import HomeFaqSection from '@/components/HomeFaqSection'
 import ScrollReveal from '@/components/ScrollReveal'
 import Footer from '@/components/Footer'
@@ -112,10 +115,13 @@ export default async function CompetitionPage({ params }: Props) {
         <JsonLd data={breadcrumbSchema} />
         <Header />
         <CompetitionEntryFlow competition={competition} />
+        <LeaderboardRewards competition={competition} />
+        <HowItWorksInteractive ctaHref="#entry-main" />
         <HomepageWinners />
         <ProductEditorial competition={competition} />
         <ComparisonSection />
         <TestimonialTabs />
+        <WhyNotBuyIt ctaHref="#entry-main" />
         <HomeFaqSection />
         <ScrollReveal />
         <Footer />
@@ -138,10 +144,13 @@ export default async function CompetitionPage({ params }: Props) {
         <JsonLd data={breadcrumbSchema} />
         <Header />
         <CompetitionEntryFlow competition={mergedCompetition} />
+        <LeaderboardRewards competition={mergedCompetition} />
+        <HowItWorksInteractive ctaHref="#entry-main" />
         <HomepageWinners />
         <ProductEditorial competition={mergedCompetition} />
         <ComparisonSection />
         <TestimonialTabs />
+        <WhyNotBuyIt ctaHref="#entry-main" />
         <HomeFaqSection />
         <ScrollReveal />
         <Footer />
@@ -162,9 +171,12 @@ export default async function CompetitionPage({ params }: Props) {
       <JsonLd data={breadcrumbSchema} />
       <Header />
       <CompetitionEntryFlow competition={competition} />
+      <LeaderboardRewards competition={competition} />
+      <HowItWorksInteractive ctaHref="#entry-main" />
       <HomepageWinners />
       <ProductEditorial competition={competition} />
       <ComparisonSection />
+      <WhyNotBuyIt ctaHref="#entry-main" />
       <HomeFaqSection />
       <ScrollReveal />
       <Footer />
