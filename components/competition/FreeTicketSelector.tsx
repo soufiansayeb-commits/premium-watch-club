@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
+import { useMoney } from '@/context/StoreSettingsContext'
 
 interface Props {
   competition: Competition
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function FreeTicketSelector({ competition: c, onContinue }: Props) {
+  const fmt = useMoney()
   // Odds based on current entries remaining — same formula as paid comp.
   const odds = c.ticketsLeft > 0 ? c.ticketsLeft : c.totalTickets
 
@@ -228,7 +230,7 @@ export default function FreeTicketSelector({ competition: c, onContinue }: Props
                 </div>
                 <div className="fts-right">
                   <div className="fts-price">
-                    {c.entryPrice === 0 ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+                    {c.entryPrice === 0 ? 'FREE' : fmt(c.entryPrice)}
                   </div>
                   <div className="fts-odds-small">1 in {odds} odds</div>
                 </div>
@@ -250,7 +252,7 @@ export default function FreeTicketSelector({ competition: c, onContinue }: Props
               </div>
               <div className="fts-op-right">
                 <div className="fts-op-detail">
-                  1 entry · {c.entryPrice === 0 ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+                  1 entry · {c.entryPrice === 0 ? 'FREE' : fmt(c.entryPrice)}
                 </div>
                 <div className="fts-op-note">
                   Every entry is independently drawn<br />in the publicly streamed live draw.
@@ -274,7 +276,7 @@ export default function FreeTicketSelector({ competition: c, onContinue }: Props
                 </div>
               </div>
               <div className="sr-amount">
-                {c.entryPrice === 0 ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+                {c.entryPrice === 0 ? 'FREE' : fmt(c.entryPrice)}
               </div>
             </div>
 

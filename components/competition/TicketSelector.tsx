@@ -14,6 +14,8 @@ import {
   bundleCardQuantities,
 } from '@/lib/bundle-discounts'
 import { useBundleConfig } from '@/context/BundleConfigContext'
+import { useMoney } from '@/context/StoreSettingsContext'
+import { getAllowedMaxQty } from '@/lib/quantity-limits'
 
 interface Props {
   competition: Competition
@@ -23,7 +25,7 @@ interface Props {
 }
 
 export default function TicketSelector({ competition: c, selectedQty, onQtyChange, onContinue }: Props) {
-  const fmt = (n: number) => `${c.currency}${n.toFixed(2)}`
+  const fmt = useMoney()
 
   // Defense-in-depth: CompetitionEntryFlow already gates on isSoldOut before
   // rendering TicketSelector. This guard handles any direct-render edge cases.
@@ -58,10 +60,13 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
     )
   }
 
-  // maxTicketsPerPurchase = policy cap (from ACF percentage or override).
-  // allowedMaxQty = min(policy cap, live remaining stock).
+  // Allowed max = min(per-member policy cap, live remaining stock). Resolved
+  // through the shared helper so the cart drawer and entry summary agree exactly.
   const entriesRemaining = c.ticketsLeft > 0 ? c.ticketsLeft : 1
-  const allowedMaxQty = Math.min(c.maxTicketsPerPurchase, entriesRemaining)
+  const allowedMaxQty = getAllowedMaxQty({
+    maxTicketsPerPurchase: c.maxTicketsPerPurchase,
+    ticketsLeft: c.ticketsLeft,
+  })
   const showSlider = allowedMaxQty > 1
   const isFree = !!c.isFree
 

@@ -6,12 +6,10 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { useCart } from '@/context/CartContext'
+import { useMoney } from '@/context/StoreSettingsContext'
+import { getAllowedMaxQty } from '@/lib/quantity-limits'
 import { trackEvent } from '@/lib/analytics'
 import type { CartItem } from '@/lib/cartStore'
-
-function fmt(amount: number, currency: string): string {
-  return `${currency}${amount.toFixed(2)}`
-}
 
 function QuantityStepper({
   item,
@@ -22,7 +20,9 @@ function QuantityStepper({
   onUpdate: (competitionId: string, qty: number) => void
   onRemove: (competitionId: string) => void
 }) {
-  const max = item.maxTicketsPerPurchase ?? 999
+  // Same allowed-max the PDP and cart drawer use — resolved from the product's
+  // per-member cap carried on the cart item. Never a hardcoded number.
+  const max = getAllowedMaxQty({ maxTicketsPerPurchase: item.maxTicketsPerPurchase })
   const min = 1
 
   function dec() {
@@ -77,12 +77,12 @@ function QuantityStepper({
 
 export default function CartPage() {
   const { items, itemCount, removeItem, updateQuantity, prepareCheckout } = useCart()
+  const fmt = useMoney()
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
 
   const hasItems = items.length > 0
   const grandTotal = items.reduce((sum, i) => sum + i.total, 0)
-  const grandCurrency = items[0]?.currency ?? '£'
   const allFree = items.every((i) => i.isFreeCompetition)
 
   async function handleCheckout() {
@@ -172,7 +172,7 @@ export default function CartPage() {
                           <span className="cp-row-val">
                             {item.isFreeCompetition
                               ? <span className="cp-free">FREE</span>
-                              : fmt(item.price, item.currency)}
+                              : fmt(item.price)}
                           </span>
                         </div>
 
@@ -195,7 +195,7 @@ export default function CartPage() {
                           <span className="cp-row-val">
                             {item.isFreeCompetition
                               ? <span className="cp-free">FREE</span>
-                              : fmt(item.total, item.currency)}
+                              : fmt(item.total)}
                           </span>
                         </div>
                       </div>
@@ -228,7 +228,7 @@ export default function CartPage() {
                       <span className="cp-summary-val">
                         {item.isFreeCompetition
                           ? <span className="cp-free">FREE</span>
-                          : fmt(item.total, item.currency)}
+                          : fmt(item.total)}
                       </span>
                     </div>
                   ))}
@@ -240,7 +240,7 @@ export default function CartPage() {
                     <span className="cp-summary-total-val">
                       {allFree
                         ? <span className="cp-free">FREE</span>
-                        : fmt(grandTotal, grandCurrency)}
+                        : fmt(grandTotal)}
                     </span>
                   </div>
 

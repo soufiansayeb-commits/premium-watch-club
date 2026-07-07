@@ -87,7 +87,6 @@ export default function FreeCompetitionEntryFlow({ competition }: Props) {
             {currentStep === 3 && (
               <CheckoutStep
                 competition={competition}
-                selectedQty={1}
                 selectedAnswer={selectedOptionId
                   ? (!!competition.challengeImage && (competition.answerOptions?.length ?? 0) > 0
                       ? selectedOptionId

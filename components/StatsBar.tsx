@@ -4,7 +4,7 @@ export default function StatsBar() {
       <div className="container">
         <div className="stats-inner">
           <div className="stat-item reveal">
-            <div className="stat-val">£480K+</div>
+            <div className="stat-val">$480K+</div>
             <div className="stat-lbl">In Prizes Awarded</div>
           </div>
           <div className="stat-item reveal d1">

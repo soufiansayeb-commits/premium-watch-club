@@ -4,13 +4,11 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useCart } from '@/context/CartContext'
 import { useBundleConfig } from '@/context/BundleConfigContext'
+import { useMoney } from '@/context/StoreSettingsContext'
 import { resolveLinePricing } from '@/lib/bundle-pricing'
+import { getAllowedMaxQty } from '@/lib/quantity-limits'
 import { trackEvent } from '@/lib/analytics'
 import type { CartItem } from '@/lib/cartStore'
-
-function fmt(amount: number, currency: string): string {
-  return `${currency}${amount.toFixed(2)}`
-}
 
 function QuantityStepper({
   item,
@@ -21,7 +19,10 @@ function QuantityStepper({
   onUpdate: (competitionId: string, qty: number) => void
   onRemove: (competitionId: string) => void
 }) {
-  const max = 20 // max tickets per competition
+  // Same allowed-max the PDP ticket selector uses — resolved from the product's
+  // per-member cap (carried on the cart item), never a hardcoded number. Stock is
+  // enforced by WooCommerce at checkout, so the drawer caps on policy only.
+  const max = getAllowedMaxQty({ maxTicketsPerPurchase: item.maxTicketsPerPurchase })
   const min = 1
 
   function dec() {
@@ -80,6 +81,9 @@ export default function CartDrawer() {
   // Live backend-driven bundle rules — the SAME source the ticket cards and Woo
   // checkout use. Recomputing here keeps the drawer preview in lock-step.
   const bundleConfig = useBundleConfig()
+  // Live Woo currency — ignores each item's stored symbol so prices always follow
+  // the current WooCommerce currency, even for items added before it changed.
+  const fmt = useMoney()
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
 
@@ -89,7 +93,6 @@ export default function CartDrawer() {
     (sum, i) => sum + resolveLinePricing(bundleConfig, i).discountedSubtotal,
     0,
   )
-  const grandCurrency = items[0]?.currency ?? '£'
   const allFree = items.every((i) => i.isFreeCompetition)
 
   async function handleContinueToCheckout() {
@@ -197,7 +200,7 @@ export default function CartDrawer() {
                       </div>
                       <div className="cd-item-title">{item.title}</div>
                       <div className="cd-item-qty-line">
-                        {item.isFreeCompetition ? 'FREE' : fmt(item.price, item.currency)} per ticket
+                        {item.isFreeCompetition ? 'FREE' : fmt(item.price)} per ticket
                       </div>
                     </div>
                   </div>
@@ -218,7 +221,7 @@ export default function CartDrawer() {
                       <span className="cd-row-val">
                         {item.isFreeCompetition
                           ? <span className="cd-free">FREE</span>
-                          : fmt(item.price, item.currency)}
+                          : fmt(item.price)}
                       </span>
                     </div>
                     <div className="cd-row">
@@ -232,11 +235,11 @@ export default function CartDrawer() {
                           <span className="cd-free">FREE</span>
                         ) : pricing.discounted ? (
                           <span className="cd-subtotal-wrap">
-                            <span className="cd-subtotal-was">{fmt(pricing.originalSubtotal, item.currency)}</span>
-                            <span className="cd-subtotal-now">{fmt(pricing.discountedSubtotal, item.currency)}</span>
+                            <span className="cd-subtotal-was">{fmt(pricing.originalSubtotal)}</span>
+                            <span className="cd-subtotal-now">{fmt(pricing.discountedSubtotal)}</span>
                           </span>
                         ) : (
-                          fmt(pricing.discountedSubtotal, item.currency)
+                          fmt(pricing.discountedSubtotal)
                         )}
                       </span>
                     </div>
@@ -244,7 +247,7 @@ export default function CartDrawer() {
                       <div className="cd-row cd-row-discount">
                         <span className="cd-row-label">Bundle discount</span>
                         <span className="cd-discount-val">
-                          {pricing.discountPercent}% off &middot; You saved {fmt(pricing.savings, item.currency)}
+                          {pricing.discountPercent}% off &middot; You saved {fmt(pricing.savings)}
                         </span>
                       </div>
                     )}
@@ -270,7 +273,7 @@ export default function CartDrawer() {
                   <span className="cd-row-val">
                     {allFree
                       ? <span className="cd-free">FREE</span>
-                      : fmt(grandTotal, grandCurrency)}
+                      : fmt(grandTotal)}
                   </span>
                 </div>
               )}

@@ -22,6 +22,7 @@ import HomeFaqSection from '@/components/HomeFaqSection'
 import ScrollReveal from '@/components/ScrollReveal'
 import Footer from '@/components/Footer'
 import { JsonLd } from '@/components/JsonLd'
+import { fetchStoreSettings, formatMoney, type StoreSettings } from '@/lib/store-settings'
 import type { Competition } from '@/lib/competition-data'
 
 interface Props {
@@ -32,7 +33,7 @@ interface Props {
 // resolve to the active competition of that type — the URL stays clean forever.
 const COMP_TYPE_SLUGS = new Set(['weekly', 'monthly', 'special'])
 
-function buildCompetitionSchemas(competition: Competition, slug: string) {
+function buildCompetitionSchemas(competition: Competition, slug: string, settings: StoreSettings) {
   const image = competition.galleryImages?.[0]?.src ?? competition.heroImage
 
   const productSchema = {
@@ -40,11 +41,11 @@ function buildCompetitionSchemas(competition: Competition, slug: string) {
     '@type': 'Product',
     name: competition.title,
     image,
-    description: competition.description ?? `Enter to win a ${competition.title} worth ${competition.currency}${competition.retailValue.toLocaleString('en-GB')}.`,
+    description: competition.description ?? `Enter to win a ${competition.title} worth ${formatMoney(competition.retailValue, settings, { decimals: 0 })}.`,
     offers: {
       '@type': 'Offer',
       price: String(competition.entryPrice),
-      priceCurrency: 'GBP',
+      priceCurrency: settings.currency,
       availability: competition.ticketsLeft > 0
         ? 'https://schema.org/InStock'
         : 'https://schema.org/SoldOut',
@@ -85,11 +86,14 @@ export async function generateMetadata({ params }: Props) {
 
   if (!competition) return {}
 
+  const settings = await fetchStoreSettings()
   const ogImage = competition.galleryImages?.[0]?.src ?? competition.heroImage
+  const entry = formatMoney(competition.entryPrice, settings)
+  const retail = formatMoney(competition.retailValue, settings, { decimals: 0 })
 
   return {
-    title: `${competition.title} — Win for ${competition.currency}${competition.entryPrice} — Premium Watch Club`,
-    description: `Enter to win a ${competition.title} worth ${competition.currency}${competition.retailValue.toLocaleString('en-GB')} for just ${competition.currency}${competition.entryPrice} a ticket. Draw: ${competition.drawDateDisplay}.`,
+    title: `${competition.title} — Win for ${entry} — Premium Watch Club`,
+    description: `Enter to win a ${competition.title} worth ${retail} for just ${entry} a ticket. Draw: ${competition.drawDateDisplay}.`,
     alternates: {
       canonical: `https://premiumwatchclub.com/competitions/${slug}`,
     },
@@ -99,6 +103,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function CompetitionPage({ params }: Props) {
   const { slug } = params
+  const storeSettings = await fetchStoreSettings()
 
   // ── Type-based routes: /competitions/weekly | monthly | special ──────────
   // Fetches whichever WooCommerce product is currently active for that type.
@@ -107,7 +112,7 @@ export default async function CompetitionPage({ params }: Props) {
     const competition = await getActiveCompetitionByType(slug)
     if (!competition) notFound()
 
-    const { productSchema, breadcrumbSchema } = buildCompetitionSchemas(competition, slug)
+    const { productSchema, breadcrumbSchema } = buildCompetitionSchemas(competition, slug, storeSettings)
 
     return (
       <>
@@ -136,7 +141,7 @@ export default async function CompetitionPage({ params }: Props) {
     const { product: wooProduct } = await fetchWooProductById(staticComp.wooProductId)
     const merged = wooProduct ? mergeWooData(staticComp, wooProduct) : staticComp
     const mergedCompetition = wooProduct ? await resolveCompetitionMedia(merged, wooProduct) : merged
-    const { productSchema, breadcrumbSchema } = buildCompetitionSchemas(mergedCompetition, slug)
+    const { productSchema, breadcrumbSchema } = buildCompetitionSchemas(mergedCompetition, slug, storeSettings)
 
     return (
       <>
@@ -163,7 +168,7 @@ export default async function CompetitionPage({ params }: Props) {
   if (!wooProduct) notFound()
 
   const competition = await resolveCompetitionMedia(wooProductToCompetition(wooProduct), wooProduct)
-  const { productSchema, breadcrumbSchema } = buildCompetitionSchemas(competition, slug)
+  const { productSchema, breadcrumbSchema } = buildCompetitionSchemas(competition, slug, storeSettings)
 
   return (
     <>

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { JournalPost, RelatedProduct } from '@/lib/wordpress-journal'
 import type { ArticleSection } from '@/lib/journal-sections'
+import { useMoney } from '@/context/StoreSettingsContext'
 
 interface Props {
   post:         JournalPost
@@ -19,6 +20,7 @@ function cardImageFor(p: JournalPost): string | null {
 }
 
 export default function JournalEditorial({ post, product, relatedPosts, sections, blockquote }: Props) {
+  const fmt = useMoney()
   const heroImage = post.featuredImage ?? product?.images[0] ?? null
   const gallery   = (product?.images ?? []).slice(0, 4)
   const [activeImg, setActiveImg] = useState(0)
@@ -60,7 +62,7 @@ export default function JournalEditorial({ post, product, relatedPosts, sections
   }, [])
 
   const price = product && product.entryPrice > 0
-    ? `${product.currency}${product.entryPrice.toFixed(2)}`
+    ? fmt(product.entryPrice)
     : null
   const ctaState  = product?.ctaState ?? 'enter'
   const quoteText = blockquote || post.excerpt || ''

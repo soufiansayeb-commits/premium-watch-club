@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { useCart } from '@/context/CartContext'
-import { bundleLineTotal, getEligibleTiers } from '@/lib/bundle-discounts'
-import { useBundleConfig } from '@/context/BundleConfigContext'
+import { useMoney } from '@/context/StoreSettingsContext'
 import { trackEvent } from '@/lib/analytics'
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -36,7 +35,6 @@ const TrashIcon = () => (
 
 interface Props {
   competition: Competition
-  selectedQty: number
   selectedAnswer: string | null
   onBack: () => void
 }
@@ -45,20 +43,13 @@ interface Props {
 
 export default function CheckoutStep({
   competition: c,
-  selectedQty,
   selectedAnswer,
   onBack,
 }: Props) {
-  // All cart items — used for the full order summary
-  const { items, removeItem, updateQuantity, prepareCheckout } = useCart()
-  const bundleConfig = useBundleConfig()
-
-  const fmt = (n: number, currency: string = c.currency) => `${currency}${n.toFixed(2)}`
-
-  // Qty stepper state — only applies to the current competition (paid comps)
-  const entriesRemaining = c.ticketsLeft > 0 ? c.ticketsLeft : c.maxTicketsPerPurchase
-  const allowedMaxQty    = Math.min(c.maxTicketsPerPurchase, entriesRemaining)
-  const [qty, setQty]    = useState(() => Math.min(selectedQty, allowedMaxQty))
+  // All cart items — used for the full order summary. Quantity is edited in the
+  // cart drawer (single source of truth); the Entry Summary only confirms it.
+  const { items, removeItem, prepareCheckout } = useCart()
+  const fmt = useMoney()
 
   const [isSyncing,  setIsSyncing]  = useState(false)
   const [syncError,  setSyncError]  = useState<string | null>(null)
@@ -111,26 +102,11 @@ export default function CheckoutStep({
   }, [items.length, items.map(i => i.competitionId + i.quantity).join(',')])
 
   // ── Derived totals from ALL cart items ─────────────────────────────────────
-  // For the current competition, override quantity from local stepper state
-  // so the displayed total stays live while the user adjusts the stepper.
-  const displayItems = items.map(item => {
-    // Apply the local stepper quantity to the current competition so the order
-    // total reflects the stepper before the user submits.
-    // Use allowedMaxQty > 1 (not price > 0) so free multi-entry competitions
-    // also get live stepper feedback. Free items have price=0 so total stays 0.
-    if (item.competitionId === c.id && allowedMaxQty > 1) {
-      const tiers = getEligibleTiers(bundleConfig, c.competitionType, item.price, item.isFreeCompetition)
-      return {
-        ...item,
-        quantity: qty,
-        total: bundleLineTotal(item.price, tiers, qty),
-      }
-    }
-    return item
-  })
-
+  // Quantities are whatever the cart holds (edited in the cart drawer). Each
+  // item.total is kept in lock-step with the live bundle config by CartContext,
+  // so the summary already reflects the correct discounted totals.
+  const displayItems = items
   const grandTotal   = displayItems.reduce((sum, i) => sum + i.total, 0)
-  const grandCurrency = displayItems[0]?.currency ?? c.currency
   // Derive allFree from live prices, not from the stale isFreeCompetition flag in cart
   const allFree      = displayItems.every(i => i.price === 0)
 
@@ -139,13 +115,6 @@ export default function CheckoutStep({
     if (isSyncing || items.length === 0) return
     setSyncError(null)
     setIsSyncing(true)
-
-    // Flush local stepper qty back into the cart store before sync.
-    // Always sync — even for free multi-entry competitions (qty can be > 1).
-    // Using allowedMaxQty > 1 as the guard ensures single-entry comps (max=1) are
-    // not unnecessarily updated, but the correct fix for multi-entry free comps
-    // is to always persist whatever qty the stepper shows.
-    updateQuantity(c.id, qty)
 
     const url = await prepareCheckout()
     setIsSyncing(false)
@@ -162,7 +131,7 @@ export default function CheckoutStep({
       competitionId: c.id,
       slug:          c.slug,
       wooProductId:  c.wooProductId,
-      quantity:      qty,
+      quantity:      items.find(i => i.competitionId === c.id)?.quantity ?? 0,
       grandTotal,
       itemCount:     items.length,
     })
@@ -222,42 +191,20 @@ export default function CheckoutStep({
               <div className="os-title">Order Summary</div>
 
               {displayItems.map((item) => {
-                const isCurrentComp = item.competitionId === c.id
                 // Derive paid/free from live price, not from isFreeCompetition flag stored
                 // in the cart. The flag is set at add-to-cart time and can be stale if the
                 // product changed from free→paid after the item was added.
                 return (
                   <div key={item.competitionId} className="os-row os-item-row">
 
-                    {/* Left: name + qty control */}
+                    {/* Left: name + static quantity. Quantity is edited in the cart
+                        drawer (single source of truth) — the Entry Summary only
+                        confirms the entry, so no plus/minus controls here. */}
                     <div className="os-item-info">
                       <span className="label os-item-name">{item.title}</span>
-
-                      {/* Qty stepper for the current competition when multiple entries
-                          are allowed (allowedMaxQty > 1). Works for both paid AND
-                          free multi-entry competitions. For single-entry comps (max=1)
-                          or other cart items, show a static badge. */}
-                      {isCurrentComp && allowedMaxQty > 1 ? (
-                        <div className="qty-stepper os-stepper">
-                          <button
-                            className="qty-btn"
-                            onClick={() => setQty(q => Math.max(1, q - 1))}
-                            disabled={qty <= 1}
-                            aria-label="Remove one ticket"
-                          >−</button>
-                          <span className="qty-value">{qty}</span>
-                          <button
-                            className="qty-btn"
-                            onClick={() => setQty(q => Math.min(allowedMaxQty, q + 1))}
-                            disabled={qty >= allowedMaxQty}
-                            aria-label="Add one ticket"
-                          >+</button>
-                        </div>
-                      ) : (
-                        <span className="os-qty-badge">
-                          × {item.quantity}
-                        </span>
-                      )}
+                      <span className="os-qty-badge">
+                        × {item.quantity}
+                      </span>
                     </div>
 
                     {/* Right: price + trash button */}
@@ -266,7 +213,7 @@ export default function CheckoutStep({
                         {item.price === 0 ? (
                           <span className="os-free-label">FREE</span>
                         ) : (
-                          fmt(item.total, item.currency)
+                          fmt(item.total)
                         )}
                       </span>
 
@@ -302,7 +249,7 @@ export default function CheckoutStep({
                   {allFree ? (
                     <span style={{ color: 'var(--green)', fontWeight: 700 }}>FREE</span>
                   ) : (
-                    fmt(grandTotal, grandCurrency)
+                    fmt(grandTotal)
                   )}
                 </span>
               </div>

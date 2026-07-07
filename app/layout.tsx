@@ -3,10 +3,12 @@ import './globals.css'
 import AgeVerificationModal from '@/components/AgeVerificationModal'
 import { CartProvider } from '@/context/CartContext'
 import { BundleConfigProvider } from '@/context/BundleConfigContext'
+import { StoreSettingsProvider } from '@/context/StoreSettingsContext'
 import CartDrawer from '@/components/CartDrawer'
 import AnnouncementBar from '@/components/AnnouncementBar'
 import { getAnnouncements } from '@/lib/announcements'
 import { fetchBundleConfig } from '@/lib/bundle-discounts'
+import { fetchStoreSettings } from '@/lib/store-settings'
 import { JsonLd } from '@/components/JsonLd'
 
 const organizationSchema = {
@@ -36,9 +38,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [announcements, bundleConfig] = await Promise.all([
+  const [announcements, bundleConfig, storeSettings] = await Promise.all([
     getAnnouncements(),
     fetchBundleConfig(),
+    fetchStoreSettings(),
   ])
 
   return (
@@ -50,14 +53,16 @@ export default async function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <JsonLd data={organizationSchema} />
-        <BundleConfigProvider config={bundleConfig}>
-          <CartProvider>
-            <AgeVerificationModal />
-            <AnnouncementBar announcements={announcements} />
-            {children}
-            <CartDrawer />
-          </CartProvider>
-        </BundleConfigProvider>
+        <StoreSettingsProvider settings={storeSettings}>
+          <BundleConfigProvider config={bundleConfig}>
+            <CartProvider>
+              <AgeVerificationModal />
+              <AnnouncementBar announcements={announcements} />
+              {children}
+              <CartDrawer />
+            </CartProvider>
+          </BundleConfigProvider>
+        </StoreSettingsProvider>
       </body>
     </html>
   )

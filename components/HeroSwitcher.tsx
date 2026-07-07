@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import type { CompetitionType, CompetitionsByType } from '@/lib/woocommerce'
+import { useMoney } from '@/context/StoreSettingsContext'
 
 interface CardConfig {
   type: CompetitionType
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export default function HeroSwitcher({ competitionsByType, activeType, onSelect }: Props) {
+  const fmt = useMoney()
   const visibleCards = CARD_CONFIG.filter(({ type }) => {
     const comp = competitionsByType[type]
     // Closed products (slot = null) and explicitly-Closed status → hidden
@@ -128,7 +130,7 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
                     <span className="hs-price--free">FREE</span>
                   ) : (
                     <>
-                      <span className="hs-price__val">{comp.currency}{comp.entryPrice.toFixed(2)}</span>
+                      <span className="hs-price__val">{fmt(comp.entryPrice)}</span>
                       <span className="hs-price__per"> / entry</span>
                     </>
                   )}

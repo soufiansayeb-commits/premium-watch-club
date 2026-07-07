@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut } from '@/lib/competition-status'
+import { useMoney } from '@/context/StoreSettingsContext'
 
 interface Props {
   competition: Competition
@@ -16,6 +17,7 @@ function pad(n: number) {
 
 export default function FreeCompHero({ competition }: Props) {
   const c = competition
+  const fmt = useMoney()
   // null means the draw date is missing/invalid — timer stays in safe fallback state
   const drawTimestamp = useMemo(() => {
     const ts = new Date(c.drawDate).getTime()
@@ -138,7 +140,7 @@ export default function FreeCompHero({ competition }: Props) {
               <div className="fc-stat">
                 <span className="fc-stat-label">ENTRY</span>
                 <span className={`fc-stat-val${c.isFree ? ' fc-stat-free' : ''}`}>
-                  {c.isFree ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+                  {c.isFree ? 'FREE' : fmt(c.entryPrice)}
                 </span>
               </div>
               <div className="fc-stat-divider" />
@@ -188,7 +190,7 @@ export default function FreeCompHero({ competition }: Props) {
             <div className="fc-mobile-entry">
               {c.isFree
                 ? <><strong>FREE</strong> entry</>
-                : <><strong>{c.currency}{c.entryPrice.toFixed(2)}</strong> per entry</>
+                : <><strong>{fmt(c.entryPrice)}</strong> per entry</>
               }
             </div>
 
@@ -222,7 +224,7 @@ export default function FreeCompHero({ competition }: Props) {
                 <div className="fc-card-row">
                   <span className="fc-card-label">Entry Price</span>
                   <span className={`fc-card-val${c.isFree ? ' fc-card-free' : ''}`}>
-                    {c.isFree ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+                    {c.isFree ? 'FREE' : fmt(c.entryPrice)}
                   </span>
                 </div>
                 <div className="fc-card-divider" />

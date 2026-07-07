@@ -4,12 +4,14 @@ import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
+import { useMoney } from '@/context/StoreSettingsContext'
 
 interface Props {
   competition: Competition
 }
 
 export default function CtaBanner({ competition: c }: Props) {
+  const money = useMoney()
   const fillRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLElement>(null)
 
@@ -60,14 +62,14 @@ export default function CtaBanner({ competition: c }: Props) {
 
           <p className="cd-sub">
             One competition. One watch. {c.totalTickets} entries only.
-            Secure your chance to own the {c.model} for just {c.currency}{c.entryPrice.toFixed(2)}.
+            Secure your chance to own the {c.model} for just {money(c.entryPrice)}.
           </p>
 
           {/* pill row */}
           <div className="cd-pills">
             <div className="cd-pill">
               <span className="cd-pill-label">Entry</span>
-              <span className="cd-pill-value">{c.currency}{c.entryPrice.toFixed(2)}</span>
+              <span className="cd-pill-value">{money(c.entryPrice)}</span>
             </div>
             <div className="cd-pill-sep" />
             <div className="cd-pill">
@@ -77,7 +79,7 @@ export default function CtaBanner({ competition: c }: Props) {
             <div className="cd-pill-sep" />
             <div className="cd-pill">
               <span className="cd-pill-label">Watch Value</span>
-              <span className="cd-pill-value">{c.currency}{c.retailValue.toLocaleString('en-GB')}</span>
+              <span className="cd-pill-value">{money(c.retailValue, { decimals: 0 })}</span>
             </div>
           </div>
 
@@ -133,7 +135,7 @@ export default function CtaBanner({ competition: c }: Props) {
               <div className="cd-card-body">
                 <div className="cd-card-row">
                   <span className="cd-card-label">Entry Price</span>
-                  <span className="cd-card-val">{c.currency}{c.entryPrice.toFixed(2)}</span>
+                  <span className="cd-card-val">{money(c.entryPrice)}</span>
                 </div>
                 <div className="cd-card-divider" />
                 <div className="cd-card-row">

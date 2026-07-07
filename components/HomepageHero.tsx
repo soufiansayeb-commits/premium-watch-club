@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut } from '@/lib/competition-status'
+import { useMoney } from '@/context/StoreSettingsContext'
 import LiveActivity from '@/components/LiveActivity'
 
 interface Props {
@@ -19,6 +20,7 @@ function pad(n: number) {
 
 export default function HomepageHero({ competition, switcherSlot }: Props) {
   const c = competition
+  const fmt = useMoney()
   const soldOut    = isSoldOut(c)
   const isComingSoon = c.competitionStatus === 'Coming Soon'
 
@@ -181,7 +183,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
             <span className="h2-price">
               {c.isFree || c.entryPrice === 0
                 ? <strong style={{ color: 'var(--green)' }}>FREE</strong>
-                : <><strong>{c.currency}{c.entryPrice.toFixed(2)}</strong> per entry</>
+                : <><strong>{fmt(c.entryPrice)}</strong> per entry</>
               }
             </span>
           </div>
@@ -218,7 +220,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
                 <span className="h2-card-val">
                   {c.isFree || c.entryPrice === 0
                     ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>FREE</span>
-                    : `${c.currency}${c.entryPrice.toFixed(2)}`
+                    : fmt(c.entryPrice)
                   }
                 </span>
               </div>
@@ -354,7 +356,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
           <div className="h2m-price">
             {c.isFree || c.entryPrice === 0
               ? <><strong style={{ color: 'var(--green)' }}>FREE</strong> entry</>
-              : <>From <strong>{c.currency}{c.entryPrice.toFixed(2)}</strong> per entry</>
+              : <>From <strong>{fmt(c.entryPrice)}</strong> per entry</>
             }
           </div>
         </div>

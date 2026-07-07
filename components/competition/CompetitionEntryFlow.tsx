@@ -187,7 +187,6 @@ export default function CompetitionEntryFlow({ competition }: Props) {
             {currentStep === 3 && (
               <CheckoutStep
                 competition={competition}
-                selectedQty={selectedTicketQty}
                 selectedAnswer={selectedOptionId
                   ? (!!competition.challengeImage && (competition.answerOptions?.length ?? 0) > 0
                       ? selectedOptionId

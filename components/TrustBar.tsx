@@ -32,7 +32,7 @@ export default function TrustBar() {
               <div className="trust-stat-bar"></div>
             </div>
             <div className="trust-stat">
-              <div className="trust-stat-val">£0</div>
+              <div className="trust-stat-val">$0</div>
               <div className="trust-stat-lbl">Unclaimed Prizes</div>
               <div className="trust-stat-bar"></div>
             </div>

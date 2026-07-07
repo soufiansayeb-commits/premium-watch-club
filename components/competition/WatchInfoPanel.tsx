@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { Competition } from '@/lib/competition-data'
+import { useMoney } from '@/context/StoreSettingsContext'
 import TrustpilotProof from '@/components/TrustpilotProof'
 
 interface Props {
@@ -24,7 +25,9 @@ function formatCondition(raw: string): string {
 }
 
 export default function WatchInfoPanel({ competition: c }: Props) {
-  const fmt = (n: number) => `${c.currency}${n.toLocaleString('en-GB')}`
+  const money = useMoney()
+  // Retail values are whole-currency figures — no decimals.
+  const fmt = (n: number) => money(n, { decimals: 0 })
 
   // All WooCommerce gallery images (index 0 = featured product image).
   // Fallback to static image, then heroImage so single-image products work.
@@ -195,7 +198,7 @@ export default function WatchInfoPanel({ competition: c }: Props) {
           <div className="wi-val">
             {c.isFree || c.entryPrice === 0
               ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>FREE</span>
-              : `From ${c.currency}${c.entryPrice.toFixed(2)}`
+              : `From ${money(c.entryPrice)}`
             }
           </div>
         </div>

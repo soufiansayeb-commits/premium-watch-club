@@ -9,6 +9,7 @@ import HomeFaqSection from '@/components/HomeFaqSection'
 import ScrollReveal from '@/components/ScrollReveal'
 import Footer from '@/components/Footer'
 import { JsonLd } from '@/components/JsonLd'
+import { fetchStoreSettings, formatMoney } from '@/lib/store-settings'
 
 export const metadata = {
   title: 'Free Omega Speedmaster Moonwatch Competition — Premium Watch Club',
@@ -24,6 +25,7 @@ export default async function FreeCompetitionPage() {
 
   const { product: wooProduct } = await fetchWooProductById(competition.wooProductId)
   const mergedCompetition = wooProduct ? mergeWooData(competition, wooProduct) : competition
+  const settings = await fetchStoreSettings()
 
   const image = mergedCompetition.galleryImages?.[0]?.src ?? mergedCompetition.heroImage
 
@@ -32,11 +34,11 @@ export default async function FreeCompetitionPage() {
     '@type': 'Product',
     name: mergedCompetition.title,
     image,
-    description: mergedCompetition.description ?? `Enter to win a ${mergedCompetition.title} worth ${mergedCompetition.currency}${mergedCompetition.retailValue.toLocaleString('en-GB')}.`,
+    description: mergedCompetition.description ?? `Enter to win a ${mergedCompetition.title} worth ${formatMoney(mergedCompetition.retailValue, settings, { decimals: 0 })}.`,
     offers: {
       '@type': 'Offer',
       price: String(mergedCompetition.entryPrice),
-      priceCurrency: 'GBP',
+      priceCurrency: settings.currency,
       availability: mergedCompetition.ticketsLeft > 0
         ? 'https://schema.org/InStock'
         : 'https://schema.org/SoldOut',

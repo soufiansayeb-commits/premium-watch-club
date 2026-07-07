@@ -26,16 +26,16 @@ function CompetitionFallback() {
     <div className="hwi-fb hwi-fb1">
       <div className="hwi-fb-card hwi-fb-card-off">
         <span className="hwi-fb-chip">Weekly</span>
-        <span className="hwi-fb-price">£4.99</span>
+        <span className="hwi-fb-price">$4.99</span>
       </div>
       <div className="hwi-fb-card hwi-fb-card-active">
         <span className="hwi-fb-live">Live</span>
         <span className="hwi-fb-chip">Monthly</span>
-        <span className="hwi-fb-price">£9.99</span>
+        <span className="hwi-fb-price">$9.99</span>
       </div>
       <div className="hwi-fb-card hwi-fb-card-off">
         <span className="hwi-fb-chip">Special</span>
-        <span className="hwi-fb-price">£14.99</span>
+        <span className="hwi-fb-price">$14.99</span>
       </div>
     </div>
   )

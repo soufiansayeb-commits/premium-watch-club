@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut } from '@/lib/competition-status'
+import { useMoney } from '@/context/StoreSettingsContext'
 
 // ── Countdown helper ──────────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ function CountdownBlock({ value, label }: { value: number; label: string }) {
 }
 
 function CompCard({ competition: c }: { competition: Competition }) {
+  const fmt     = useMoney()
   const time    = useCountdown(c.drawDate)
   const imgRef  = useRef<HTMLDivElement>(null)
   const soldOut = isSoldOut(c)
@@ -115,7 +117,7 @@ function CompCard({ competition: c }: { competition: Competition }) {
           <div className="cgc-stat">
             <span className="cgc-stat-label">Entry</span>
             <span className="cgc-stat-val">
-              {c.isFree ? 'FREE' : `${c.currency}${c.entryPrice.toFixed(2)}`}
+              {c.isFree ? 'FREE' : fmt(c.entryPrice)}
             </span>
           </div>
           <div className="cgc-stat-divider" />
