@@ -2,9 +2,11 @@ import type { Metadata } from 'next'
 import './globals.css'
 import AgeVerificationModal from '@/components/AgeVerificationModal'
 import { CartProvider } from '@/context/CartContext'
+import { BundleConfigProvider } from '@/context/BundleConfigContext'
 import CartDrawer from '@/components/CartDrawer'
 import AnnouncementBar from '@/components/AnnouncementBar'
 import { getAnnouncements } from '@/lib/announcements'
+import { fetchBundleConfig } from '@/lib/bundle-discounts'
 import { JsonLd } from '@/components/JsonLd'
 
 const organizationSchema = {
@@ -34,7 +36,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const announcements = await getAnnouncements()
+  const [announcements, bundleConfig] = await Promise.all([
+    getAnnouncements(),
+    fetchBundleConfig(),
+  ])
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -45,12 +50,14 @@ export default async function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <JsonLd data={organizationSchema} />
-        <CartProvider>
-          <AgeVerificationModal />
-          <AnnouncementBar announcements={announcements} />
-          {children}
-          <CartDrawer />
-        </CartProvider>
+        <BundleConfigProvider config={bundleConfig}>
+          <CartProvider>
+            <AgeVerificationModal />
+            <AnnouncementBar announcements={announcements} />
+            {children}
+            <CartDrawer />
+          </CartProvider>
+        </BundleConfigProvider>
       </body>
     </html>
   )

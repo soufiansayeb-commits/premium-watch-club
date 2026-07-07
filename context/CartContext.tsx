@@ -16,7 +16,8 @@ import {
   getWooCart,
 } from '@/lib/woocommerce-cart'
 import { trackEvent } from '@/lib/analytics'
-import { bundleLineTotal } from '@/lib/ticket-bundles'
+import { bundleLineTotal, getEligibleTiers } from '@/lib/bundle-discounts'
+import { useBundleConfig } from '@/context/BundleConfigContext'
 
 const CHECKOUT_FLAG_KEY = 'pwc_checkout_initiated'
 
@@ -41,6 +42,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [hydrated, setHydrated] = useState(false)
+
+  // Live bundle-discount rules (same single source of truth the buy box and the
+  // WooCommerce backend use). Cart line totals are recalculated from these so the
+  // drawer preview matches what checkout will charge.
+  const bundleConfig = useBundleConfig()
+
+  // Recompute a cart item's discounted line total from the live config. The item
+  // carries its own competitionType / isFree so eligibility resolves correctly.
+  const lineTotalFor = useCallback(
+    (item: Pick<CartItem, 'price' | 'competitionType' | 'isFreeCompetition'>, qty: number) => {
+      const tiers = getEligibleTiers(
+        bundleConfig,
+        item.competitionType,
+        item.price,
+        item.isFreeCompetition,
+      )
+      return bundleLineTotal(item.price, tiers, qty)
+    },
+    [bundleConfig],
+  )
 
   // ── Hydrate from localStorage after first render (avoids SSR mismatch) ──────
   useEffect(() => {
@@ -99,15 +120,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
         return {
           ...item,
           quantity: wooItem.quantity,
-          // Derive total from live price + bundle discount, not stale flags.
-          // bundleLineTotal returns 0 when price is 0 (free comps), so no special-casing.
-          total: bundleLineTotal(item.price, wooItem.quantity),
+          // Derive total from live price + live bundle config, not stale flags.
+          // Returns full price (0 discount) for ineligible / free comps.
+          total: lineTotalFor(item, wooItem.quantity),
           wooCartItemKey: wooItem.key,
         }
       })
       return next
     })
-  }, [])
+  }, [lineTotalFor])
 
   // ── addItem ───────────────────────────────────────────────────────────────────
   const addItem = useCallback((newItem: CartItem) => {
@@ -162,8 +183,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           const updated: CartItem = {
             ...item,
             quantity: qty,
-            // Derive total from live price + bundle discount (0 for free comps).
-            total: bundleLineTotal(item.price, qty),
+            // Derive total from live price + live bundle config (0 for free comps).
+            total: lineTotalFor(item, qty),
           }
           // Best-effort: update WooCommerce if we already have the cart item key
           if (item.wooCartItemKey) {
@@ -175,7 +196,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       trackEvent('cart_quantity_updated', { competitionId, newQty: qty })
     },
-    [removeItem]
+    [removeItem, lineTotalFor]
   )
 
   // ── clearCart ─────────────────────────────────────────────────────────────────

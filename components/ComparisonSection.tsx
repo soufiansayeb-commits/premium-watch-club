@@ -50,18 +50,14 @@ export default function ComparisonSection() {
     <section className="cs-s">
       <div className="cs-w">
 
-        {/* ── Intro: eyebrow · gold wordmark title · subtitle (centered) ── */}
+        {/* ── Intro: eyebrow · headline · supporting copy (centered) ── */}
         <div className="cs-intro">
-          <p className="cs-eyebrow">The PWC Standard</p>
-          <Image
-            src="/brand-assets/pwc-logo-wordmark-gold.png"
-            alt="Premium Watch Club"
-            width={1447} height={341}
-            className="cs-title-logo"
-            priority
-          />
+          <p className="cs-eyebrow">Premium Watch Club vs. Typical Comps</p>
+          <h2 className="cs-title">Why Premium Watch Club feels different</h2>
           <p className="cs-sub">
-            A cleaner, more transparent way to enter premium watch competitions.
+            Most watch competitions bury the odds, crowd the entry pool and blur the draw.
+            We built the opposite: limited drops, skill-based entry and a verified winner
+            archive you can actually check.
           </p>
         </div>
 

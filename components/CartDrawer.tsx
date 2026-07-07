@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { useCart } from '@/context/CartContext'
+import { useBundleConfig } from '@/context/BundleConfigContext'
+import { resolveLinePricing } from '@/lib/bundle-pricing'
 import { trackEvent } from '@/lib/analytics'
 import type { CartItem } from '@/lib/cartStore'
 
@@ -75,11 +77,18 @@ function QuantityStepper({
 
 export default function CartDrawer() {
   const { items, itemCount, isOpen, closeDrawer, removeItem, updateQuantity, prepareCheckout } = useCart()
+  // Live backend-driven bundle rules — the SAME source the ticket cards and Woo
+  // checkout use. Recomputing here keeps the drawer preview in lock-step.
+  const bundleConfig = useBundleConfig()
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncError, setSyncError] = useState<string | null>(null)
 
   const hasItems = items.length > 0
-  const grandTotal = items.reduce((sum, i) => sum + i.total, 0)
+  // Grand total from the live discounted line totals (not the stored item.total).
+  const grandTotal = items.reduce(
+    (sum, i) => sum + resolveLinePricing(bundleConfig, i).discountedSubtotal,
+    0,
+  )
   const grandCurrency = items[0]?.currency ?? '£'
   const allFree = items.every((i) => i.isFreeCompetition)
 
@@ -163,7 +172,10 @@ export default function CartDrawer() {
             </div>
           ) : (
             <>
-              {items.map((item) => (
+              {items.map((item) => {
+                // Live discount preview for this line (0 discount when ineligible).
+                const pricing = resolveLinePricing(bundleConfig, item)
+                return (
                 <div key={item.competitionId} className="cd-item-block">
                   {/* ── Competition item ── */}
                   <div className="cd-item">
@@ -216,11 +228,26 @@ export default function CartDrawer() {
                     <div className="cd-row cd-row-total">
                       <span className="cd-row-label">Subtotal</span>
                       <span className="cd-row-val">
-                        {item.isFreeCompetition
-                          ? <span className="cd-free">FREE</span>
-                          : fmt(item.total, item.currency)}
+                        {item.isFreeCompetition ? (
+                          <span className="cd-free">FREE</span>
+                        ) : pricing.discounted ? (
+                          <span className="cd-subtotal-wrap">
+                            <span className="cd-subtotal-was">{fmt(pricing.originalSubtotal, item.currency)}</span>
+                            <span className="cd-subtotal-now">{fmt(pricing.discountedSubtotal, item.currency)}</span>
+                          </span>
+                        ) : (
+                          fmt(pricing.discountedSubtotal, item.currency)
+                        )}
                       </span>
                     </div>
+                    {!item.isFreeCompetition && pricing.discounted && (
+                      <div className="cd-row cd-row-discount">
+                        <span className="cd-row-label">Bundle discount</span>
+                        <span className="cd-discount-val">
+                          {pricing.discountPercent}% off &middot; You saved {fmt(pricing.savings, item.currency)}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* ── Skill note ── */}
@@ -233,7 +260,8 @@ export default function CartDrawer() {
                     Remove entry
                   </button>
                 </div>
-              ))}
+                )
+              })}
 
               {/* ── Grand total (shown when multiple items) ── */}
               {items.length > 1 && (

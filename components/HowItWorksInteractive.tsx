@@ -12,6 +12,8 @@ const EASE = [0.22, 1, 0.36, 1] as const
 
 interface Step {
   id: string
+  /** Short label shown under the timeline node. */
+  short: string
   title: string
   copy: string
   fallback: React.ReactNode
@@ -97,30 +99,35 @@ function WinnerFallback() {
 const steps: Step[] = [
   {
     id: 'step-1',
+    short: 'Choose',
     title: 'Choose Your Competition',
     copy: 'Pick the live Weekly, Monthly or Special competition you want to enter.',
     fallback: <CompetitionFallback />,
   },
   {
     id: 'step-2',
+    short: 'Entries',
     title: 'Select Your Entries',
     copy: 'Choose how many entries you want. More entries means more chances in the draw.',
     fallback: <EntriesFallback />,
   },
   {
     id: 'step-3',
+    short: 'Skill',
     title: 'Answer the Skill Question',
     copy: 'Every order includes a skill-based question. Your selected answer is recorded with your entry.',
     fallback: <SkillFallback />,
   },
   {
     id: 'step-4',
+    short: 'Draw',
     title: 'Watch the Live Draw',
     copy: 'When entries close, the live draw is shared through our socials so members can follow the result.',
     fallback: <DrawFallback />,
   },
   {
     id: 'step-5',
+    short: 'Wrist',
     title: 'From Winner to Wrist',
     copy: 'The winning entry is selected through RandomDraws. We contact the winner, arrange the prize and document the watch reaching its new wrist.',
     fallback: <WinnerFallback />,
@@ -160,10 +167,10 @@ function StepMedia({ step }: { step: Step }) {
     }
   }, [step.id])
 
-  if (stage === 'checking') return <div className="hwi-frame" />
+  if (stage === 'checking') return <div className="hwi-media-inner" />
 
   return (
-    <div className="hwi-frame">
+    <div className="hwi-media-inner">
       {stage === 'video' && (
         <video
           key={step.id}
@@ -195,37 +202,10 @@ function StepMedia({ step }: { step: Step }) {
 
 export default function HowItWorksInteractive({ ctaHref }: Props) {
   const [activeIndex, setActiveIndex] = useState(0)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 899px)')
-    setIsMobile(mq.matches)
-    const listener = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mq.addEventListener('change', listener)
-    return () => mq.removeEventListener('change', listener)
-  }, [])
-
-  useEffect(() => {
-    if (!modalOpen) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setModalOpen(false)
-    }
-    document.addEventListener('keydown', onKeyDown)
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = prevOverflow
-    }
-  }, [modalOpen])
-
-  const handleStepClick = (i: number) => {
-    setActiveIndex(i)
-    if (isMobile) setModalOpen(true)
-  }
-
   const active = steps[activeIndex]
+  const last = steps.length - 1
+
+  const go = (i: number) => setActiveIndex(Math.max(0, Math.min(last, i)))
 
   return (
     <section id="how-it-works" className="hwi-section">
@@ -240,44 +220,125 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           <div className="section-eyebrow">How It Works</div>
           <h2 className="hwi-title">From Entry to Wrist</h2>
           <p className="hwi-subtitle">
-            See how Premium Watch Club works, from choosing your competition to following the live draw and seeing the watch reach the winner&rsquo;s wrist.
+            Five steps, from choosing your competition to seeing the watch reach the winner&rsquo;s wrist.
           </p>
         </motion.div>
 
-        <div className="hwi-layout">
-          <div className="hwi-steps">
-            {steps.map((step, i) => (
-              <button
-                key={step.id}
-                type="button"
-                className={`hwi-step ${activeIndex === i ? 'hwi-step-active' : ''}`}
-                aria-pressed={activeIndex === i}
-                onClick={() => handleStepClick(i)}
-              >
-                <span className="hwi-step-num">{i + 1}</span>
-                <span className="hwi-step-text">
-                  <span className="hwi-step-title">{step.title}</span>
-                  <span className="hwi-step-copy">{step.copy}</span>
-                  <span className="hwi-step-cue" aria-hidden="true">
-                    See how it works
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M9 6l6 6-6 6" />
-                    </svg>
-                  </span>
-                </span>
-              </button>
-            ))}
+        {/* ── Interactive timeline rail ── */}
+        <motion.div
+          className="hwi-railwrap"
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-40px' }}
+          transition={{ duration: 0.5, ease: EASE }}
+        >
+          <div className="hwi-hint">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M9 11.5V6a2 2 0 0 1 4 0v5" />
+              <path d="M13 8.5a2 2 0 0 1 4 0V13" />
+              <path d="M17 10.5a2 2 0 0 1 4 0V16a5 5 0 0 1-5 5h-2.5a5 5 0 0 1-3.9-1.9L5 15.5a2 2 0 0 1 3.2-2.4l.8 1" />
+            </svg>
+            Tap a step to see how it works
           </div>
 
-          <motion.div
-            className="hwi-visual"
-            key={active.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: EASE }}
-          >
-            <StepMedia step={active} />
-          </motion.div>
+          <div className="hwi-rail" role="tablist" aria-label="How it works steps">
+            {steps.map((step, i) => {
+              const done = i < activeIndex
+              const isActive = i === activeIndex
+              return (
+                <div className="hwi-node-wrap" key={step.id}>
+                  {i > 0 && <span className={`hwi-seg ${i <= activeIndex ? 'hwi-seg-done' : ''}`} aria-hidden="true" />}
+                  <button
+                    type="button"
+                    role="tab"
+                    id={`hwi-tab-${step.id}`}
+                    aria-selected={isActive}
+                    aria-controls="hwi-stage-panel"
+                    className={`hwi-node ${isActive ? 'hwi-node-active' : ''} ${done ? 'hwi-node-done' : ''}`}
+                    onClick={() => go(i)}
+                  >
+                    <span className="hwi-node-dot">
+                      {done ? (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      ) : (
+                        <span className="hwi-node-num">{i + 1}</span>
+                      )}
+                    </span>
+                    <span className="hwi-node-label">{step.short}</span>
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </motion.div>
+
+        {/* ── Stage: media + text, updates on node click ── */}
+        <div className="hwi-stage">
+          <div className="hwi-media-frame" id="hwi-stage-panel" role="tabpanel" aria-labelledby={`hwi-tab-${active.id}`}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={active.id}
+                className="hwi-media-motion"
+                initial={{ opacity: 0, scale: 1.02 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.99 }}
+                transition={{ duration: 0.35, ease: EASE }}
+              >
+                <StepMedia step={active} />
+              </motion.div>
+            </AnimatePresence>
+            <span className="hwi-stage-badge">Step {activeIndex + 1} / {steps.length}</span>
+          </div>
+
+          <div className="hwi-panel">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={active.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3, ease: EASE }}
+              >
+                <span className="hwi-panel-eyebrow">Step {activeIndex + 1}</span>
+                <h3 className="hwi-panel-title">{active.title}</h3>
+                <p className="hwi-panel-copy">{active.copy}</p>
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="hwi-nav">
+              <button
+                type="button"
+                className="hwi-nav-btn"
+                onClick={() => go(activeIndex - 1)}
+                disabled={activeIndex === 0}
+                aria-label="Previous step"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
+              </button>
+              <div className="hwi-nav-dots" aria-hidden="true">
+                {steps.map((s, i) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`hwi-nav-dot ${i === activeIndex ? 'hwi-nav-dot-on' : ''}`}
+                    onClick={() => go(i)}
+                    tabIndex={-1}
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                className="hwi-nav-btn"
+                onClick={() => go(activeIndex + 1)}
+                disabled={activeIndex === last}
+                aria-label="Next step"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         <motion.div
@@ -297,48 +358,6 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
         </motion.div>
       </div>
 
-      <AnimatePresence>
-        {modalOpen && (
-          <motion.div
-            className="hwi-modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={() => setModalOpen(false)}
-          >
-            <motion.div
-              className="hwi-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="hwi-modal-title"
-              initial={{ opacity: 0, y: 20, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 12, scale: 0.98 }}
-              transition={{ duration: 0.25, ease: EASE }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                className="hwi-modal-close"
-                aria-label="Close step details"
-                onClick={() => setModalOpen(false)}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 6l12 12M18 6L6 18" />
-                </svg>
-              </button>
-              <div className="hwi-modal-media">
-                <StepMedia step={active} />
-              </div>
-              <span className="hwi-modal-num">Step {activeIndex + 1} of {steps.length}</span>
-              <h3 id="hwi-modal-title" className="hwi-modal-title">{active.title}</h3>
-              <p className="hwi-modal-copy">{active.copy}</p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <style dangerouslySetInnerHTML={{ __html: `
 
         .hwi-section {
@@ -347,11 +366,11 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           border-top: 1px solid var(--border-light);
         }
         .hwi-inner {
-          max-width: 1180px;
+          max-width: 1120px;
           margin: 0 auto;
           padding: 92px 28px 96px;
         }
-        .hwi-header { text-align: center; margin-bottom: 52px; }
+        .hwi-header { text-align: center; margin-bottom: 40px; }
         .hwi-title {
           font-family: var(--font-serif);
           font-size: clamp(28px, 3.6vw, 44px);
@@ -364,110 +383,214 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
         .hwi-subtitle {
           font-size: 15px;
           color: var(--text-muted);
-          max-width: 58ch;
+          max-width: 52ch;
           margin: 0 auto;
           line-height: 1.75;
         }
 
-        /* ── Layout: steps left, media right ── */
-        .hwi-layout {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 12px;
-          margin-bottom: 56px;
-        }
-        .hwi-steps {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-        .hwi-step {
-          display: flex;
-          align-items: flex-start;
-          gap: 16px;
-          text-align: left;
-          background: var(--bg-white);
-          border: 1px solid var(--border-light);
-          border-radius: 12px;
-          padding: 18px 20px;
-          cursor: pointer;
-          transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .hwi-step:hover {
-          border-color: rgba(197,160,101,0.5);
-        }
-        .hwi-step-active {
-          background: var(--navy);
-          border-color: var(--navy);
-          box-shadow: 0 14px 40px rgba(10,31,68,0.18);
-        }
-        .hwi-step-num {
-          flex-shrink: 0;
-          width: 30px; height: 30px;
-          border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          font-family: var(--font-serif);
-          font-size: 14px;
-          font-weight: 700;
-          background: var(--bg-off-white);
-          color: var(--text-muted);
-          border: 1px solid var(--border-light);
-          transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-        }
-        .hwi-step-active .hwi-step-num {
-          background: var(--gold);
-          color: var(--navy);
-          border-color: var(--gold);
-        }
-        .hwi-step-text {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          min-width: 0;
-        }
-        .hwi-step-title {
-          font-family: var(--font-serif);
-          font-size: 17px;
-          font-weight: 700;
-          color: var(--navy);
-          letter-spacing: -0.01em;
-          transition: color 0.2s ease;
-        }
-        .hwi-step-active .hwi-step-title { color: var(--text-on-dark); }
-        .hwi-step-copy {
-          font-size: 13.5px;
-          line-height: 1.6;
-          color: var(--text-mid);
-          transition: color 0.2s ease;
-        }
-        .hwi-step-active .hwi-step-copy { color: rgba(245,244,240,0.72); }
-        .hwi-step-cue {
-          display: none;
-          align-items: center;
-          gap: 6px;
-          margin-top: 4px;
-          font-size: 11.5px;
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: var(--gold);
+        /* ── Interactive hint ── */
+        .hwi-railwrap { margin-bottom: 40px; }
+        .hwi-hint {
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          font-family: var(--font-sans);
+          font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+          color: var(--gold-dark);
+          margin-bottom: 26px;
         }
 
-        /* ── Visual frame (desktop only) ── */
-        .hwi-visual { display: none; }
-        .hwi-frame {
+        /* ── Rail: connected numbered nodes ── */
+        .hwi-rail {
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+        }
+        .hwi-node-wrap {
+          display: flex;
+          align-items: center;
+          flex: 1;
+          min-width: 0;
+        }
+        .hwi-node-wrap:first-child { flex: 0 0 auto; }
+        /* connector segment sits before each node (except the first) */
+        .hwi-seg {
+          flex: 1;
+          height: 2px;
+          min-width: 18px;
+          margin-top: 22px;   /* align with node dot centre (44px dot → 22px) */
+          background: var(--border-light);
+          border-radius: 2px;
+          transition: background 0.45s ease;
+        }
+        .hwi-seg-done { background: var(--gold); }
+
+        .hwi-node {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 0 6px;
+          flex-shrink: 0;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .hwi-node-dot {
+          position: relative;
+          width: 44px; height: 44px;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          background: var(--bg-white);
+          border: 2px solid var(--border-light);
+          color: var(--text-muted);
+          transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .hwi-node-num {
+          font-family: var(--font-serif);
+          font-size: 16px; font-weight: 700;
+          line-height: 1;
+        }
+        .hwi-node-label {
+          font-family: var(--font-sans);
+          font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+          color: var(--text-muted);
+          transition: color 0.25s ease;
+          white-space: nowrap;
+        }
+        /* completed */
+        .hwi-node-done .hwi-node-dot {
+          background: var(--gold-bg, rgba(197,160,101,0.14));
+          border-color: var(--gold);
+          color: var(--gold-dark);
+        }
+        .hwi-node-done .hwi-node-label { color: var(--text-mid); }
+        /* hover — obvious lift + gold ring */
+        .hwi-node:hover .hwi-node-dot {
+          border-color: var(--gold);
+          transform: translateY(-3px);
+          box-shadow: 0 10px 22px -10px rgba(197,160,101,0.7);
+        }
+        .hwi-node:hover .hwi-node-label { color: var(--navy); }
+        .hwi-node:focus-visible { outline: none; }
+        .hwi-node:focus-visible .hwi-node-dot {
+          outline: 2px solid var(--gold-dark);
+          outline-offset: 3px;
+        }
+        /* active — filled, enlarged, unmistakable */
+        .hwi-node-active .hwi-node-dot {
+          background: var(--navy);
+          border-color: var(--navy);
+          color: var(--gold);
+          transform: scale(1.14);
+          box-shadow: 0 14px 30px -10px rgba(10,31,68,0.55), 0 0 0 5px rgba(197,160,101,0.16);
+        }
+        .hwi-node-active .hwi-node-label {
+          color: var(--navy);
+          font-weight: 800;
+        }
+        .hwi-node-active:hover .hwi-node-dot { transform: scale(1.14) translateY(-2px); }
+
+        /* ── Stage ── */
+        .hwi-stage {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 22px;
+          margin-bottom: 48px;
+        }
+        .hwi-media-frame {
           position: relative;
           width: 100%;
-          aspect-ratio: 4 / 3;
-          border-radius: 16px;
+          aspect-ratio: 16 / 10;   /* one consistent frame for every step's GIF/video */
+          border-radius: 18px;
           overflow: hidden;
           background: var(--navy);
           border: 1px solid var(--border-light);
+          box-shadow: 0 24px 60px -34px rgba(10,31,68,0.6);
         }
+        .hwi-media-motion { position: absolute; inset: 0; }
+        .hwi-media-inner { position: absolute; inset: 0; }
         .hwi-media {
           width: 100%; height: 100%;
           object-fit: cover;
           display: block;
+        }
+        .hwi-stage-badge {
+          position: absolute;
+          top: 14px; left: 14px;
+          z-index: 2;
+          font-family: var(--font-sans);
+          font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+          color: var(--gold-light);
+          background: rgba(10,31,68,0.72);
+          backdrop-filter: blur(4px);
+          padding: 6px 12px;
+          border-radius: 999px;
+          border: 1px solid rgba(197,160,101,0.3);
+        }
+
+        .hwi-panel {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+        .hwi-panel-eyebrow {
+          display: inline-block;
+          font-family: var(--font-sans);
+          font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+          color: var(--gold-dark);
+          margin-bottom: 10px;
+        }
+        .hwi-panel-title {
+          font-family: var(--font-serif);
+          font-size: clamp(22px, 2.6vw, 28px);
+          font-weight: 700;
+          color: var(--navy);
+          letter-spacing: -0.01em;
+          line-height: 1.18;
+          margin-bottom: 12px;
+        }
+        .hwi-panel-copy {
+          font-size: 15px;
+          line-height: 1.72;
+          color: var(--text-mid);
+          max-width: 46ch;
+        }
+
+        /* ── Prev / next controls ── */
+        .hwi-nav {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-top: 24px;
+        }
+        .hwi-nav-btn {
+          width: 44px; height: 44px;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          background: var(--bg-white);
+          border: 1px solid var(--border-light);
+          color: var(--navy);
+          cursor: pointer;
+          transition: background 0.2s ease, border-color 0.2s ease, transform 0.16s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+        }
+        .hwi-nav-btn:hover:not(:disabled) {
+          border-color: var(--gold);
+          transform: translateY(-2px);
+          box-shadow: 0 10px 22px -12px rgba(10,31,68,0.5);
+        }
+        .hwi-nav-btn:focus-visible { outline: 2px solid var(--gold-dark); outline-offset: 2px; }
+        .hwi-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .hwi-nav-dots { display: flex; align-items: center; gap: 8px; }
+        .hwi-nav-dot {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: var(--border-light);
+          border: none; padding: 0; cursor: pointer;
+          transition: background 0.25s ease, width 0.25s ease, border-radius 0.25s ease;
+        }
+        .hwi-nav-dot-on {
+          background: var(--gold);
+          width: 22px;
+          border-radius: 999px;
         }
 
         /* ── CTA ── */
@@ -520,10 +643,7 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           gap: 18px;
           padding: 28px;
         }
-        .hwi-fb1 {
-          flex-direction: row;
-          gap: 12px;
-        }
+        .hwi-fb1 { flex-direction: row; gap: 12px; }
         .hwi-fb-card {
           flex: 1;
           position: relative;
@@ -566,7 +686,6 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           color: var(--gold-light);
           letter-spacing: 0.03em;
         }
-
         .hwi-fb-stepper {
           display: flex;
           align-items: center;
@@ -613,7 +732,6 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           color: rgba(245,244,240,0.6);
           text-transform: uppercase;
         }
-
         .hwi-fb-question {
           font-family: var(--font-serif);
           font-size: 15.5px;
@@ -642,7 +760,6 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           color: var(--gold-light);
         }
         .hwi-fb-answer-selected em { font-style: normal; font-weight: 700; }
-
         .hwi-fb-live-badge {
           display: flex;
           align-items: center;
@@ -678,7 +795,6 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           color: var(--gold-light);
         }
         .hwi-fb-countdown em { font-style: normal; opacity: 0.5; }
-
         .hwi-fb-notify {
           display: flex;
           align-items: center;
@@ -711,87 +827,40 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           border: 3px solid var(--gold-dark);
         }
 
-        /* ── Modal (mobile) ── */
-        .hwi-modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(10,31,68,0.72);
-          backdrop-filter: blur(3px);
-          display: flex;
-          align-items: flex-end;
-          justify-content: center;
-          z-index: 200;
-        }
-        .hwi-modal {
-          position: relative;
-          width: 100%;
-          max-width: 480px;
-          max-height: 88vh;
-          overflow-y: auto;
-          background: var(--bg-white);
-          border-radius: 20px 20px 0 0;
-          padding: 22px 22px 30px;
-        }
-        .hwi-modal-close {
-          position: absolute;
-          top: 14px; right: 14px;
-          width: 34px; height: 34px;
-          border-radius: 50%;
-          display: flex; align-items: center; justify-content: center;
-          background: var(--bg-off-white);
-          border: 1px solid var(--border-light);
-          color: var(--navy);
-          z-index: 1;
-        }
-        .hwi-modal-media {
-          border-radius: 14px;
-          overflow: hidden;
-          margin-bottom: 18px;
-        }
-        .hwi-modal-num {
-          display: block;
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--gold-dark);
-          margin-bottom: 8px;
-        }
-        .hwi-modal-title {
-          font-family: var(--font-serif);
-          font-size: 21px;
-          font-weight: 700;
-          color: var(--navy);
-          margin-bottom: 10px;
-        }
-        .hwi-modal-copy {
-          font-size: 14.5px;
-          line-height: 1.7;
-          color: var(--text-mid);
-        }
-
-        /* ── Desktop: two-column layout, click switches visual ── */
+        /* ── Desktop: media left, text right ── */
         @media (min-width: 900px) {
-          .hwi-layout {
-            grid-template-columns: 0.92fr 1fr;
+          .hwi-stage {
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 44px;
             align-items: center;
-            gap: 56px;
           }
-          .hwi-visual { display: block; }
-          .hwi-step { padding: 20px 22px; }
-          .hwi-step-copy { max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.25s ease, opacity 0.2s ease; }
-          .hwi-step-active .hwi-step-copy { max-height: 60px; opacity: 1; margin-top: 2px; }
+          .hwi-seg { min-width: 30px; }
         }
 
-        @media (max-width: 899px) {
-          .hwi-inner { padding: 64px 20px 72px; }
-          .hwi-header { margin-bottom: 36px; }
-          .hwi-step-cue { display: flex; }
-          .hwi-step-active .hwi-step-cue { color: var(--gold-light); }
+        /* ── Mobile: keep the rail readable, allow horizontal scroll if tight ── */
+        @media (max-width: 640px) {
+          .hwi-inner { padding: 64px 18px 72px; }
+          .hwi-header { margin-bottom: 30px; }
+          .hwi-rail {
+            justify-content: flex-start;
+            overflow-x: auto;
+            padding: 4px 2px 8px;
+            gap: 0;
+            scrollbar-width: none;
+          }
+          .hwi-rail::-webkit-scrollbar { display: none; }
+          .hwi-node-dot { width: 40px; height: 40px; }
+          .hwi-seg { margin-top: 20px; min-width: 14px; }
+          .hwi-node-active .hwi-node-dot { transform: scale(1.1); }
+          .hwi-node-label { font-size: 11px; }
         }
         @media (max-width: 480px) {
           .hwi-cta { width: 100%; justify-content: center; padding: 15px 20px; }
-          .hwi-step { padding: 16px 16px; gap: 12px; }
+          .hwi-panel-copy { font-size: 14.5px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hwi-node-dot, .hwi-seg, .hwi-nav-btn, .hwi-nav-dot, .hwi-cta { transition: none; }
         }
       ` }} />
     </section>

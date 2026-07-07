@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { useCart } from '@/context/CartContext'
-import { bundleLineTotal } from '@/lib/ticket-bundles'
+import { bundleLineTotal, getEligibleTiers } from '@/lib/bundle-discounts'
+import { useBundleConfig } from '@/context/BundleConfigContext'
 import { trackEvent } from '@/lib/analytics'
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
@@ -50,6 +51,7 @@ export default function CheckoutStep({
 }: Props) {
   // All cart items — used for the full order summary
   const { items, removeItem, updateQuantity, prepareCheckout } = useCart()
+  const bundleConfig = useBundleConfig()
 
   const fmt = (n: number, currency: string = c.currency) => `${currency}${n.toFixed(2)}`
 
@@ -117,10 +119,11 @@ export default function CheckoutStep({
     // Use allowedMaxQty > 1 (not price > 0) so free multi-entry competitions
     // also get live stepper feedback. Free items have price=0 so total stays 0.
     if (item.competitionId === c.id && allowedMaxQty > 1) {
+      const tiers = getEligibleTiers(bundleConfig, c.competitionType, item.price, item.isFreeCompetition)
       return {
         ...item,
         quantity: qty,
-        total: bundleLineTotal(item.price, qty),
+        total: bundleLineTotal(item.price, tiers, qty),
       }
     }
     return item

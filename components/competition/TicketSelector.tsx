@@ -4,15 +4,16 @@ import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut } from '@/lib/competition-status'
 import TrustpilotProof from '@/components/TrustpilotProof'
+import SoldProgress from '@/components/competition/SoldProgress'
 import {
-  getBundleDiscountPercent,
+  discountPercentForQty,
   bundleLineTotal,
   fullLineTotal,
   bundleSaving,
-} from '@/lib/ticket-bundles'
-
-type Badge = 'MOST POPULAR' | 'BEST ODDS' | null
-const BADGES: Record<number, Badge> = { 10: 'MOST POPULAR', 20: 'BEST ODDS' }
+  getEligibleTiers,
+  bundleCardQuantities,
+} from '@/lib/bundle-discounts'
+import { useBundleConfig } from '@/context/BundleConfigContext'
 
 interface Props {
   competition: Competition
@@ -62,12 +63,27 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
   const entriesRemaining = c.ticketsLeft > 0 ? c.ticketsLeft : 1
   const allowedMaxQty = Math.min(c.maxTicketsPerPurchase, entriesRemaining)
   const showSlider = allowedMaxQty > 1
+  const isFree = !!c.isFree
+
+  // Live bundle-discount rules — the single source of truth shared with the
+  // WooCommerce backend (WooCommerce → PWC Bundle Discounts). getEligibleTiers
+  // returns [] when this competition is not eligible, so we only ever display a
+  // discount the checkout will actually charge. Never hardcode tiers or prices.
+  const bundleConfig = useBundleConfig()
+  const tiers = getEligibleTiers(bundleConfig, c.competitionType, c.entryPrice, isFree)
+
+  // Bundle cards follow the active tiers (plus the single-entry base). Falls back
+  // to the competition's own ticket options when no discounts apply.
+  const cardQtys = bundleCardQuantities(tiers, c.ticketOptions.map(o => o.qty))
+  // The badged tier with the highest threshold gets the "hero" gold treatment.
+  const badgedQtys = tiers.filter(t => t.badge).map(t => t.minQty)
+  const heroQty = badgedQtys.length ? Math.max(...badgedQtys) : null
 
   // Bundle-aware totals (discount enforced server-side by pwc-ticket-bundle-discounts.php;
-  // these mirror it for display via lib/ticket-bundles.ts).
-  const subtotal     = bundleLineTotal(c.entryPrice, selectedQty)
+  // these mirror the SAME live rules for display).
+  const subtotal     = bundleLineTotal(c.entryPrice, tiers, selectedQty)
   const fullSubtotal = fullLineTotal(c.entryPrice, selectedQty)
-  const subtotalSave = bundleSaving(c.entryPrice, selectedQty)
+  const subtotalSave = bundleSaving(c.entryPrice, tiers, selectedQty)
   // Odds based on current entries sold (WWC model):
   //   entriesSold = totalTickets − entriesRemaining
   //   currentPool = entriesSold + selectedQty  (pool after your selection joins)
@@ -100,12 +116,9 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
     onQtyChange(Math.max(1, Math.min(allowedMaxQty, val)))
   }
 
-
-  const isFree = !!c.isFree
-
   function priceLabel(qty: number): string {
     if (isFree) return 'FREE'
-    return fmt(bundleLineTotal(c.entryPrice, qty))
+    return fmt(bundleLineTotal(c.entryPrice, tiers, qty))
   }
 
   return (
@@ -125,37 +138,45 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
         </div>
 
         <div className="entry-card-body">
+          {/* Live scarcity meter — same dynamic sold%/tickets-left the hero shows,
+              rendered natively above the ticket bundle. Paid comps only. */}
+          {!isFree && c.totalTickets > 0 && (
+            <SoldProgress soldPercentage={c.soldPercentage} ticketsLeft={c.ticketsLeft} />
+          )}
+
           <div className="tickets-label">
             {isFree ? 'Your entry:' : 'Select your tickets:'}
           </div>
 
           {/* ── Bundle / entry grid ── */}
           <div className="bundle-grid">
-            {c.ticketOptions.map(opt => {
+            {cardQtys.map(qty => {
               // Lock based solely on allowedMaxQty — works for both free and paid products.
               // sold_individually=true → allowedMaxQty=1 → all options >1 are locked.
               // Never lock based on isFree alone; a free product can allow multiple entries
               // if sold_individually is false.
-              const isLocked = opt.qty > allowedMaxQty
-              const badge: Badge = isLocked ? null : (BADGES[opt.qty] ?? null)
-              const isSelected = selectedQty === opt.qty
-              const isHero = badge === 'BEST ODDS'
-              const isLarge = opt.qty >= 10
+              const isLocked = qty > allowedMaxQty
+              // Badge text comes from the backend tier for this exact quantity.
+              const tier = tiers.find(t => t.minQty === qty)
+              const badge = isLocked ? '' : (tier?.badge ?? '')
+              const isSelected = selectedQty === qty
+              const isHero = !isLocked && heroQty !== null && qty === heroQty
+              const isLarge = qty >= 10
               // Odds based on entries sold (same WWC model as the summary panel)
-              const effectiveQty = Math.min(opt.qty, allowedMaxQty)
+              const effectiveQty = Math.min(qty, allowedMaxQty)
               const bundlePool = entriesSold + effectiveQty
               const bundleOdds = Math.max(1, Math.ceil(bundlePool / effectiveQty))
               // Bundle discount (paid comps only — free comps show FREE, no savings)
-              const savePct  = isFree ? 0 : getBundleDiscountPercent(opt.qty)
-              const fullCost = isFree ? 0 : fullLineTotal(c.entryPrice, opt.qty)
+              const savePct  = isFree ? 0 : discountPercentForQty(tiers, qty)
+              const fullCost = isFree ? 0 : fullLineTotal(c.entryPrice, qty)
 
               return (
                 <div
-                  key={opt.qty}
+                  key={qty}
                   role="button"
                   aria-pressed={isSelected && !isLocked}
                   aria-disabled={isLocked}
-                  onClick={() => !isLocked && onQtyChange(opt.qty)}
+                  onClick={() => !isLocked && onQtyChange(qty)}
                   className={[
                     'bundle-card',
                     isSelected && !isLocked ? 'bundle-selected' : '',
@@ -170,7 +191,7 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                   } : undefined}
                 >
                   {badge && (
-                    <span className={`bundle-badge ${badge === 'BEST ODDS' ? 'badge-gold' : 'badge-navy'}`}>
+                    <span className={`bundle-badge ${isHero ? 'badge-gold' : 'badge-navy'}`}>
                       {badge}
                     </span>
                   )}
@@ -179,10 +200,10 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                       SOLD OUT
                     </span>
                   )}
-                  <span className="bc-qty">{opt.qty}</span>
-                  <span className="bc-label">{opt.qty === 1 ? 'Entry' : 'Tickets'}</span>
+                  <span className="bc-qty">{qty}</span>
+                  <span className="bc-label">{qty === 1 ? 'Entry' : 'Tickets'}</span>
                   <span className={`bc-price${isFree ? ' bc-price-free' : ''}`}>
-                    {priceLabel(opt.qty)}
+                    {priceLabel(qty)}
                   </span>
                   {savePct > 0 ? (
                     <span className="bc-save">
@@ -286,7 +307,7 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                 {isFree ? 'FREE' : fmt(subtotal)}
               </div>
               {!isFree && subtotalSave > 0 && (
-                <span className="sr-save">You save {fmt(subtotalSave)} ({getBundleDiscountPercent(selectedQty)}%)</span>
+                <span className="sr-save">You save {fmt(subtotalSave)} ({discountPercentForQty(tiers, selectedQty)}%)</span>
               )}
             </div>
           </div>

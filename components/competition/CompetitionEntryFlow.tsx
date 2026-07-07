@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut, getStatusLabel } from '@/lib/competition-status'
 import { getOptionLabel } from '@/lib/skill-challenge-config'
-import { bundleLineTotal } from '@/lib/ticket-bundles'
+import { bundleLineTotal, getEligibleTiers } from '@/lib/bundle-discounts'
 import { useCart } from '@/context/CartContext'
+import { useBundleConfig } from '@/context/BundleConfigContext'
 import ProgressSteps from './ProgressSteps'
 import WatchInfoPanel from './WatchInfoPanel'
 import TicketSelector from './TicketSelector'
@@ -101,6 +102,7 @@ export default function CompetitionEntryFlow({ competition }: Props) {
   const [selectedTicketQty, setSelectedTicketQty] = useState(1)
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
   const { addItem } = useCart()
+  const bundleConfig = useBundleConfig()
 
   function scrollToEntry() {
     if (typeof document !== 'undefined') {
@@ -121,6 +123,9 @@ export default function CompetitionEntryFlow({ competition }: Props) {
     const qty = selectedTicketQty
     const price = competition.entryPrice
     const isFree = !!competition.isFree
+    // Resolve the live discount tiers for this competition so the cart line total
+    // matches what WooCommerce will charge (0 discount when ineligible/free).
+    const tiers = getEligibleTiers(bundleConfig, competition.competitionType, price, isFree)
     const isAcfMode = !!competition.challengeImage && (competition.answerOptions?.length ?? 0) > 0
     const challengeId = competition.skillChallengeId ?? ''
     // ACF mode: selectedOptionId IS the human-readable label (option text = option ID).
@@ -136,7 +141,7 @@ export default function CompetitionEntryFlow({ competition }: Props) {
       wooProductId: competition.wooProductId,
       quantity: qty,
       price,
-      total: bundleLineTotal(price, qty),
+      total: bundleLineTotal(price, tiers, qty),
       currency: competition.currency,
       selectedSkillAnswer: answerLabel,
       skillQuestion: competition.skillQuestion,
@@ -146,6 +151,7 @@ export default function CompetitionEntryFlow({ competition }: Props) {
       timestampAdded: Date.now(),
       image: competition.heroImage,
       isFreeCompetition: isFree,
+      competitionType: competition.competitionType,
       maxTicketsPerPurchase: competition.maxTicketsPerPurchase,
     })
 
