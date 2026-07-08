@@ -7820,7 +7820,8 @@ img { max-width: 100%; display: block; }
    each button keeps its own hover transform. */
 .h2-cta-btn, .h2-card-cta, .fc-cta-btn,
 .cd-btn-primary, .cd-card-cta, .cgc-cta,
-.btn-continue, .btn-nav-enter {
+.btn-continue, .btn-nav-enter,
+.h2m-cta:not(.h2m-cta--disabled) {
   box-shadow:
     0 6px 22px rgba(197,160,101,0.42),
     0 2px 8px rgba(197,160,101,0.28),

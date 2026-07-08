@@ -7,7 +7,7 @@ import OfferBar from '@/components/OfferBar'
 import HomepageHeroContainer from '@/components/HomepageHeroContainer'
 import StatsBar from '@/components/StatsBar'
 import HomepageWinners from '@/components/HomepageWinners'
-import TrustBar from '@/components/TrustBar'
+import OfferSection from '@/components/OfferSection'
 import HowItWorksInteractive from '@/components/HowItWorksInteractive'
 import JournalPreview from '@/components/JournalPreview'
 import WhyNotBuyIt from '@/components/WhyNotBuyIt'
@@ -46,7 +46,12 @@ export default async function WeeklyLandingPage() {
       <HomepageHeroContainer competitionsByType={competitionsByType} defaultType="weekly" />
       <StatsBar />
       <HomepageWinners />
-      <TrustBar />
+      <OfferSection
+        offer={offer}
+        special={competitionsByType.special}
+        weekly={competitionsByType.weekly}
+        ctaHref={offerCtaHref}
+      />
       <HowItWorksInteractive ctaHref={routes.competitionWeekly} />
       <CompetitionsGrid competitions={gridComps} />
       <WhyNotBuyIt ctaHref={routes.competitionWeekly} />
