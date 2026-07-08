@@ -54,7 +54,7 @@ export default function Footer() {
               <h4>Competition</h4>
               <ul>
                 <li><Link href="/weekly">Current Draw</Link></li>
-                <li><Link href="/#how">How It Works</Link></li>
+                <li><Link href="/#how-it-works">How It Works</Link></li>
                 <li><Link href="/past-winners">Past Winners</Link></li>
               </ul>
             </div>

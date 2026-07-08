@@ -215,11 +215,16 @@ export default function OfferBar({ offer, ctaHref }: Props) {
             font-family: var(--font-sans);
             font-size: 11px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
             color: var(--ob-on-accent); background: var(--ob-accent);
-            padding: 8px 18px; border-radius: 30px; white-space: nowrap;
-            box-shadow: 0 4px 14px color-mix(in srgb, var(--ob-accent) 36%, transparent);
-            transition: filter 0.16s ease;
+            padding: 9px 20px; border-radius: 5px; white-space: nowrap;
+            box-shadow: 0 5px 16px color-mix(in srgb, var(--ob-accent) 46%, transparent),
+                        inset 0 1px 0 rgba(255,255,255,0.34);
+            transition: filter 0.16s ease, box-shadow 0.2s ease;
           }
-          .offbar-cta:hover { filter: brightness(1.06); }
+          .offbar-cta:hover {
+            filter: brightness(1.06);
+            box-shadow: 0 8px 22px color-mix(in srgb, var(--ob-accent) 58%, transparent),
+                        inset 0 1px 0 rgba(255,255,255,0.42);
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {

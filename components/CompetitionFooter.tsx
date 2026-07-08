@@ -8,7 +8,7 @@ export default function CompetitionFooter() {
           <div className="footer-logo-name">Premium Watch Club</div>
           <nav className="footer-links">
             <Link href="/">Home</Link>
-            <Link href="/#how">How It Works</Link>
+            <Link href="/#how-it-works">How It Works</Link>
             <Link href="/#winners">Winners</Link>
             <Link href="/terms">Terms</Link>
             <Link href="/privacy">Privacy</Link>

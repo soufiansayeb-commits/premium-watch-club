@@ -6,6 +6,8 @@
 // editorial layout sitting directly on the mint, exactly like the reference.
 
 import { useState } from 'react'
+import Image from 'next/image'
+import TrustpilotProof from '@/components/TrustpilotProof'
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
@@ -139,9 +141,13 @@ const TABS: Tab[] = [
 
 function Stars({ className }: { className?: string }) {
   return (
-    <span className={`tt-stars ${className ?? ''}`} aria-label="5 out of 5 stars">
-      {'★★★★★'}
-    </span>
+    <Image
+      src="/brand-assets/trustpilot-stars.png"
+      alt="Rated 5 out of 5"
+      width={935}
+      height={180}
+      className={`tt-stars-img ${className ?? ''}`}
+    />
   )
 }
 
@@ -156,10 +162,7 @@ export default function TestimonialTabs() {
       <div className="tt-w">
 
         {/* ── Header ── */}
-        <div className="tt-rating">
-          <Stars className="tt-rating-stars" />
-          <span className="tt-rating-num">4.8 stars</span>
-        </div>
+        <TrustpilotProof className="tt-rating-proof" variant="inline" />
         <h2 className="tt-h2" id="tt-heading">What our winners say</h2>
 
         {/* ── Tabs ── */}
@@ -209,19 +212,20 @@ export default function TestimonialTabs() {
           text-transform: uppercase; color: #0A1F44;
           text-align: center; margin: 0 0 16px;
         }
-        .tt-rating {
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          margin: 0 0 8px;
+        /* Trustpilot proof — large horizontal bar (wordmark + stars + review
+           count) above the heading. Replaces the old plain-text star rating. */
+        .tt-rating-proof { justify-content: center; gap: 14px; margin: 0 0 20px; flex-wrap: wrap; }
+        .tt-rating-proof .tp-proof-wordmark { height: 27px; width: auto; }
+        .tt-rating-proof .tp-proof-stars { height: 24px; width: auto; }
+        .tt-rating-proof .tp-proof-count { font-size: 15px; color: rgba(10,31,68,.68); }
+        @media (max-width: 480px) {
+          .tt-rating-proof { gap: 10px; }
+          .tt-rating-proof .tp-proof-wordmark { height: 22px; }
+          .tt-rating-proof .tp-proof-stars { height: 19px; }
+          .tt-rating-proof .tp-proof-count { font-size: 13px; }
         }
-        .tt-stars {
-          color: #00B77F; letter-spacing: 1px; font-size: 20px; line-height: 1;
-        }
-        .tt-rating-stars { font-size: 23px; }
-        .tt-rating-num {
-          font-family: 'Jost', sans-serif;
-          font-size: 14px; font-weight: 500; letter-spacing: .01em;
-          color: rgba(10,31,68,.7);
-        }
+        /* Per-card star image */
+        .tt-stars-img { height: 15px; width: auto; display: inline-block; }
         .tt-h2 {
           font-family: 'Cormorant Garamond', Georgia, serif;
           font-size: clamp(30px, 4.4vw, 50px);
@@ -273,7 +277,7 @@ export default function TestimonialTabs() {
           animation: ttIn .5s cubic-bezier(.22,1,.36,1) both;
           padding: 0 6px;
         }
-        .tt-card .tt-stars { font-size: 13px; display: inline-block; margin-bottom: 16px; }
+        .tt-card .tt-stars-img { height: 13px; margin-bottom: 16px; }
         .tt-card-h {
           font-family: 'Jost', sans-serif;
           font-size: 16.5px; font-weight: 600; line-height: 1.34;

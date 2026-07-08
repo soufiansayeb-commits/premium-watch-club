@@ -334,6 +334,15 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
+
+          {/* Accepted payment methods — sits directly under the Continue CTA */}
+          <div className="pdp-pay-methods">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand-assets/payment-methods.png"
+              alt="Accepted payment methods: Visa, Mastercard, American Express, Discover, PayPal, Apple Pay, Google Pay"
+            />
+          </div>
         </div>
 
         {/* Desktop-only Trustpilot proof inside the buy box */}

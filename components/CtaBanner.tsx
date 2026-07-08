@@ -91,7 +91,7 @@ export default function CtaBanner({ competition: c }: Props) {
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </Link>
-            <Link href="/#how" className="cd-btn-secondary">How It Works</Link>
+            <Link href="/#how-it-works" className="cd-btn-secondary">How It Works</Link>
           </div>
 
           {/* scarcity module */}

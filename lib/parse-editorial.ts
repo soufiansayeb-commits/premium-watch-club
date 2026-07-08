@@ -232,12 +232,15 @@ function parseLabeledDescription(lines: string[]): ParsedEditorial {
     if (label || text) features.push({ label, badge, text })
   }
 
-  const intro = get('INTRO')
+  // INTRO — preserve paragraph breaks. Each source line under INTRO (one per
+  // <p>/blank-line-separated block from the Woo description) becomes its own
+  // paragraph, rather than collapsing them into one block.
+  const introParas = (map['INTRO'] ?? []).map(s => s.trim()).filter(Boolean)
 
   return {
     title:      get('TITLE'),
     subline:    get('SUBTITLE'),
-    paragraphs: intro ? [intro] : [],
+    paragraphs: introParas,
     specs:      specs.slice(0, 5),
     features:   features.slice(0, 3),
     quote:      get('QUOTE'),

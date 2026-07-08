@@ -153,10 +153,10 @@ export default function OfferSection({ offer, special, weekly, ctaHref }: Props)
             var(--op) 55%,
             color-mix(in srgb, var(--op) 82%, #000 18%) 100%);
           padding: 16px clamp(24px, 3vw, 38px); border-radius: 7px;
-          box-shadow: 0 14px 34px color-mix(in srgb, var(--op) 38%, transparent);
+          box-shadow: 0 14px 34px color-mix(in srgb, var(--op) 44%, transparent), 0 3px 10px color-mix(in srgb, var(--op) 34%, transparent), inset 0 1px 0 rgba(255,255,255,0.34);
           transition: transform 0.16s ease, box-shadow 0.2s ease;
         }
-        .offer-cta:hover { transform: translateY(-2px); box-shadow: 0 18px 42px color-mix(in srgb, var(--op) 52%, transparent); }
+        .offer-cta:hover { transform: translateY(-2px); box-shadow: 0 20px 48px color-mix(in srgb, var(--op) 60%, transparent), 0 4px 14px color-mix(in srgb, var(--op) 44%, transparent), inset 0 1px 0 rgba(255,255,255,0.42); }
         .offer-cta:focus-visible { outline: 3px solid var(--os); outline-offset: 3px; }
 
         /* ── Benefits ── */

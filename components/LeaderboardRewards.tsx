@@ -448,13 +448,13 @@ export default function LeaderboardRewards({ competition, ctaHref = '#entry-main
           font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
           padding: 16px 40px;
           border-radius: 5px;
-          box-shadow: 0 8px 26px -10px rgba(197,160,101,0.9);
+          box-shadow: 0 6px 22px rgba(197,160,101,0.42), 0 2px 8px rgba(197,160,101,0.28), inset 0 1px 0 rgba(255,255,255,0.32);
           transition: background 0.2s ease, transform 0.16s ease, box-shadow 0.2s ease;
         }
         .lbr-cta:hover {
           background: var(--gold-light);
           transform: translateY(-2px);
-          box-shadow: 0 14px 32px -12px rgba(197,160,101,1);
+          box-shadow: 0 12px 36px rgba(197,160,101,0.6), 0 3px 12px rgba(197,160,101,0.42), inset 0 1px 0 rgba(255,255,255,0.42);
         }
         .lbr-cta:focus-visible { outline: 2px solid var(--gold-dark); outline-offset: 3px; }
         .lbr-terms {

@@ -4586,6 +4586,23 @@ img { max-width: 100%; display: block; }
 .btn-continue:active { transform: translateY(0); }
 .btn-continue svg { flex-shrink: 0; }
 .btn-continue:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+/* Accepted-payment icon strip under the Continue button. Uses a transparent PNG
+   so only the icons show — no box, no checkerboard. Kept narrower than the
+   full-width Continue button. */
+.pdp-pay-methods {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+  line-height: 0;
+}
+.pdp-pay-methods img {
+  width: 88%;
+  max-width: 320px;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.9;
+}
 .entry-card-footer {
   padding: 16px 32px;
   border-top: 1px solid var(--border-light);
@@ -7793,4 +7810,27 @@ img { max-width: 100%; display: block; }
 .h2m-prog-fill {
   background: linear-gradient(90deg, var(--red-dark), var(--red), var(--red-light));
   box-shadow: 0 0 13px rgba(225,90,76,0.5);
+}
+
+/* ── Shared premium gold CTA glow ──────────────────────────────────────────────
+   Stronger warm-gold glow + a subtle inner highlight on the primary gold CTAs,
+   lifting further on hover. Warm/luxury (gold rgba) — never neon. The component-
+   scoped CTAs (.hwi-cta / .lbr-cta / .offer-cta / .offbar-cta) get the same
+   treatment in their own style blocks. Appended last so it wins the cascade;
+   each button keeps its own hover transform. */
+.h2-cta-btn, .h2-card-cta, .fc-cta-btn,
+.cd-btn-primary, .cd-card-cta, .cgc-cta,
+.btn-continue, .btn-nav-enter {
+  box-shadow:
+    0 6px 22px rgba(197,160,101,0.42),
+    0 2px 8px rgba(197,160,101,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.32);
+}
+.h2-cta-btn:hover, .h2-card-cta:hover, .fc-cta-btn:hover,
+.cd-btn-primary:hover, .cd-card-cta:hover, .cgc-cta:hover,
+.btn-continue:hover:not(:disabled), .btn-nav-enter:hover {
+  box-shadow:
+    0 12px 36px rgba(197,160,101,0.6),
+    0 3px 12px rgba(197,160,101,0.42),
+    inset 0 1px 0 rgba(255,255,255,0.42);
 }

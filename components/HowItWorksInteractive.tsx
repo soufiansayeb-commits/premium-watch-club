@@ -374,6 +374,8 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           position: relative;
           background: var(--bg-off-white);
           border-top: 1px solid var(--border-light);
+          /* Land below the sticky header + offer bar when reached via #how-it-works. */
+          scroll-margin-top: 120px;
         }
         .hwi-inner {
           max-width: 1120px;
@@ -618,12 +620,12 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           padding: 16px 40px;
           border-radius: 4px;
           transition: background 0.2s ease, transform 0.16s ease, box-shadow 0.2s ease;
-          box-shadow: 0 6px 26px rgba(197,160,101,0.28);
+          box-shadow: 0 6px 22px rgba(197,160,101,0.42), 0 2px 8px rgba(197,160,101,0.28), inset 0 1px 0 rgba(255,255,255,0.32);
         }
         .hwi-cta:hover {
           background: var(--gold-dark);
           transform: translateY(-2px);
-          box-shadow: 0 10px 34px rgba(197,160,101,0.36);
+          box-shadow: 0 12px 36px rgba(197,160,101,0.6), 0 3px 12px rgba(197,160,101,0.42), inset 0 1px 0 rgba(255,255,255,0.42);
         }
         .hwi-trust {
           display: flex;

@@ -55,27 +55,6 @@ function buildImageSlots(
   return slots
 }
 
-// ── Fallback spec builder ─────────────────────────────────────────────────────
-
-import type { ParsedSpec, ParsedFeature } from '@/lib/parse-editorial'
-
-function buildFallbackSpecs(competition: Competition, money: MoneyFmt): ParsedSpec[] {
-  const specs: ParsedSpec[] = []
-  if (competition.reference)        specs.push({ key: 'Reference', value: competition.reference })
-  if (competition.condition)        specs.push({ key: 'Condition', value: competition.condition })
-  if (competition.retailValue)      specs.push({ key: 'Value',     value: money(competition.retailValue, { decimals: 0 }) })
-  if (competition.competitionType)  specs.push({ key: 'Type',      value: competition.competitionType })
-  if (competition.competitionStatus)specs.push({ key: 'Status',    value: competition.competitionStatus })
-  return specs
-}
-
-// Fallback accordion items when WooCommerce description has no labeled accordion blocks.
-// Produces at most 1 item from the competition's ACF description field.
-function buildFallbackFeatures(competition: Competition): ParsedFeature[] {
-  if (!competition.description) return []
-  return [{ label: competition.shortName || competition.title, badge: '', text: competition.description }]
-}
-
 // ── Headline renderer — *word* → italic gold em ───────────────────────────────
 
 function renderHeadline(text: string): React.ReactNode[] {
@@ -150,25 +129,21 @@ export default function ProductEditorial({ competition }: Props) {
     [competition.wooDescription]
   )
 
-  const headline   = parsed?.title      || competition.title
-  const subline    = parsed?.subline    || competition.detail
-  const intro      = parsed?.paragraphs[0] || competition.description || ''
-  const specs      = ((parsed?.specs?.length ?? 0) > 0)
-    ? parsed!.specs.slice(0, 5)
-    : buildFallbackSpecs(competition, money)
-  // Use parsed accordion items when available; fall back to competition ACF data.
-  // Never returns undefined — ensures the accordion block always renders when there is any content.
-  const features: ParsedFeature[] = ((parsed?.features?.length ?? 0) > 0)
-    ? parsed!.features.slice(0, 3)
-    : buildFallbackFeatures(competition)
-  const quote      = parsed?.quote?.trim() ||
-    `Not every piece needs to be serious to be memorable. Some pieces win because they bring energy, colour and personality to the wrist.`
-  const quoteAttr  = parsed?.quoteAttr?.trim() ||
-    `Premium Watch Club · ${competition.competitionType === 'starter' ? 'Starter Drop' : competition.competitionType === 'weekly' ? 'Weekly Drop' : 'Editorial'}`
+  // Story content — ONLY the supported editorial markers:
+  // TITLE, SUBTITLE, INTRO, QUOTE, QUOTE SOURCE. No specs, no accordion.
+  // Each falls back gracefully to empty so missing fields render nothing.
+  const headline   = parsed?.title      || competition.title || ''
+  const subline    = parsed?.subline    || competition.detail || ''
+  // INTRO can be multiple paragraphs — each renders as its own <p> with spacing.
+  const introParagraphs = (parsed?.paragraphs?.length
+    ? parsed.paragraphs
+    : (competition.description ? [competition.description] : []))
+  const quote      = parsed?.quote?.trim() || ''
+  const quoteAttr  = parsed?.quoteAttr?.trim() || ''
 
-  // ── Build image slots ─────────────────────────────────────────────────────
+  // ── Build image slots (gallery is independent of the removed accordion) ────
   const slots = useMemo(
-    () => buildImageSlots(competition, features.map(f => f.label), money),
+    () => buildImageSlots(competition, [], money),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [competition.id, competition.galleryImages]
   )
@@ -293,15 +268,17 @@ export default function ProductEditorial({ competition }: Props) {
           margin: 0 0 30px;
         }
 
-        /* Intro */
-        .pe3-intro {
+        /* Intro — multi-paragraph, preserving Woo blank-line breaks */
+        .pe3-intro { margin: 0 0 32px; }
+        .pe3-intro-p {
           font-family: 'Jost', 'Helvetica Neue', sans-serif;
           font-size: 13.5px;
           line-height: 1.88;
           color: #4a5568;
-          margin: 0 0 32px;
           font-weight: 300;
+          margin: 0;
         }
+        .pe3-intro-p + .pe3-intro-p { margin-top: 1.15em; }
 
         /* ── Spec strip ─────────────────────────────────── */
         .pe3-specs {
@@ -712,61 +689,23 @@ export default function ProductEditorial({ competition }: Props) {
               </p>
             )}
 
-            {/* Intro paragraph */}
-            {intro && (
-              <p className={`pe3-intro pe3-fade pe3-d2${visible ? ' on' : ''}`}>
-                {intro}
-              </p>
-            )}
-
-            {/* Spec strip */}
-            {specs.length > 0 && (
-              <div className={`pe3-specs pe3-fade pe3-d2${visible ? ' on' : ''}`}>
-                {specs.map(s => (
-                  <div key={s.key} className="pe3-spec">
-                    <span className="pe3-sk">{s.key}</span>
-                    <span className="pe3-sv">{s.value}</span>
-                  </div>
+            {/* Intro — one <p> per paragraph, preserving Woo blank-line breaks */}
+            {introParagraphs.length > 0 && (
+              <div className={`pe3-intro pe3-fade pe3-d2${visible ? ' on' : ''}`}>
+                {introParagraphs.map((para, i) => (
+                  <p key={i} className="pe3-intro-p">{para}</p>
                 ))}
               </div>
             )}
 
-            {/* Accordion — linked to image gallery */}
-            {features.length > 0 && (
-              <ul className={`pe3-features pe3-fade pe3-d3${visible ? ' on' : ''}`} role="list">
-                {features.map((f, idx) => (
-                  <li
-                    key={idx}
-                    role="button"
-                    tabIndex={0}
-                    aria-pressed={activeIdx === idx}
-                    aria-expanded={activeIdx === idx}
-                    className={`pe3-feat${activeIdx === idx ? ' act' : ''}`}
-                    onClick={() => setActiveIdx(idx)}
-                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setActiveIdx(idx) }}
-                  >
-                    <div className="pe3-feat-hd">
-                      <span className="pe3-flabel">{f.label}</span>
-                      <div className="pe3-feat-right">
-                        {/* Show slot sublabel (Est. value / reference) as italic gold badge */}
-                        <span className="pe3-fbadge">
-                          {slots[idx]?.sublabel || f.badge || ''}
-                        </span>
-                        <span className="pe3-chevron" aria-hidden="true" />
-                      </div>
-                    </div>
-                    {f.text && <p className="pe3-ftext">{f.text}</p>}
-                  </li>
-                ))}
-              </ul>
+            {/* Pull quote — editorial block. Renders only when a QUOTE exists. */}
+            {quote && (
+              <div className={`pe3-quote pe3-fade pe3-d4${visible ? ' on' : ''}`}>
+                <span className="pe3-qmark" aria-hidden="true">&ldquo;</span>
+                <p className="pe3-qtext">{quote}</p>
+                {quoteAttr && <span className="pe3-qattr">{quoteAttr}</span>}
+              </div>
             )}
-
-            {/* Pull quote */}
-            <div className={`pe3-quote pe3-fade pe3-d4${visible ? ' on' : ''}`}>
-              <span className="pe3-qmark" aria-hidden="true">&ldquo;</span>
-              <p className="pe3-qtext">{quote}</p>
-              <span className="pe3-qattr">{quoteAttr}</span>
-            </div>
 
           </div>
 
