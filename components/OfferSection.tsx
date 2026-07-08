@@ -206,7 +206,7 @@ export default function OfferSection({ offer, special, weekly, ctaHref }: Props)
         .offer-name {
           display: block; font-family: var(--font-serif); font-style: italic;
           font-size: clamp(11px, 1.3vw, 14px); color: color-mix(in srgb, var(--otx) 84%, transparent);
-          margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          margin-top: 2px; line-height: 1.3; overflow-wrap: break-word;
         }
         .offer-seal {
           display: flex; flex-direction: column; align-items: center; justify-content: center;

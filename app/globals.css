@@ -4222,6 +4222,10 @@ img { max-width: 100%; display: block; }
 }
 .ech-price-line { font-size: 13px; color: var(--text-muted); }
 .ech-price-line strong { color: var(--text-dark); font-weight: 600; }
+/* Buy-box header: drop the full-bleed underline — the inset .pdp-divider--buybox
+   above the sold bar carries the separation instead, so it never sits flush to the
+   card edge. Tighter bottom padding pulls that divider up nearer the title/price. */
+.entry-card-header--main { border-bottom: none; padding-bottom: 8px; }
 .entry-card-body { padding: 28px 32px; }
 .tickets-label { font-size: 13px; font-weight: 600; color: var(--text-mid); margin-bottom: 16px; }
 .ticket-grid {
@@ -4530,6 +4534,27 @@ img { max-width: 100%; display: block; }
 .slider-cap { font-size: 10px; color: var(--text-muted); letter-spacing: 0.01em; }
 
 .entry-divider { height: 1px; background: var(--border-light); margin: 0 0 24px; }
+
+/* ── Premium editorial divider (PDP) ──────────────────────────────────────────
+   Soft gold-beige hairline that fades to transparent at both ends, so it always
+   reads as an inset editorial separator — never a hard line flush to an edge.
+   Placement is responsive: desktop uses it above the sold/progress bar inside the
+   buy box; mobile uses it between the Trustpilot proof and the product title. */
+.pdp-divider {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--border-mid) 20%,
+    rgba(197, 160, 101, 0.4) 50%,
+    var(--border-mid) 80%,
+    transparent 100%
+  );
+}
+/* Desktop: sits inside the padded buy-box body, directly above the red sold bar. */
+.pdp-divider--buybox { margin: 0 0 22px; }
+.pdp-divider--mobile { display: none; }
 .subtotal-row {
   display: flex; align-items: baseline; justify-content: space-between;
   margin-bottom: 20px; padding: 16px 18px;
@@ -4582,11 +4607,35 @@ img { max-width: 100%; display: block; }
 }
 .tp-proof-logo { width: auto; height: 34px; }   /* asset already includes 5 stars */
 .tp-proof-count { font-size: 12px; color: var(--text-muted); letter-spacing: 0.01em; }
-/* Desktop: shown inside the buy box, above the footer trust line */
+/* Desktop: shown inside the buy box, under the Continue button. Tighter top pull
+   sits it nearer the button; real bottom padding keeps it clear of the footer
+   divider instead of resting on the line. */
 .tp-proof--buybox {
   display: flex;
-  padding: 18px 24px 0;
+  padding: 6px 24px 20px;
 }
+/* Compact trust proof at the top of the buy box, under the title/price. Left-
+   aligned to the header, smaller than the reassurance block below so the two
+   never read as repetitive. */
+/* Price + Trustpilot share one inline row under the title. */
+.ech-priceproof-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.ech-priceproof-row .ech-price-line { flex-shrink: 0; }
+.tp-proof--buybox-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+/* Single-row lockup: wordmark + 5 stars inline with the price (matches reference). */
+.tp-proof--buybox-top .tp-proof-wordmark { height: 17px; width: auto; }
+.tp-proof--buybox-top .tp-proof-stars { height: 15px; width: auto; }
+.tp-proof--buybox-top .tp-proof-count { font-size: 12px; }
 /* Mobile head (Trustpilot + clean product title) — hidden on desktop */
 .wip-mobile-head { display: none; }
 .tp-proof--mobile { display: none; }
@@ -5025,6 +5074,10 @@ img { max-width: 100%; display: block; }
   }
   .tp-proof--mobile { display: flex; margin-bottom: 16px; }
   .tp-proof--mobile .tp-proof-logo { height: 36px; }
+  /* Mobile: divider structures the Trustpilot → title transition. The desktop
+     buy-box divider is redundant here (mobile title lives above the gallery). */
+  .pdp-divider--mobile { display: block; width: 86%; margin: 0 auto 16px; }
+  .pdp-divider--buybox { display: none; }
   .wip-mobile-title {
     font-family: var(--font-serif);
     font-size: clamp(26px, 7.6vw, 34px);
@@ -5083,7 +5136,8 @@ img { max-width: 100%; display: block; }
   .footer-meta-end { align-items: flex-start; }
   .footer-policies { justify-content: flex-start; }
   .footer-join-title { font-size: 26px; }
-  .footer-wordmark span { font-size: clamp(40px, 16vw, 92px); }
+  /* Scale so the longest word ("PremiumWatch") always fits the viewport — no crop. */
+  .footer-wordmark span { font-size: clamp(28px, 11vw, 70px); }
   /* Bundle grid: 2-col, hero card full-width at bottom */
   .bundle-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .bundle-card { grid-column: span 1; padding: 16px 8px 12px; }
@@ -7621,7 +7675,7 @@ img { max-width: 100%; display: block; }
 }
 .cs-col-pwc .cs-last { height: calc(var(--h-row) + var(--lift)); }
 .cs-pwc-logo {
-  width: 80%; max-width: 172px; height: auto;
+  width: 86%; max-width: 200px; height: auto;
   object-fit: contain; display: block;
   filter: drop-shadow(0 1px 4px rgba(0,0,0,.25));
 }
@@ -7640,25 +7694,37 @@ img { max-width: 100%; display: block; }
   font-family: 'Jost', sans-serif;
   font-size: 9px; font-weight: 600;
   letter-spacing: .14em; text-transform: uppercase;
-  color: rgba(10,31,68,.34); line-height: 1.4;
+  color: rgba(10,31,68,.55); line-height: 1.4;
 }
 .cs-comp { flex-direction: column; gap: 5px; }
 .cs-comp-glyph { display: flex; align-items: center; justify-content: center; height: 24px; }
 .cs-comp-val {
   font-family: 'Jost', sans-serif;
-  font-size: 11px; font-weight: 300; font-style: italic;
-  color: rgba(10,31,68,.4); text-align: center; padding: 0 8px;
+  font-size: 11px; font-weight: 400; font-style: italic;
+  color: rgba(10,31,68,.62); text-align: center; padding: 0 8px;
 }
 @media (max-width: 820px) {
   /* Vertical padding keeps the floating PWC card's shadow visible. */
   .cs-table-wrap { width: 100%; max-width: 560px; padding: 18px 2px 4px; }
   .cs-table { width: 100%; }
 }
+/* Desktop scaling: let the comparison table be the hero of the section — wider
+   table, wider title (fewer stacked lines), tighter vertical whitespace. Scoped
+   to ≥821px so tablet/mobile layouts are untouched. */
+@media (min-width: 821px) {
+  .cs-s { padding: 74px 28px 78px; }
+  .cs-w { max-width: 1100px; }
+  .cs-intro { max-width: 780px; margin-bottom: 46px; }
+  .cs-title { max-width: 34ch; font-size: clamp(32px, 3.6vw, 44px); }
+  .cs-table-wrap { max-width: 900px; }
+  .cs-table { --h-head: 88px; --h-row: 70px; --lift: 18px; }
+}
 /* Mobile: collapse descriptor text to a clean check vs cross scan (Bobbin-style).
    The criteria column carries the meaning; the columns just mark check vs cross. */
 @media (max-width: 600px) {
   .cs-intro { margin-bottom: 30px; }
-  .cs-title { font-size: clamp(24px, 7vw, 30px); margin-bottom: 14px; }
+  /* Wider usable width + slightly smaller size = fewer forced line breaks. */
+  .cs-title { font-size: clamp(23px, 6.6vw, 29px); max-width: 22ch; margin-bottom: 14px; }
   .cs-eyebrow { margin-bottom: 14px; }
   .cs-sub { font-size: 13.5px; }
   .cs-table { --h-head: 70px; --h-row: 56px; --lift: 12px; }
@@ -7670,7 +7736,7 @@ img { max-width: 100%; display: block; }
   .cs-crit { font-size: 11.5px; padding-left: 12px; line-height: 1.22; }
   .cs-head-crit { padding-left: 12px; }
   .cs-head-comp span { font-size: 8px; }
-  .cs-pwc-logo { width: 94%; max-width: 132px; }
+  .cs-pwc-logo { width: 94%; max-width: 150px; }
   .cs-pwc-glyph svg, .cs-comp-glyph svg { width: 21px; height: 21px; }
 }
 @media (max-width: 480px) {

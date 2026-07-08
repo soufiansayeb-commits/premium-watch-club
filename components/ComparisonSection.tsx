@@ -35,8 +35,8 @@ function Check() {
 function Cross() {
   return (
     <svg width="24" height="24" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-      <circle cx="13" cy="13" r="12" fill="rgba(120,122,130,.08)" stroke="rgba(120,122,130,.34)" strokeWidth="1.3" />
-      <path d="M9.2 9.2l7.6 7.6M16.8 9.2l-7.6 7.6" stroke="rgba(120,122,130,.7)" strokeWidth="1.7" strokeLinecap="round" />
+      <circle cx="13" cy="13" r="12" fill="rgba(192,57,43,.10)" stroke="rgba(192,57,43,.45)" strokeWidth="1.4" />
+      <path d="M9.2 9.2l7.6 7.6M16.8 9.2l-7.6 7.6" stroke="#C0392B" strokeWidth="2" strokeLinecap="round" />
     </svg>
   )
 }

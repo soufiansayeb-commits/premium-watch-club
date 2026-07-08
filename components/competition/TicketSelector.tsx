@@ -133,20 +133,30 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
         <div className="entry-card-header entry-card-header--main">
           <div className="ech-eyebrow">Win the Prize</div>
           <div className="ech-title">{c.title}</div>
-          <div className="ech-price-line">
-            {isFree ? (
-              <><strong style={{ color: 'var(--green)' }}>Free entry</strong>, no purchase required</>
-            ) : (
-              <><strong>{fmt(c.entryPrice)}</strong> per entry</>
-            )}
+          {/* Price + Trustpilot on one inline row — desktop only (header hidden on
+              mobile, which already shows Trustpilot above the gallery). */}
+          <div className="ech-priceproof-row">
+            <div className="ech-price-line">
+              {isFree ? (
+                <><strong style={{ color: 'var(--green)' }}>Free entry</strong>, no purchase required</>
+              ) : (
+                <><strong>{fmt(c.entryPrice)}</strong> per entry</>
+              )}
+            </div>
+            <TrustpilotProof className="tp-proof--buybox-top" variant="inline" />
           </div>
         </div>
 
         <div className="entry-card-body">
           {/* Live scarcity meter — same dynamic sold%/tickets-left the hero shows,
-              rendered natively above the ticket bundle. Paid comps only. */}
+              rendered natively above the ticket bundle. Paid comps only.
+              The inset divider (desktop) sits directly above the red sold bar,
+              separating the title/price header from the availability section. */}
           {!isFree && c.totalTickets > 0 && (
-            <SoldProgress soldPercentage={c.soldPercentage} ticketsLeft={c.ticketsLeft} />
+            <>
+              <div className="pdp-divider pdp-divider--buybox" aria-hidden="true" />
+              <SoldProgress soldPercentage={c.soldPercentage} ticketsLeft={c.ticketsLeft} />
+            </>
           )}
 
           <div className="tickets-label">

@@ -73,6 +73,7 @@ export default function WatchInfoPanel({ competition: c }: Props) {
           Desktop hides this (the buy box carries the title + Trustpilot there). */}
       <div className="wip-mobile-head">
         <TrustpilotProof className="tp-proof--mobile" />
+        <div className="pdp-divider pdp-divider--mobile" aria-hidden="true" />
         <h1 className="wip-mobile-title">
           Win the <span className="wip-mobile-title-name">{c.title}</span>
         </h1>
@@ -189,9 +190,11 @@ export default function WatchInfoPanel({ competition: c }: Props) {
 
       <div className="watch-info-card">
         <div className="wic-section-title">Watch &amp; Competition Information</div>
+        {/* Cash Alternative leads and carries the gold accent — the detail that
+            matters most to entrants. */}
         <div className="wi-row">
-          <div className="wi-key">Retail Value</div>
-          <div className="wi-val gold">{fmt(c.retailValue)}</div>
+          <div className="wi-key">Cash Alternative</div>
+          <div className="wi-val gold">{fmt(c.cashAlternative)}</div>
         </div>
         <div className="wi-row">
           <div className="wi-key">Entry Price</div>
@@ -215,16 +218,18 @@ export default function WatchInfoPanel({ competition: c }: Props) {
           <div className="wi-val">{c.condition ? formatCondition(c.condition) : 'Brand New · Full Box & Papers'}</div>
         </div>
         <div className="wi-row">
+          <div className="wi-key">Delivery</div>
+          <div className="wi-val">Free · Fully Insured</div>
+        </div>
+        <div className="wi-row">
           <div className="wi-key">Draw Date</div>
           <div className="wi-val">{c.drawDateDisplay}</div>
         </div>
+        {/* Frontend label only — still sourced from the retailValue field (ACF
+            unchanged). Represents the total value of runner-up rewards. */}
         <div className="wi-row">
-          <div className="wi-key">Cash Alternative</div>
-          <div className="wi-val">{fmt(c.cashAlternative)}</div>
-        </div>
-        <div className="wi-row">
-          <div className="wi-key">Delivery</div>
-          <div className="wi-val">Free · Fully Insured</div>
+          <div className="wi-key">Runner Up Prizes</div>
+          <div className="wi-val">{fmt(c.retailValue)}</div>
         </div>
       </div>
     </div>

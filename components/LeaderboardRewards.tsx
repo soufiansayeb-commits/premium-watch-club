@@ -129,7 +129,6 @@ export default function LeaderboardRewards({ competition, ctaHref = '#entry-main
                   </div>
                   <div className="lbr-meta">
                     <span className="lbr-winners">{t.winners} winners</span>
-                    <span className="lbr-total">${t.total} total</span>
                   </div>
                   <p className="lbr-note">{t.note}</p>
                 </motion.div>
@@ -153,7 +152,7 @@ export default function LeaderboardRewards({ competition, ctaHref = '#entry-main
                 <path d="M2 7.5l3.2 3.2L12 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
-            Runner-up rewards are issued after the draw has been verified.
+            Runner-up rewards are issued as Premium Watch Club store credit after the draw has been verified.
           </p>
           <a href={ctaHref} className="lbr-cta">Enter This Competition</a>
           <p className="lbr-terms">Rewards apply to eligible entries. Full terms apply.</p>
@@ -348,7 +347,7 @@ export default function LeaderboardRewards({ competition, ctaHref = '#entry-main
           transform: translateY(-2px);
         }
 
-        .lbr-reward { display: flex; flex-direction: column; gap: 1px; }
+        .lbr-reward { display: flex; flex-direction: row; align-items: baseline; gap: 6px; flex-wrap: wrap; }
         .lbr-reward-amt {
           font-family: var(--font-serif);
           font-size: 21px; font-weight: 700;
@@ -357,7 +356,7 @@ export default function LeaderboardRewards({ competition, ctaHref = '#entry-main
         }
         .lbr-reward-lab {
           font-family: var(--font-sans);
-          font-size: 11px; color: var(--text-muted);
+          font-size: 12px; color: var(--text-muted);
           letter-spacing: 0.02em;
         }
 

@@ -17,6 +17,10 @@ interface Step {
   title: string
   copy: string
   fallback: React.ReactNode
+  /** object-fit for this step's GIF/video. Defaults to 'cover'. Use 'contain'
+   *  for media whose aspect ratio differs from the 16:10 frame so it is never
+   *  cropped (letterboxed against the frame's navy instead). */
+  mediaFit?: 'cover' | 'contain'
 }
 
 // ── Fallback visuals — premium PWC UI mockups, shown until real media lands in /public/howitworks ──
@@ -103,6 +107,8 @@ const steps: Step[] = [
     title: 'Choose Your Competition',
     copy: 'Pick the live Weekly, Monthly or Special competition you want to enter.',
     fallback: <CompetitionFallback />,
+    // 800×370 GIF is wider than the 16:10 frame — contain it so nothing is cropped.
+    mediaFit: 'contain',
   },
   {
     id: 'step-2',
@@ -169,12 +175,15 @@ function StepMedia({ step }: { step: Step }) {
 
   if (stage === 'checking') return <div className="hwi-media-inner" />
 
+  const fitStyle = { objectFit: step.mediaFit ?? 'cover' } as const
+
   return (
     <div className="hwi-media-inner">
       {stage === 'video' && (
         <video
           key={step.id}
           className="hwi-media"
+          style={fitStyle}
           autoPlay
           muted
           loop
@@ -190,6 +199,7 @@ function StepMedia({ step }: { step: Step }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img
           className="hwi-media"
+          style={fitStyle}
           src={`/howitworks/${step.id}.gif`}
           alt={step.title}
           onError={() => setStage('fallback')}

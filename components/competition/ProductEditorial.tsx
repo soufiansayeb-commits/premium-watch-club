@@ -225,43 +225,58 @@ export default function ProductEditorial({ competition }: Props) {
 
         /* ── LEFT: text ─────────────────────────────────── */
 
-        /* Eyebrow */
+        /* Centered section heading — matches the site-wide eyebrow + serif headline
+           pattern (e.g. "Hall of Honour" / "Meet our winners"). */
+        .pe3-head {
+          max-width: 1100px;
+          margin: 0 auto 34px;
+          padding: 0 48px;
+          text-align: center;
+        }
         .pe3-eyebrow {
           display: flex;
           align-items: center;
-          gap: 14px;
-          margin-bottom: 28px;
+          justify-content: center;
+          gap: 11px;
+          margin-bottom: 12px;
         }
-        .pe3-eline {
-          height: 1px;
-          background: linear-gradient(to right, #b8963e, rgba(184,150,62,.3));
-          width: 32px;
-          flex-shrink: 0;
-        }
+        .pe3-eline,
         .pe3-eline-r {
-          flex: 1;
+          display: block;
+          width: 30px;
           height: 1px;
-          background: linear-gradient(to right, rgba(184,150,62,.25), transparent);
+          background: #b8963e;
+          opacity: .5;
+          flex: 0 0 auto;
         }
         .pe3-elabel {
           font-family: 'Jost', 'Helvetica Neue', sans-serif;
-          font-size: 8px;
-          font-weight: 600;
-          letter-spacing: .3em;
+          font-size: 9.5px;
+          font-weight: 700;
+          letter-spacing: .2em;
           text-transform: uppercase;
           color: #b8963e;
           white-space: nowrap;
         }
+        .pe3-title {
+          font-family: var(--font-serif);
+          font-size: clamp(24px, 2.9vw, 33px);
+          font-weight: 700;
+          letter-spacing: -.015em;
+          line-height: 1.14;
+          color: #0f1f3d;
+          margin: 0;
+        }
 
-        /* Headline */
+        /* Story sub-headline (product-specific) — opens the left text column. */
         .pe3-headline {
           font-family: 'Cormorant Garamond', Georgia, serif;
-          font-size: clamp(28px, 3vw, 42px);
-          font-weight: 300;
-          line-height: 1.15;
+          font-size: clamp(22px, 2.5vw, 30px);
+          font-weight: 400;
+          line-height: 1.2;
           color: #0f1f3d;
           margin: 0 0 8px;
-          letter-spacing: -.015em;
+          letter-spacing: -.01em;
         }
         .pe3-headline em {
           font-style: italic;
@@ -646,12 +661,16 @@ export default function ProductEditorial({ competition }: Props) {
             gap: 44px;
             padding: 0 28px;
           }
+          .pe3-head    { padding: 0 28px; margin-bottom: 34px; }
           .pe3-section { padding: 60px 0 56px; }
-          .pe3-imgcol  { position: static; order: -1; }
+          /* Mobile reading order: title + story text first, image/gallery below. */
+          .pe3-imgcol  { position: static; order: 0; }
           .pe3-main    { aspect-ratio: 4/3; }
         }
         @media (max-width: 600px) {
           .pe3-wrap    { padding: 0 18px; }
+          .pe3-head    { padding: 0 18px; margin-bottom: 28px; }
+          .pe3-eline, .pe3-eline-r { width: 26px; }
           .pe3-section { padding: 44px 0 40px; }
           .pe3-specs   { flex-wrap: wrap; }
           .pe3-spec    {
@@ -668,22 +687,25 @@ export default function ProductEditorial({ competition }: Props) {
         className="pe3-section"
         aria-label="The story behind the prize"
       >
+        {/* ═══════════ Centered site-style section heading ═══════════ */}
+        <div className={`pe3-head pe3-fade${visible ? ' on' : ''}`}>
+          <div className="pe3-eyebrow">
+            <span className="pe3-eline" />
+            <span className="pe3-elabel">The Story of an Icon</span>
+            <span className="pe3-eline-r" />
+          </div>
+          <h2 className="pe3-title">The Story Behind the Prize</h2>
+        </div>
+
         <div className="pe3-wrap">
 
           {/* ═══════════ LEFT: text column ═══════════ */}
           <div>
 
-            {/* Eyebrow */}
-            <div className={`pe3-eyebrow pe3-fade${visible ? ' on' : ''}`}>
-              <span className="pe3-eline" />
-              <span className="pe3-elabel">The Story Behind the Prize</span>
-              <span className="pe3-eline-r" />
-            </div>
-
-            {/* Headline + subline */}
-            <h2 className={`pe3-headline pe3-fade pe3-d1${visible ? ' on' : ''}`}>
+            {/* Product sub-headline + subline */}
+            <h3 className={`pe3-headline pe3-fade pe3-d1${visible ? ' on' : ''}`}>
               {renderHeadline(headline)}
-            </h2>
+            </h3>
             {subline && (
               <p className={`pe3-subline pe3-fade pe3-d1${visible ? ' on' : ''}`}>
                 {subline}
