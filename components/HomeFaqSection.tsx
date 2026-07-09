@@ -14,7 +14,7 @@ export default function HomeFaqSection() {
 
           <header className="home-faq-head">
             <span className="home-faq-eyebrow">✦ Good to know</span>
-            <h2 className="home-faq-title" id="home-faq-title">Questions,<br/>answered</h2>
+            <h2 className="home-faq-title" id="home-faq-title">Premium Watch Club — FAQ</h2>
             <p className="home-faq-sub">
               Everything worth knowing before you enter, clear and on the record.
             </p>

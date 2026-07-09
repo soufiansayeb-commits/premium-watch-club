@@ -230,6 +230,8 @@ img { max-width: 100%; display: block; }
 .btn-nav-enter:hover { background: var(--gold-dark); transform: translateY(-1px); }
 .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 6px; }
 .hamburger span { display: block; width: 22px; height: 1.5px; background: var(--text-dark); border-radius: 2px; }
+/* Mobile menu header row (close X) — only rendered inside the open drawer on mobile. */
+.nav-menu-top { display: none; }
 
 /* ════════════════════════════════
    HERO — Premium Luxury (3-col)
@@ -3295,6 +3297,8 @@ img { max-width: 100%; display: block; }
   overflow: hidden;
   padding: 72px 0 80px;
   isolation: isolate;
+  /* Land below the sticky header (+ offer bar) when reached via #competitions-grid. */
+  scroll-margin-top: 120px;
 }
 
 /* layered background — deep navy plaster texture, shown nearly full strength.
@@ -5122,15 +5126,44 @@ img { max-width: 100%; display: block; }
 }
 @media (max-width: 640px) {
   .nav-links { display: none; }
+  /* Lift the whole header (and its drawer child) above the announcement bar
+     (.pwc-ab, z-index 1000) on mobile — otherwise #nav's own stacking context
+     (z-index 999) traps the open drawer beneath the offer bar and the close X
+     gets covered. */
+  #nav { z-index: 1001; }
   .nav-links.open {
     display: flex; flex-direction: column; position: fixed;
-    top: 72px; left: 0; right: 0;
+    top: 0; left: 0; right: 0;
     background: var(--bg-white);
-    padding: 20px 28px; border-bottom: 1px solid var(--border-light);
-    gap: 16px; z-index: 998;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    padding: 0 0 22px; border-bottom: 1px solid var(--border-light);
+    gap: 0; z-index: 2;   /* above the announcement bar, which #nav now outranks */
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
   }
-  .nav-links.open a { color: var(--text-mid); }
+  /* Header row: close X pinned top-LEFT, where the hamburger sits, so it's the
+     first thing seen when the menu opens. */
+  .nav-links.open .nav-menu-top {
+    display: flex; align-items: center; justify-content: flex-start; gap: 14px;
+    height: 72px; padding: 0 12px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .nav-menu-label {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--text-muted);
+  }
+  .nav-close {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--bg-off-white); border: 1px solid var(--border-light);
+    color: var(--text-dark); cursor: pointer;
+    transition: background 0.18s, border-color 0.18s, transform 0.14s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-close:hover { border-color: var(--gold); background: var(--bg-white); }
+  .nav-close:active { transform: scale(0.94); }
+  .nav-close:focus-visible { outline: 2px solid var(--gold-dark); outline-offset: 2px; }
+  .nav-links.open li:not(.nav-menu-top) { padding: 0 20px; }
+  .nav-links.open li:first-of-type:not(.nav-menu-top) { padding-top: 8px; }
+  .nav-links.open a { color: var(--text-mid); display: block; padding: 12px 0; }
   .hamburger { display: flex; }
   .winners-outer { padding: 0 12px; }
   .wna-left { margin-right: 10px; }
@@ -7437,15 +7470,16 @@ img { max-width: 100%; display: block; }
     padding: 8px 15px;
     letter-spacing: 0.07em;
   }
-  /* Dropdown opens just beneath the 72px bar */
-  .nav-links.open { top: 72px; }
+  /* Full-width drawer from the top; its own header row carries the close X. */
+  .nav-links.open { top: 0; }
 }
 
 @media (max-width: 380px) {
   .nav-inner { height: 66px; }
   .nav-logo-img { height: 40px; max-width: min(66vw, 180px); }
   .btn-nav-enter { font-size: 10.5px; padding: 7px 12px; }
-  .nav-links.open { top: 66px; }
+  .nav-links.open { top: 0; }
+  .nav-links.open .nav-menu-top { height: 66px; }
 }
 
 /* ── TASK 3: Mobile hero — product-first hierarchy ── */

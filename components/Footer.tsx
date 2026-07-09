@@ -62,7 +62,7 @@ export default function Footer() {
               <h4>Information</h4>
               <ul>
                 <li><Link href="/terms">Competition Terms</Link></li>
-                <li><Link href="/about-us">About Us</Link></li>
+                <li><Link href="/#faq">FAQ</Link></li>
                 <li><Link href="/privacy">Privacy Policy</Link></li>
                 <li><Link href="/contact">Contact Us</Link></li>
               </ul>
@@ -71,9 +71,9 @@ export default function Footer() {
               <h4>Editorial</h4>
               <ul>
                 <li><Link href="/journal">Journal</Link></li>
-                <li><Link href="/journal">Watch Guides</Link></li>
-                <li><Link href="/journal">Brand Heritage</Link></li>
-                <li><Link href="/journal">Collecting Advice</Link></li>
+                <li><Link href="/journal/weekly">Weekly</Link></li>
+                <li><Link href="/journal/monthly">Monthly</Link></li>
+                <li><Link href="/journal/special">Special</Link></li>
               </ul>
             </div>
             <div className="footer-col">
@@ -95,7 +95,7 @@ export default function Footer() {
             <p className="footer-desc">A curated destination for watch collectors. One competition at a time, done properly.</p>
           </div>
 
-          <p className="footer-legal">Premium Watch Club is a skill-based competition platform. Promoter: PWC Ltd, registered in England &amp; Wales. A correct answer to a skill question is required to win. All competitions are subject to full terms and conditions available on request. 18+ only. Please compete responsibly.</p>
+          <p className="footer-legal">Premium Watch Club is a skill-based competition platform. Promoter: PREMIUM WATCH CLUB LTD is a company registered in England and Wales (company number 17233368). Registered office: 71-75 Shelton Street, Covent Garden, London, United Kingdom, WC2H 9JQ. A correct answer to a skill question is required to win. All competitions are subject to full terms and conditions. 18+ only. Please compete responsibly.</p>
 
           <div className="footer-meta-end">
             <div className="social-row">
@@ -112,7 +112,7 @@ export default function Footer() {
             <div className="footer-policies">
               <Link href="/terms">Terms</Link>
               <Link href="/privacy">Privacy</Link>
-              <Link href="/about-us">About Us</Link>
+              <Link href="/#faq">FAQ</Link>
               <span className="footer-copy">© {new Date().getFullYear()} Premium Watch Club</span>
             </div>
           </div>

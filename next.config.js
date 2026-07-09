@@ -6,6 +6,27 @@ const nextConfig = {
     ],
   },
 
+  async rewrites() {
+    return [
+      // ── Short journal URLs ────────────────────────────────────────────────
+      // Footer "Advertorial" links point at clean /journal/weekly|monthly|special
+      // URLs. Rewrite (not redirect) so the short URL stays in the address bar
+      // while the real WordPress article is rendered underneath.
+      {
+        source: '/journal/weekly',
+        destination: '/journal/why-the-rolex-daytona-remains-an-icon',
+      },
+      {
+        source: '/journal/monthly',
+        destination: '/journal/why-the-audemars-piguet-royal-oak-still-defines-luxury-sport',
+      },
+      {
+        source: '/journal/special',
+        destination: '/journal/ap-x-swatch-royal-popp-colour-hype-and-wrist-energy',
+      },
+    ]
+  },
+
   async redirects() {
     return [
       // ── Legacy competition slug → canonical slug ──────────────────────────

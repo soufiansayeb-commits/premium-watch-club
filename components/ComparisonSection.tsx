@@ -10,15 +10,13 @@ import Image from 'next/image'
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
-type Row = { label: string; pwc: string; comp: string }
-
-const ROWS: Row[] = [
-  { label: 'Entry pool size',   pwc: 'Limited drops',     comp: 'Crowded pools'  },
-  { label: 'Entry mechanic',    pwc: 'Skill-based',       comp: 'Raffle feel'    },
-  { label: 'Odds transparency', pwc: 'Visible logic',     comp: 'Often unclear'  },
-  { label: 'Prize curation',    pwc: 'Watches only',      comp: 'Mixed prizes'   },
-  { label: 'Winner proof',      pwc: 'Verified archive',  comp: 'Hard to verify' },
-  { label: 'Brand experience',  pwc: 'Luxury watch club', comp: 'Generic site'   },
+const ROWS: string[] = [
+  'Best odds',
+  'Top 50 gets a prize',
+  'Cash alternative guaranteed',
+  'Special offers',
+  'Real-time odds',
+  'Premium experience',
 ]
 
 // ── Marks ─────────────────────────────────────────────────────────────────────
@@ -52,12 +50,12 @@ export default function ComparisonSection() {
 
         {/* ── Intro: eyebrow · headline · supporting copy (centered) ── */}
         <div className="cs-intro">
-          <p className="cs-eyebrow">Premium Watch Club vs. Typical Comps</p>
+          <p className="cs-eyebrow">Us vs Them</p>
           <h2 className="cs-title">Why Premium Watch Club feels different</h2>
           <p className="cs-sub">
-            Most watch competitions bury the odds, crowd the entry pool and blur the draw.
-            We built the opposite: limited drops, skill-based entry and a verified winner
-            archive you can actually check.
+            Most watch competitions hide the odds, stop rewarding after one winner and leave
+            you guessing. We show you exactly how many tickets remain, guarantee a cash
+            alternative, and pay out fifty places deep on every drop.
           </p>
         </div>
 
@@ -68,9 +66,9 @@ export default function ComparisonSection() {
               {/* ── Col 1: Criteria ── */}
               <div className="cs-col cs-col-crit">
                 <div className="cs-cell cs-head cs-head-crit"><span>Criteria</span></div>
-                {ROWS.map((row, i) => (
+                {ROWS.map((label, i) => (
                   <div key={i} className={`cs-cell cs-crit${i === last ? ' cs-last' : ''}`}>
-                    {row.label}
+                    {label}
                   </div>
                 ))}
               </div>
@@ -86,21 +84,19 @@ export default function ComparisonSection() {
                     priority
                   />
                 </div>
-                {ROWS.map((row, i) => (
+                {ROWS.map((_, i) => (
                   <div key={i} className={`cs-cell cs-pwc${i === last ? ' cs-last' : ''}`}>
                     <span className="cs-pwc-glyph"><Check /></span>
-                    <span className="cs-pwc-sub">{row.pwc}</span>
                   </div>
                 ))}
               </div>
 
-              {/* ── Col 3: Watch comps ── */}
+              {/* ── Col 3: Typical Comps ── */}
               <div className="cs-col cs-col-comp cs-col-end">
-                <div className="cs-cell cs-head cs-head-comp"><span>Watch comps</span></div>
-                {ROWS.map((row, i) => (
+                <div className="cs-cell cs-head cs-head-comp"><span>Typical Comps</span></div>
+                {ROWS.map((_, i) => (
                   <div key={i} className={`cs-cell cs-comp${i === last ? ' cs-last' : ''}`}>
                     <span className="cs-comp-glyph"><Cross /></span>
-                    <span className="cs-comp-val">{row.comp}</span>
                   </div>
                 ))}
               </div>

@@ -49,6 +49,16 @@ export default function Header() {
         </Link>
 
         <ul className={`nav-links${menuOpen ? ' open' : ''}`} id="navLinks">
+          {/* Mobile-only menu header: pins a large, tappable close control to the
+              top-right of the open drawer so it's visible the instant it opens. */}
+          <li className="nav-menu-top" aria-hidden="true">
+            <button type="button" className="nav-close" aria-label="Close menu" onClick={closeMenu}>
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                <path d="M2 2l14 14M16 2L2 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
+            <span className="nav-menu-label">Menu</span>
+          </li>
           <li><Link href="/#competitions-grid" onClick={closeMenu}>Competitions</Link></li>
           <li><Link href="/#how-it-works" onClick={closeMenu}>How It Works</Link></li>
           <li><Link href="/past-winners" onClick={closeMenu}>Past Winners</Link></li>

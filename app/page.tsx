@@ -62,7 +62,8 @@ export default async function HomePage() {
         weekly={competitionsByType.weekly}
         ctaHref={offerCtaHref}
       />
-      <HowItWorksInteractive ctaHref={offerCtaHref} />
+      {/* CTA scrolls to the current competitions section on this page, not the Special comp. */}
+      <HowItWorksInteractive ctaHref="#competitions-grid" />
       <ComparisonSection />
       <TestimonialTabs />
       {/* Current Competitions section — always rendered when any non-Coming-Soon comp exists */}
