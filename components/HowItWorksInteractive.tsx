@@ -16,10 +16,11 @@ interface Step {
   short: string
   title: string
   copy: string
-  fallback: React.ReactNode
-  /** object-fit for this step's GIF/video. Defaults to 'cover'. Use 'contain'
-   *  for media whose aspect ratio differs from the 16:10 frame so it is never
-   *  cropped (letterboxed against the frame's navy instead). */
+  /** Optional placeholder shown only if the step's media file is missing. */
+  fallback?: React.ReactNode
+  /** object-fit for this step's GIF/video. Defaults to 'contain' so the full
+   *  animation is always visible (never cropped). The frame adapts to the media's
+   *  own ratio, so there is no letterboxing. */
   mediaFit?: 'cover' | 'contain'
 }
 
@@ -86,20 +87,6 @@ function DrawFallback() {
   )
 }
 
-function WinnerFallback() {
-  return (
-    <div className="hwi-fb hwi-fb5">
-      <div className="hwi-fb-notify">
-        <span className="hwi-fb-notify-dot" />
-        Winner selected via RandomDraws
-      </div>
-      <div className="hwi-fb-watch" aria-hidden="true">
-        <span className="hwi-fb-watch-face" />
-      </div>
-    </div>
-  )
-}
-
 const steps: Step[] = [
   {
     id: 'step-1',
@@ -107,8 +94,6 @@ const steps: Step[] = [
     title: 'Choose Your Competition',
     copy: 'Pick the live Weekly, Monthly or Special competition you want to enter.',
     fallback: <CompetitionFallback />,
-    // 800×370 GIF is wider than the 16:10 frame — contain it so nothing is cropped.
-    mediaFit: 'contain',
   },
   {
     id: 'step-2',
@@ -136,7 +121,6 @@ const steps: Step[] = [
     short: 'Wrist',
     title: 'From Winner to Wrist',
     copy: 'The winning entry is selected through RandomDraws. We contact the winner, arrange the prize and document the watch reaching its new wrist.',
-    fallback: <WinnerFallback />,
   },
 ]
 
@@ -149,22 +133,42 @@ async function mediaExists(path: string): Promise<boolean> {
   }
 }
 
-function StepMedia({ step }: { step: Step }) {
-  const [stage, setStage] = useState<'checking' | 'video' | 'gif' | 'fallback'>('checking')
+function StepMedia({
+  step,
+  onRatioChange,
+}: {
+  step: Step
+  /** Reports the media's intrinsic ratio ("W / H") so the frame can match it, or
+   *  null for fallback visuals (which use the frame's default ratio). */
+  onRatioChange: (ratio: string | null) => void
+}) {
+  const [stage, setStage] = useState<'checking' | 'video' | 'image' | 'fallback'>('checking')
+  // Resolved <img> source for a step whose media is a GIF or a static PNG.
+  const [imgSrc, setImgSrc] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
     setStage('checking')
 
     async function resolve() {
-      const [hasVideo, hasGif] = await Promise.all([
+      // Priority: video → animated GIF → static PNG → fallback UI.
+      const [hasVideo, hasGif, hasPng] = await Promise.all([
         mediaExists(`/howitworks/${step.id}.mp4`),
         mediaExists(`/howitworks/${step.id}.gif`),
+        mediaExists(`/howitworks/${step.id}.png`),
       ])
       if (cancelled) return
-      if (hasVideo) setStage('video')
-      else if (hasGif) setStage('gif')
-      else setStage('fallback')
+      if (hasVideo) {
+        setStage('video')
+      } else if (hasGif) {
+        setImgSrc(`/howitworks/${step.id}.gif`)
+        setStage('image')
+      } else if (hasPng) {
+        setImgSrc(`/howitworks/${step.id}.png`)
+        setStage('image')
+      } else {
+        setStage('fallback')
+      }
     }
 
     resolve()
@@ -173,9 +177,16 @@ function StepMedia({ step }: { step: Step }) {
     }
   }, [step.id])
 
+  // Fallback steps carry no intrinsic media ratio → use the frame default.
+  useEffect(() => {
+    if (stage === 'fallback') onRatioChange(null)
+  }, [stage, onRatioChange])
+
   if (stage === 'checking') return <div className="hwi-media-inner" />
 
-  const fitStyle = { objectFit: step.mediaFit ?? 'cover' } as const
+  // 'contain' guarantees the whole animation is always visible — never cropped or
+  // zoomed. The frame matches the media's own ratio, so there is no letterboxing.
+  const fitStyle = { objectFit: step.mediaFit ?? 'contain' } as const
 
   return (
     <div className="hwi-media-inner">
@@ -189,19 +200,30 @@ function StepMedia({ step }: { step: Step }) {
           loop
           playsInline
           preload="metadata"
+          onLoadedMetadata={e => {
+            const v = e.currentTarget
+            if (v.videoWidth && v.videoHeight) onRatioChange(`${v.videoWidth} / ${v.videoHeight}`)
+          }}
           onError={() => setStage('fallback')}
         >
           <source src={`/howitworks/${step.id}.mp4`} type="video/mp4" />
           <source src={`/howitworks/${step.id}.webm`} type="video/webm" />
         </video>
       )}
-      {stage === 'gif' && (
+      {stage === 'image' && imgSrc && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           className="hwi-media"
           style={fitStyle}
-          src={`/howitworks/${step.id}.gif`}
+          src={imgSrc}
           alt={step.title}
+          // Match the frame to the image's own dimensions so it renders at its
+          // native aspect ratio — no letterboxing, cropping or stretching. Works
+          // identically for animated GIFs and static PNGs.
+          onLoad={e => {
+            const im = e.currentTarget
+            if (im.naturalWidth && im.naturalHeight) onRatioChange(`${im.naturalWidth} / ${im.naturalHeight}`)
+          }}
           onError={() => setStage('fallback')}
         />
       )}
@@ -212,6 +234,9 @@ function StepMedia({ step }: { step: Step }) {
 
 export default function HowItWorksInteractive({ ctaHref }: Props) {
   const [activeIndex, setActiveIndex] = useState(0)
+  // Intrinsic ratio of the active step's media ("W / H"); null → frame default.
+  // The container adapts to the media, never the other way around.
+  const [mediaRatio, setMediaRatio] = useState<string | null>(null)
   const active = steps[activeIndex]
   const last = steps.length - 1
 
@@ -286,7 +311,13 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
 
         {/* ── Stage: media + text, updates on node click ── */}
         <div className="hwi-stage">
-          <div className="hwi-media-frame" id="hwi-stage-panel" role="tabpanel" aria-labelledby={`hwi-tab-${active.id}`}>
+          <div
+            className="hwi-media-frame"
+            id="hwi-stage-panel"
+            role="tabpanel"
+            aria-labelledby={`hwi-tab-${active.id}`}
+            style={{ aspectRatio: mediaRatio ?? '16 / 10' }}
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={active.id}
@@ -296,7 +327,7 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
                 exit={{ opacity: 0, scale: 0.99 }}
                 transition={{ duration: 0.35, ease: EASE }}
               >
-                <StepMedia step={active} />
+                <StepMedia step={active} onRatioChange={setMediaRatio} />
               </motion.div>
             </AnimatePresence>
             <span className="hwi-stage-badge">Step {activeIndex + 1} / {steps.length}</span>
@@ -512,7 +543,10 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
         .hwi-media-frame {
           position: relative;
           width: 100%;
-          aspect-ratio: 16 / 10;   /* one consistent frame for every step's GIF/video */
+          /* Default only — the inline style sets the ratio to the active media's
+             own intrinsic ratio so GIFs/videos render native (no letterbox/crop).
+             Fallback steps keep this 16:10. */
+          aspect-ratio: 16 / 10;
           border-radius: 18px;
           overflow: hidden;
           background: var(--navy);
@@ -523,7 +557,9 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
         .hwi-media-inner { position: absolute; inset: 0; }
         .hwi-media {
           width: 100%; height: 100%;
-          object-fit: cover;
+          /* Never crop/zoom — show the full frame edge to edge. The container
+             adapts to the media's ratio, so 'contain' fills with no letterbox. */
+          object-fit: contain;
           display: block;
         }
         .hwi-stage-badge {
@@ -807,37 +843,6 @@ export default function HowItWorksInteractive({ ctaHref }: Props) {
           color: var(--gold-light);
         }
         .hwi-fb-countdown em { font-style: normal; opacity: 0.5; }
-        .hwi-fb-notify {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-size: 12.5px;
-          color: var(--text-on-dark);
-          background: rgba(255,255,255,0.05);
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 999px;
-          padding: 9px 18px;
-        }
-        .hwi-fb-notify-dot {
-          width: 7px; height: 7px;
-          border-radius: 50%;
-          background: var(--green);
-          box-shadow: 0 0 6px rgba(39,174,96,0.7);
-          flex-shrink: 0;
-        }
-        .hwi-fb-watch {
-          width: 92px; height: 92px;
-          border-radius: 50%;
-          background: radial-gradient(circle at 35% 30%, var(--gold-light), var(--gold-dark) 70%);
-          display: flex; align-items: center; justify-content: center;
-          box-shadow: 0 14px 40px rgba(197,160,101,0.3);
-        }
-        .hwi-fb-watch-face {
-          width: 62px; height: 62px;
-          border-radius: 50%;
-          background: var(--navy);
-          border: 3px solid var(--gold-dark);
-        }
 
         /* ── Desktop: media left, text right ── */
         @media (min-width: 900px) {
