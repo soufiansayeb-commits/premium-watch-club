@@ -5,6 +5,17 @@ import Image from 'next/image'
 import { Competition } from '@/lib/competition-data'
 import { getChallenge, getOptionLabel } from '@/lib/skill-challenge-config'
 import { trackEvent } from '@/lib/analytics'
+import StickyMobileCta from '@/components/competition/StickyMobileCta'
+
+// Magnifier glyph for the Step 2 sticky bar — "study the detail".
+function InspectGlyph() {
+  return (
+    <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M15.8 15.8L20 20" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
 
 interface Props {
   competition: Competition
@@ -176,6 +187,21 @@ export default function SkillChallenge({
 
           </div>
         </div>
+
+        {/* Mobile-only sticky CTA — same handler + validation as the button above.
+            Neutral until an answer is picked, then it activates. */}
+        <StickyMobileCta
+          visible
+          active={!!selectedOptionId}
+          bumpKey={selectedOptionId ?? 'idle'}
+          icon={<InspectGlyph />}
+          primary={selectedOptionId ? 'Answer selected' : 'Select your answer'}
+          secondary="Step 2 of 3"
+          label={isValidating ? 'Confirming…' : 'Continue'}
+          onClick={handleContinue}
+          disabled={!selectedOptionId || isValidating}
+          hideArrow={isValidating}
+        />
       </div>
     )
   }
@@ -268,6 +294,21 @@ export default function SkillChallenge({
 
           </div>
         </div>
+
+        {/* Mobile-only sticky CTA — same handler + validation as the button above.
+            Neutral until an answer is picked, then it activates. */}
+        <StickyMobileCta
+          visible
+          active={!!selectedOptionId}
+          bumpKey={selectedOptionId ?? 'idle'}
+          icon={<InspectGlyph />}
+          primary={selectedOptionId ? 'Answer selected' : 'Select your answer'}
+          secondary="Step 2 of 3"
+          label={isValidating ? 'Confirming…' : 'Continue'}
+          onClick={handleContinue}
+          disabled={!selectedOptionId || isValidating}
+          hideArrow={isValidating}
+        />
       </div>
     )
   }
@@ -333,6 +374,20 @@ export default function SkillChallenge({
           </div>
         </div>
       </div>
+
+      {/* Mobile-only sticky CTA — same handler + validation as the button above.
+          Neutral until an answer is picked, then it activates. */}
+      <StickyMobileCta
+        visible
+        active={!!selectedOptionId}
+        bumpKey={selectedOptionId ?? 'idle'}
+        icon={<InspectGlyph />}
+        primary={selectedOptionId ? 'Answer selected' : 'Select your answer'}
+        secondary="Step 2 of 3"
+        label="Confirm"
+        onClick={() => onContinue(false)}
+        disabled={!selectedOptionId}
+      />
     </div>
   )
 }

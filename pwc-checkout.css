@@ -890,3 +890,163 @@ button.wc-block-components-checkout-place-order-button {
     padding: 0 16px 28px !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PWC — CONSENT ERRORS · TRUST STRIP · MOBILE ORDER   (added)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Required-Terms error: unmissable, premium red ─────────────────
+   Styling only — the block/validation logic is unchanged. */
+
+/* Top-of-checkout error banner shown when Place Order is blocked */
+.wc-block-components-notice-banner.is-error {
+  background: rgba(184,50,50,0.10) !important;
+  border: 1px solid rgba(184,50,50,0.55) !important;
+  border-left: 4px solid var(--pwc-red) !important;
+  color: #7c1d1d !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 12px rgba(184,50,50,0.14) !important;
+}
+.wc-block-components-notice-banner.is-error .wc-block-components-notice-banner__content {
+  font-size: 0.9rem !important;
+}
+
+/* Inline validation error directly under the Terms checkbox */
+.wp-block-woocommerce-checkout-terms-block .wc-block-components-validation-error,
+.wc-block-checkout__terms .wc-block-components-validation-error {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 8px !important;
+  padding: 10px 12px !important;
+  background: rgba(184,50,50,0.08) !important;
+  border: 1px solid rgba(184,50,50,0.45) !important;
+  border-left: 4px solid var(--pwc-red) !important;
+  border-radius: 8px !important;
+}
+.wp-block-woocommerce-checkout-terms-block .wc-block-components-validation-error p,
+.wc-block-checkout__terms .wc-block-components-validation-error p {
+  color: #7c1d1d !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+/* Halo the terms box while its error is visible (progressive enhancement) */
+.wp-block-woocommerce-checkout-terms-block:has(.wc-block-components-validation-error),
+.wp-block-woocommerce-checkout-terms-block.pwc-has-error {
+  outline: 1px solid rgba(184,50,50,0.4);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* Injected inline Terms error (from the "PWC Checkout Consent UX" snippet).
+   WooCommerce Blocks surfaces the unchecked-terms failure as a notice at the
+   TOP of the checkout, not as a field-style error by the checkbox — so on
+   mobile it scrolls out of view. This element restores a clear, red, field-
+   style error right next to the checkbox. Styling only; the block still blocks
+   the order. */
+.pwc-terms-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  background: rgba(184,50,50,0.08);
+  border: 1px solid rgba(184,50,50,0.45);
+  border-left: 4px solid var(--pwc-red);
+  border-radius: 8px;
+  color: #7c1d1d;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.pwc-terms-error::before {
+  content: '!';
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: var(--pwc-red);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* ── 2. Trust strip under Place Order (payment icons → Trustpilot) ────
+   Injected by the "PWC Checkout Trust Strip" snippet as the last child of
+   the actions block, so it sits between the button and the (::after)
+   secure-checkout fine-print line. Transparent PNGs — no box, no bg. */
+.pwc-trust-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 0;
+  line-height: 0;
+}
+.pwc-trust-strip .pwc-trust-pay {
+  width: 80%;
+  max-width: 300px;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.92;
+}
+.pwc-trust-strip .pwc-trust-tp {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
+}
+.pwc-trust-strip .pwc-trust-tp img {
+  width: auto;
+  height: 26px;
+  object-fit: contain;
+}
+.pwc-trust-strip .pwc-trust-tp span {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.64rem;
+  letter-spacing: 0.04em;
+  color: var(--pwc-text-mid);
+}
+
+/* ── 3. Mobile order: Order Summary (Checkout Totals) moves ABOVE the fields,
+      so the Terms checkbox and Place Order button stay together at the bottom.
+
+      WHY the earlier @media order rules failed: WooCommerce lays the two
+      columns out with its OWN container query and only stacks them once it has
+      added the `is-mobile` class to the flex container. Hooking that exact
+      state — `.wc-block-checkout.is-mobile` — and its direct children beats the
+      framework CSS without any breakpoint guessing. The Order Summary lives on
+      `.wc-block-checkout__sidebar` (a.k.a. .wc-block-components-sidebar /
+      .wp-block-woocommerce-checkout-totals-block); the fields + Place Order
+      live on `.wc-block-checkout__main`. ──────────────────────────────────── */
+@media (max-width: 781px) {
+  /* Make every candidate checkout flex-container a single column, so ordering
+     works no matter which one WooCommerce actually stacks (outer wrapper OR
+     the nested sidebar-layout). */
+  .wp-block-woocommerce-checkout.wc-block-checkout,
+  .wc-block-checkout.wc-block-components-sidebar-layout,
+  .wc-block-components-sidebar-layout.is-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  /* Push the Order Summary (Checkout Totals) above the fields — target it by
+     ALL of its class names so it matches whatever the real element is. */
+  .wc-block-checkout__sidebar,
+  .wc-block-components-sidebar,
+  .wp-block-woocommerce-checkout-totals-block {
+    order: -1 !important;
+  }
+  /* Fields (Contact … marketing … Terms … Place Order) stay together below it. */
+  .wc-block-checkout__main,
+  .wc-block-components-main {
+    order: 1 !important;
+  }
+  .pwc-trust-strip .pwc-trust-pay { width: 84%; }
+}

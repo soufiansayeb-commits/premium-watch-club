@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { isSoldOut, getStatusLabel } from '@/lib/competition-status'
@@ -99,27 +99,43 @@ export default function CompetitionEntryFlow({ competition }: Props) {
   }
 
   const [currentStep, setCurrentStep] = useState(1)
-  const [selectedTicketQty, setSelectedTicketQty] = useState(1)
+  // No preselection: the visitor must explicitly choose a ticket package. null =
+  // nothing selected yet (the buy box + sticky bar render a neutral state).
+  const [selectedTicketQty, setSelectedTicketQty] = useState<number | null>(null)
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null)
   const { addItem } = useCart()
   const bundleConfig = useBundleConfig()
 
-  function scrollToEntry() {
-    if (typeof document !== 'undefined') {
-      const el = document.getElementById('progress-bar')
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  // Skip the scroll on first mount; only scroll on an actual step transition.
+  const hasMountedRef = useRef(false)
+
+  // After a step change, bring the new step's content (its heading) into view —
+  // not the very top of the page. scroll-margin-top on .step-panel keeps the
+  // heading clear of the sticky header. Runs after paint so the panel exists.
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true
+      return
     }
-  }
+    const el = document.getElementById(`panel-step-${currentStep}`)
+    if (!el) return
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [currentStep])
 
   function goToStep(n: number) {
     setCurrentStep(n)
-    scrollToEntry()
   }
 
   function handleSkillContinue(isCorrect: boolean) {
-    // Always use selectedTicketQty — it is already clamped to allowedMaxQty by
-    // TicketSelector. Never force qty=1 based on isFree; sold_individually is
-    // the only source of truth for single-entry products.
+    // Guard: Step 2 is only reachable after a ticket package was explicitly
+    // selected in Step 1 (Continue is disabled otherwise), so this never fires
+    // without a quantity — but keep the flow honest and never default to 1.
+    if (selectedTicketQty == null) return
+    // selectedTicketQty is already clamped to allowedMaxQty by TicketSelector.
+    // Never force qty=1 based on isFree; sold_individually is the only source of
+    // truth for single-entry products.
     const qty = selectedTicketQty
     const price = competition.entryPrice
     const isFree = !!competition.isFree

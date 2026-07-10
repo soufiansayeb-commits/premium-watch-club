@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import PaymentMethods from '@/components/PaymentMethods'
 import { useCart } from '@/context/CartContext'
 import { useMoney } from '@/context/StoreSettingsContext'
 import { getAllowedMaxQty } from '@/lib/quantity-limits'
@@ -260,6 +261,9 @@ export default function CartPage() {
                       </svg>
                     )}
                   </button>
+
+                  {/* Accepted payment methods — directly under the checkout CTA */}
+                  <PaymentMethods className="pay-methods--cart" />
 
                   <div className="cp-secure-note">
                     <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">

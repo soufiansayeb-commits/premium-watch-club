@@ -8,6 +8,7 @@ import { useMoney } from '@/context/StoreSettingsContext'
 import { resolveLinePricing } from '@/lib/bundle-pricing'
 import { getAllowedMaxQty } from '@/lib/quantity-limits'
 import { trackEvent } from '@/lib/analytics'
+import PaymentMethods from '@/components/PaymentMethods'
 import type { CartItem } from '@/lib/cartStore'
 
 function QuantityStepper({
@@ -305,6 +306,9 @@ export default function CartDrawer() {
               </svg>
             )}
           </button>
+
+          {/* Accepted payment methods — sits directly under the checkout CTA */}
+          {hasItems && <PaymentMethods className="pay-methods--cart" />}
 
           <div className="cd-footer-secure">
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">

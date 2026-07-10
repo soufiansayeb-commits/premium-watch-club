@@ -5,6 +5,7 @@ import { Competition } from '@/lib/competition-data'
 import { isSoldOut } from '@/lib/competition-status'
 import TrustpilotProof from '@/components/TrustpilotProof'
 import SoldProgress from '@/components/competition/SoldProgress'
+import StickyMobileCta from '@/components/competition/StickyMobileCta'
 import {
   discountPercentForQty,
   bundleLineTotal,
@@ -19,9 +20,23 @@ import { getAllowedMaxQty } from '@/lib/quantity-limits'
 
 interface Props {
   competition: Competition
-  selectedQty: number
+  /** null = the visitor has not chosen a package yet (neutral state). */
+  selectedQty: number | null
   onQtyChange: (qty: number) => void
   onContinue: () => void
+}
+
+// Ticket glyph for the sticky bar — a simple inline SVG, no external icons.
+function TicketGlyph() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 8.5A1.5 1.5 0 0 1 5.5 7h13A1.5 1.5 0 0 1 20 8.5v1.7a2 2 0 0 0 0 3.6v1.7A1.5 1.5 0 0 1 18.5 17h-13A1.5 1.5 0 0 1 4 15.5v-1.7a2 2 0 0 0 0-3.6V8.5Z"
+        stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"
+      />
+      <path d="M14 7.5v9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="1.6 2.2" />
+    </svg>
+  )
 }
 
 export default function TicketSelector({ competition: c, selectedQty, onQtyChange, onContinue }: Props) {
@@ -84,20 +99,25 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
   const badgedQtys = tiers.filter(t => t.badge).map(t => t.minQty)
   const heroQty = badgedQtys.length ? Math.max(...badgedQtys) : null
 
+  // Has the visitor explicitly chosen a package yet? Until they do, every
+  // qty-derived value renders as a neutral placeholder — nothing is preselected.
+  const hasSelection = selectedQty != null && selectedQty >= 1
+  const qty = hasSelection ? (selectedQty as number) : 0
+
   // Bundle-aware totals (discount enforced server-side by pwc-ticket-bundle-discounts.php;
-  // these mirror the SAME live rules for display).
-  const subtotal     = bundleLineTotal(c.entryPrice, tiers, selectedQty)
-  const fullSubtotal = fullLineTotal(c.entryPrice, selectedQty)
-  const subtotalSave = bundleSaving(c.entryPrice, tiers, selectedQty)
+  // these mirror the SAME live rules for display). Zero until a selection exists.
+  const subtotal     = hasSelection ? bundleLineTotal(c.entryPrice, tiers, qty) : 0
+  const fullSubtotal = hasSelection ? fullLineTotal(c.entryPrice, qty) : 0
+  const subtotalSave = hasSelection ? bundleSaving(c.entryPrice, tiers, qty) : 0
   // Odds based on current entries sold (WWC model):
   //   entriesSold = totalTickets − entriesRemaining
-  //   currentPool = entriesSold + selectedQty  (pool after your selection joins)
-  //   oddsDenominator = ceil(currentPool / selectedQty)
+  //   currentPool = entriesSold + qty  (pool after your selection joins)
+  //   oddsDenominator = ceil(currentPool / qty)
   const entriesSold = Math.max(0, c.totalTickets - entriesRemaining)
-  const currentPool = entriesSold + selectedQty
-  const odds = Math.max(1, Math.ceil(currentPool / selectedQty))
-  const pct = Math.min((selectedQty / allowedMaxQty) * 100, 100)
-  const sliderPct = allowedMaxQty > 1 ? ((selectedQty - 1) / (allowedMaxQty - 1)) * 100 : 100
+  const currentPool = entriesSold + qty
+  const odds = hasSelection ? Math.max(1, Math.ceil(currentPool / qty)) : 0
+  const pct = hasSelection ? Math.min((qty / allowedMaxQty) * 100, 100) : 0
+  const sliderPct = hasSelection && allowedMaxQty > 1 ? ((qty - 1) / (allowedMaxQty - 1)) * 100 : 0
 
   // ── Temporary debug — remove once AP max quantity is confirmed correct ────────
   if (process.env.NODE_ENV === 'development') {
@@ -240,21 +260,24 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
               <div className="slider-header">
                 <span className="slider-section-label">Or choose a custom amount</span>
                 <span className="slider-value-display">
-                  {selectedQty} {selectedQty === 1 ? 'ticket' : 'tickets'} &middot; {fmt(subtotal)}
+                  {hasSelection
+                    ? <>{qty} {qty === 1 ? 'ticket' : 'tickets'} &middot; {fmt(subtotal)}</>
+                    : 'Select an amount'}
                 </span>
               </div>
               <div className="slider-row">
                 <button
                   className="slider-btn"
                   aria-label="Decrease"
-                  onClick={() => handleChange(selectedQty - 1)}
+                  onClick={() => handleChange(qty - 1)}
                 >−</button>
                 <input
                   type="range"
                   className="qty-slider"
                   min={1}
                   max={allowedMaxQty}
-                  value={selectedQty}
+                  value={hasSelection ? qty : 1}
+                  aria-valuetext={hasSelection ? `${qty} ${qty === 1 ? 'ticket' : 'tickets'}` : 'No tickets selected'}
                   onChange={e => handleChange(parseInt(e.target.value))}
                   style={{
                     background: `linear-gradient(to right, var(--gold) 0%, var(--gold) ${sliderPct}%, var(--border-mid) ${sliderPct}%, var(--border-mid) 100%)`
@@ -263,8 +286,8 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                 <button
                   className="slider-btn"
                   aria-label="Increase"
-                  onClick={() => handleChange(selectedQty + 1)}
-                  disabled={selectedQty >= allowedMaxQty}
+                  onClick={() => handleChange(qty + 1)}
+                  disabled={hasSelection && qty >= allowedMaxQty}
                 >+</button>
               </div>
               <div className="slider-cap">
@@ -278,20 +301,26 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
             <div className="odds-panel-row">
               <div className="op-left">
                 <div className="op-eyebrow">Your odds</div>
-                <div className="op-fraction">1 in {odds}</div>
+                <div className="op-fraction">{hasSelection ? `1 in ${odds}` : '—'}</div>
               </div>
               <div className="op-right">
                 <div className="op-detail">
-                  {selectedQty} {selectedQty === 1 ? 'entry' : 'entries'} &middot;{' '}
-                  {isFree ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>FREE</span> : fmt(subtotal)}
+                  {hasSelection ? (
+                    <>
+                      {qty} {qty === 1 ? 'entry' : 'entries'} &middot;{' '}
+                      {isFree ? <span style={{ color: 'var(--green)', fontWeight: 600 }}>FREE</span> : fmt(subtotal)}
+                    </>
+                  ) : 'No tickets selected yet'}
                 </div>
                 <div className="op-bar-track">
                   <div className="op-bar-fill" style={{ width: `${pct}%` }} />
                 </div>
                 <div className="op-bar-label">
-                  {allowedMaxQty === 1
-                    ? 'One entry per member for this competition'
-                    : `${Math.round(pct)}% of your maximum entries`
+                  {!hasSelection
+                    ? 'Select a ticket option to see your odds'
+                    : allowedMaxQty === 1
+                      ? 'One entry per member for this competition'
+                      : `${Math.round(pct)}% of your maximum entries`
                   }
                 </div>
               </div>
@@ -306,29 +335,31 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
             <div>
               <div className="sr-left">
                 Order Total{' '}
-                <span>
-                  ({selectedQty} {selectedQty === 1 ? 'entry' : 'tickets'})
-                </span>
+                {hasSelection && (
+                  <span>
+                    ({qty} {qty === 1 ? 'entry' : 'tickets'})
+                  </span>
+                )}
               </div>
-              {!isFree && (
-                <div className="sr-per">{fmt(c.entryPrice)} &times; {selectedQty}</div>
+              {!isFree && hasSelection && (
+                <div className="sr-per">{fmt(c.entryPrice)} &times; {qty}</div>
               )}
             </div>
             <div className="sr-right">
-              {!isFree && subtotalSave > 0 && (
+              {!isFree && hasSelection && subtotalSave > 0 && (
                 <span className="sr-full">{fmt(fullSubtotal)}</span>
               )}
-              <div className={`sr-amount${isFree ? ' sr-amount-free' : ''}`}>
-                {isFree ? 'FREE' : fmt(subtotal)}
+              <div className={`sr-amount${isFree && hasSelection ? ' sr-amount-free' : ''}`}>
+                {!hasSelection ? '—' : isFree ? 'FREE' : fmt(subtotal)}
               </div>
-              {!isFree && subtotalSave > 0 && (
-                <span className="sr-save">You save {fmt(subtotalSave)} ({discountPercentForQty(tiers, selectedQty)}%)</span>
+              {!isFree && hasSelection && subtotalSave > 0 && (
+                <span className="sr-save">You save {fmt(subtotalSave)} ({discountPercentForQty(tiers, qty)}%)</span>
               )}
             </div>
           </div>
 
-          {/* ── Continue ── */}
-          <button className="btn-continue" onClick={onContinue}>
+          {/* ── Continue ── Disabled until the visitor picks a package. */}
+          <button className="btn-continue" onClick={onContinue} disabled={!hasSelection}>
             Continue
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -363,6 +394,21 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
         </div>
 
       </div>
+
+      {/* Mobile-only sticky CTA — always visible on Step 1. Neutral/disabled until
+          a package is chosen, then it activates to mirror the selection. It proxies
+          the exact Continue action; it never selects or adds anything itself. */}
+      <StickyMobileCta
+        visible
+        active={hasSelection}
+        bumpKey={hasSelection ? qty : 'idle'}
+        icon={<TicketGlyph />}
+        primary={hasSelection ? `${qty} ${qty === 1 ? 'Ticket' : 'Tickets'} Selected` : 'Select your tickets'}
+        secondary={hasSelection ? `Odds 1:${odds}` : ''}
+        label="Continue"
+        onClick={onContinue}
+        disabled={!hasSelection}
+      />
     </div>
   )
 }

@@ -4204,6 +4204,9 @@ img { max-width: 100%; display: block; }
 ════════════════════════════════ */
 .step-panel { display: none; }
 .step-panel.active { display: block; }
+/* When a step transition scrolls a panel into view, keep its heading clear of the
+   sticky header (#nav). Applied on all viewports; matters most on mobile. */
+.step-panel { scroll-margin-top: 96px; }
 
 /* ── STEP 1: Ticket Selection ── */
 .entry-card {
@@ -4607,6 +4610,24 @@ img { max-width: 100%; display: block; }
   object-fit: contain;
   opacity: 0.9;
 }
+
+/* Shared accepted-payment strip — reused under the cart CTAs (drawer + cart page).
+   Same transparent PNG as the PDP; centered, never wider than the button. */
+.pay-methods {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+  line-height: 0;
+}
+.pay-methods img {
+  width: 82%;
+  max-width: 300px;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.9;
+}
+/* Cart drawer footer is narrow — keep the strip compact and centered. */
+.pay-methods--cart img { width: 80%; max-width: 280px; }
 .entry-card-footer {
   padding: 16px 32px;
   border-top: 1px solid var(--border-light);
@@ -4812,6 +4833,110 @@ img { max-width: 100%; display: block; }
 .btn-back:hover { border-color: var(--text-mid); color: var(--text-dark); }
 .skill-actions { display: flex; gap: 12px; align-items: center; }
 .skill-actions .btn-continue { flex: 1; }
+
+/* ── Mobile sticky CTA (PDP Step 1 + Step 2) ─────────────────────────────────
+   A floating ivory bar: ticket info on the left, champagne CTA on the right.
+   Mobile only, fully controlled (StickyMobileCta toggles .is-visible). It owns no
+   step/validation/cart logic — the button fires the same handler as the in-flow
+   Continue button. Hidden on desktop. */
+.sticky-cta { display: none; }
+@media (max-width: 768px) {
+  .sticky-cta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: fixed;
+    left: 14px; right: 14px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 900;                 /* below nav (1001) and cart drawer (1100) */
+    padding: 10px 10px 10px 12px;
+    background: #FAF8F4;
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.10), 0 -8px 30px rgba(0,0,0,0.05);
+    /* Hidden state: slide down + fade, no interaction, no spacing reserved. */
+    transform: translateY(140%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.22s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease;
+  }
+  .sticky-cta.is-visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  /* Footer reserves space only while the bar is visible — never when hidden. */
+  body.pwc-sticky-cta .site-footer {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.sticky-cta-info {
+  display: flex; align-items: center; gap: 9px;
+  flex: 1 1 auto; min-width: 0; padding-left: 2px;
+  transform-origin: left center;
+}
+.sticky-cta-icon {
+  flex: 0 0 auto;
+  width: 38px; height: 38px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(184,146,86,0.10);
+  border: 1px solid rgba(184,146,86,0.20);
+  color: #B18745;
+}
+.sticky-cta-text { display: block; min-width: 0; transform-origin: left center; }
+.sticky-cta-primary {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0;
+  text-transform: uppercase; color: #0A1F44; line-height: 1.15;
+}
+.sticky-cta-secondary {
+  display: block; margin-top: 3px;
+  font-family: var(--font-sans);
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: rgba(10,31,68,0.5);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sticky-cta-btn {
+  flex: 0 0 46%;
+  height: 58px;
+  border: none; border-radius: 18px; cursor: pointer;
+  background: #B18745; color: #FDFBF7;
+  font-family: var(--font-sans); font-size: 13.5px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  box-shadow: 0 6px 18px rgba(177,135,69,0.32);
+  transition: background 0.22s ease, color 0.22s ease, transform 0.14s, box-shadow 0.22s ease, opacity 0.22s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.sticky-cta-btn:hover { background: #a07a3d; transform: translateY(-1px); box-shadow: 0 10px 24px rgba(177,135,69,0.40); }
+.sticky-cta-btn:active { transform: translateY(0); box-shadow: 0 4px 12px rgba(177,135,69,0.30); }
+.sticky-cta-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+.sticky-cta-btn svg { flex: 0 0 auto; }
+/* Inactive (no selection yet): muted beige, non-clickable, no hover/press. */
+.sticky-cta-btn.is-inactive,
+.sticky-cta-btn.is-inactive:disabled {
+  background: #EAE2D3; color: rgba(84,72,52,0.55);
+  box-shadow: none; opacity: 1; cursor: not-allowed; transform: none;
+}
+.sticky-cta-btn.is-inactive:hover { background: #EAE2D3; transform: none; box-shadow: none; }
+
+/* Subtle feedback bump — replays when the info block remounts (activation or a
+   package change), never a full-component remount. */
+@keyframes sticky-cta-bump {
+  0%   { transform: scale(0.98); }
+  55%  { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+.sticky-cta.is-active .sticky-cta-info { animation: sticky-cta-bump 0.22s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sticky-cta { transition: opacity 0.2s ease; transform: none; }
+  .sticky-cta.is-active .sticky-cta-info { animation: none; }
+}
 
 /* ── STEP 3: Checkout ── */
 .checkout-card {
@@ -7704,6 +7829,9 @@ img { max-width: 100%; display: block; }
   font-family: 'Jost', sans-serif;
   font-size: 13px; font-weight: 600; color: #0A1F44;
   justify-content: flex-start; padding-left: 18px;
+  /* Left-align so multi-line labels (e.g. "Cash alternative guaranteed") read as
+     a normal left-set label, not a centered stack. */
+  text-align: left; line-height: 1.25;
 }
 .cs-col-pwc {
   background: #0A1F44;
@@ -7779,12 +7907,18 @@ img { max-width: 100%; display: block; }
   .cs-eyebrow { margin-bottom: 14px; }
   .cs-sub { font-size: 13.5px; }
   .cs-table { --h-head: 70px; --h-row: 56px; --lift: 12px; }
-  .cs-col-crit { flex: 1.55; }
+  /* Give the criteria column more room and take it from the cross column (which
+     only holds a small glyph) so longer labels wrap to a tidy 2 lines. The PWC
+     column keeps its width. */
+  .cs-col-crit { flex: 1.9; }
   .cs-col-pwc  { flex: 1.3; }
-  .cs-col-comp { flex: 1; }
+  .cs-col-comp { flex: 0.9; }
   .cs-pwc-sub, .cs-comp-val { display: none; }
   .cs-pwc, .cs-comp { gap: 0; }
-  .cs-crit { font-size: 11.5px; padding-left: 12px; line-height: 1.22; }
+  .cs-crit {
+    font-size: 11.5px; padding-left: 12px; padding-right: 8px;
+    line-height: 1.25; text-align: left; text-wrap: balance;
+  }
   .cs-head-crit { padding-left: 12px; }
   .cs-head-comp span { font-size: 8px; }
   .cs-pwc-logo { width: 94%; max-width: 150px; }
@@ -7796,8 +7930,9 @@ img { max-width: 100%; display: block; }
 }
 @media (max-width: 360px) {
   .cs-title { font-size: 23px; }
-  .cs-crit { font-size: 10.5px; padding-left: 10px; }
-  .cs-col-crit { flex: 1.45; }
+  .cs-crit { font-size: 10.5px; padding-left: 10px; padding-right: 6px; }
+  .cs-col-crit { flex: 1.85; }
+  .cs-col-comp { flex: 0.85; }
 }
 
 /* ════════════════════════════════════════════════════════════════
