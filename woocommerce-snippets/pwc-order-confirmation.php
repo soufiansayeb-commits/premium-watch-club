@@ -30,6 +30,34 @@ function pwc_oc_is_received() {
 	return function_exists( 'is_order_received_page' ) && is_order_received_page();
 }
 
+/**
+ * Inline gold-outline SVG icons for the "What Happens Next" timeline.
+ * Decorative only (wrappers are aria-hidden). Static trusted markup.
+ */
+function pwc_oc_next_icon( $name ) {
+	$open = '<svg viewBox="0 0 24 24" fill="none" stroke="#B8893C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">';
+	switch ( $name ) {
+		case 'mail':
+			$body = '<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M4 7l8 5.5L20 7"/>';
+			break;
+		case 'shield':
+			$body = '<path d="M12 3l7 3v5c0 4.3-3 7.4-7 8.8C8 18.4 5 15.3 5 11V6l7-3z"/><path d="M9 11.5l2 2 4-4"/>';
+			break;
+		case 'ticket':
+			$body = '<path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h13A1.5 1.5 0 0 1 20 8.5v1a1.5 1.5 0 0 0 0 3v1a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 14.5v-1a1.5 1.5 0 0 0 0-3z"/><path d="M13 7.5v9" stroke-dasharray="1.6 2.2"/>';
+			break;
+		case 'calendar':
+			$body = '<rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3"/><path d="M7.5 13h1.5M11.25 13h1.5M15 13h1.5M7.5 16.5h1.5M11.25 16.5h1.5"/>';
+			break;
+		case 'watch':
+			$body = '<circle cx="12" cy="12" r="4.6"/><path d="M12 9.8V12l1.5 1"/><path d="M9.7 7.4 9.2 4h5.6l-.5 3.4M9.7 16.6l-.5 3.4h5.6l-.5-3.4"/>';
+			break;
+		default:
+			$body = '';
+	}
+	return $open . $body . '</svg>';
+}
+
 
 /* ───────────────────────────────────────────────────────────────────────────
  * 1. PRODUCT NAME = PLAIN TEXT (no link) — backup for any default output
@@ -72,15 +100,75 @@ function pwc_oc_render( $order_id ) {
 
 	$billing = $order->get_formatted_billing_address();
 	$phone   = $order->get_billing_phone();
+
+	// Gold wordmark, served from the branded frontend (Next.js /public/brand-assets).
+	// Override in wp-config.php with: define('PWC_OC_LOGO_URL', 'https://…/logo.png');
+	$logo_url = defined( 'PWC_OC_LOGO_URL' )
+		? PWC_OC_LOGO_URL
+		: pwc_oc_frontend() . '/brand-assets/pwc-logo-wordmark-gold.png';
+
+	$next_steps = array(
+		array( 'icon' => 'mail',     'title' => '1. Confirmation email sent', 'body' => 'Your order confirmation has been sent to your inbox.' ),
+		array( 'icon' => 'shield',   'title' => '2. Entry verified',          'body' => 'We check your entry to make sure everything is correct.' ),
+		array( 'icon' => 'ticket',   'title' => '3. Entry added to the draw',  'body' => 'Your verified entry is assigned an order number and added to the draw.' ),
+		array( 'icon' => 'calendar', 'title' => '4. Draw takes place',         'body' => 'The draw takes place live on the announced date, run independently via RandomDraws.' ),
+		array( 'icon' => 'watch',    'title' => '5. Winner notified',          'body' => 'We contact the winner directly and arrange secure, insured delivery soon after the draw.' ),
+	);
 	?>
 	<div class="pwc-confirmation">
 
 		<!-- Hero -->
 		<div class="pwc-confirmation-card pwc-confirmation-hero">
-			<span class="pwc-confirmation-eyebrow">Premium Watch Club</span>
+			<img class="pwc-confirmation-logo" src="<?php echo esc_url( $logo_url ); ?>"
+			     alt="Premium Watch Club" width="1447" height="341"
+			     onerror="this.style.display='none';">
 			<h1 class="pwc-confirmation-title">Entry Confirmed</h1>
 			<p class="pwc-confirmation-sub">Thank you. Your entry has been received.</p>
+
+			<!-- Confirmation note — inside the hero card, under the thank-you line -->
+			<div class="pwc-confirmation-note">
+				<span class="pwc-confirmation-note-icon" aria-hidden="true">
+					<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#B8893C" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+						<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M4 7l8 5.5L20 7"/>
+					</svg>
+				</span>
+				<p class="pwc-confirmation-note-text">
+					A confirmation email has been sent to you.<br>
+					Please keep your order number for your records.
+				</p>
+			</div>
 		</div>
+
+		<!-- What Happens Next -->
+		<section class="pwc-confirmation-card pwc-next" aria-label="What happens next">
+			<h2 class="pwc-next-title">What Happens Next</h2>
+			<div class="pwc-next-divider" aria-hidden="true">
+				<span class="pwc-next-divider-line"></span>
+				<svg class="pwc-next-star" width="18" height="18" viewBox="0 0 24 24" fill="#B8893C" aria-hidden="true"><path d="M12 2.5l1.7 6.8L20.5 11l-6.8 1.7L12 19.5l-1.7-6.8L3.5 11l6.8-1.7L12 2.5z"/></svg>
+				<span class="pwc-next-divider-line"></span>
+			</div>
+			<ol class="pwc-next-steps">
+				<?php foreach ( $next_steps as $st ) : ?>
+					<li class="pwc-next-step">
+						<span class="pwc-next-iconrow">
+							<span class="pwc-next-icon" aria-hidden="true"><?php echo pwc_oc_next_icon( $st['icon'] ); ?></span>
+						</span>
+						<h3 class="pwc-next-step-title"><?php echo esc_html( $st['title'] ); ?></h3>
+						<p class="pwc-next-step-body"><?php echo esc_html( $st['body'] ); ?></p>
+					</li>
+				<?php endforeach; ?>
+			</ol>
+
+			<!-- Carousel controls — visible on mobile only (CSS). Manual paging, no autoplay. -->
+			<div class="pwc-next-nav">
+				<button type="button" class="pwc-next-arrow" data-dir="prev" aria-label="Previous step" disabled>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+				</button>
+				<button type="button" class="pwc-next-arrow" data-dir="next" aria-label="Next step">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+				</button>
+			</div>
+		</section>
 
 		<!-- Order summary -->
 		<div class="pwc-confirmation-card pwc-confirmation-summary">
@@ -152,11 +240,6 @@ function pwc_oc_render( $order_id ) {
 		</div>
 		<?php endif; ?>
 
-		<p class="pwc-confirmation-note">
-			A confirmation email has been sent to you.<br>
-			Please keep your order number for your records.
-		</p>
-
 	</div>
 	<?php
 }
@@ -202,9 +285,9 @@ add_action( 'wp_head', function () {
 		padding:30px 32px; margin:0 0 18px; box-shadow:0 12px 34px rgba(10,31,68,.06);
 	}
 	.pwc-confirmation-hero { text-align:center; padding:42px 32px; }
-	.pwc-confirmation-eyebrow {
-		display:block; font-size:11px; font-weight:600; letter-spacing:.3em;
-		text-transform:uppercase; color:#B8893C; margin-bottom:14px;
+	.pwc-confirmation-logo {
+		display:block; width:196px; max-width:62%; height:auto;
+		margin:0 auto 22px;
 	}
 	.pwc-confirmation-title {
 		font-family:'Cormorant Garamond',Georgia,serif; font-weight:600;
@@ -247,17 +330,153 @@ add_action( 'wp_head', function () {
 	.pwc-confirmation-billing { background:#fbf9f3; }
 	.pwc-confirmation-billing address { font-style:normal; font-size:13px; line-height:1.75; color:#6f6d75; margin:0; }
 
-	.pwc-confirmation-note { text-align:center; margin:26px auto 0; max-width:460px; font-size:12px; line-height:1.9; color:#8a8893; }
-	.pwc-confirmation-note::before { content:''; display:block; width:44px; height:1px; background:#B8893C; opacity:.6; margin:0 auto 16px; }
+	/* Reassurance note — compact pill INSIDE the hero, under the thank-you line. */
+	.pwc-confirmation-note {
+		display:flex; align-items:center; gap:13px; width:fit-content; max-width:100%;
+		margin:24px auto 0; padding:13px 20px; text-align:left;
+		background:#fbf9f3; border:1px solid rgba(184,137,60,.3); border-radius:12px;
+	}
+	.pwc-confirmation-note-icon {
+		flex:none; display:inline-flex; align-items:center; justify-content:center;
+		width:34px; height:34px; border-radius:9px;
+		background:#fff; border:1px solid rgba(184,137,60,.42);
+		box-shadow:0 2px 8px rgba(184,137,60,.14);
+	}
+	.pwc-confirmation-note-text { margin:0; font-size:13.5px; line-height:1.6; color:#5b5a62; }
+
+	/* ── What Happens Next — luxury horizontal timeline ─────────────────────── */
+	.pwc-next { background:#fbf9f3; border:1px solid rgba(184,137,60,.32); border-radius:18px;
+		padding:46px 40px 40px; box-shadow:0 20px 50px -30px rgba(184,137,60,.45); }
+	.pwc-next-title {
+		font-family:'Cormorant Garamond',Georgia,serif; font-weight:600;
+		font-size:36px; line-height:1.05; text-align:center; margin:0; color:#B8893C;
+		background:linear-gradient(180deg,#d9b877 0%,#b8893c 48%,#95602a 100%);
+		-webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+	}
+	@supports not ((-webkit-background-clip:text) or (background-clip:text)) {
+		.pwc-next-title { -webkit-text-fill-color:#B8893C; color:#B8893C; }
+	}
+	.pwc-next-divider { display:flex; align-items:center; justify-content:center; gap:14px; margin:14px 0 42px; }
+	.pwc-next-divider-line { width:72px; height:1px; background:linear-gradient(90deg,rgba(184,137,60,0),#c9a24a); }
+	.pwc-next-divider-line:last-child { background:linear-gradient(90deg,#c9a24a,rgba(184,137,60,0)); }
+	.pwc-next-star { display:block; }
+
+	.pwc-next-steps { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(5,1fr); }
+	.pwc-next-step { position:relative; text-align:center; padding:0 10px; }
+	.pwc-next-iconrow { display:flex; align-items:center; justify-content:center; height:78px; margin:0 auto 18px; }
+	.pwc-next-icon {
+		display:flex; align-items:center; justify-content:center;
+		width:78px; height:78px; border-radius:50%;
+		background:#fff; border:1px solid rgba(184,137,60,.35);
+		box-shadow:0 10px 22px -12px rgba(184,137,60,.55);
+	}
+	.pwc-next-icon svg { width:34px; height:34px; }
+	/* Gold connector between adjacent icons, with a midpoint dot (desktop). */
+	.pwc-next-step:not(:last-child)::after {
+		content:''; position:absolute; top:39px; left:calc(50% + 46px);
+		width:calc(100% - 92px); height:1px;
+		background:linear-gradient(90deg,#e3d1a3,#c9a24a,#e3d1a3);
+	}
+	.pwc-next-step:not(:last-child)::before {
+		content:''; position:absolute; top:39px; left:100%;
+		width:5px; height:5px; margin:-2.5px 0 0 -2.5px;
+		background:#c9a24a; border-radius:50%; z-index:1;
+	}
+	.pwc-next-step-title { font-family:'Cormorant Garamond',Georgia,serif; font-weight:600;
+		font-size:18px; line-height:1.25; color:#0A1F44; margin:0 0 9px; }
+	.pwc-next-step-body { font-family:'Jost',sans-serif; font-size:13px; line-height:1.7; color:#6a6973; margin:0; }
+
+	/* Carousel arrows — hidden on desktop (grid layout needs no paging). */
+	.pwc-next-nav { display:none; justify-content:center; gap:18px; margin-top:24px; }
+	.pwc-next-arrow {
+		width:46px; height:46px; border-radius:50%;
+		display:inline-flex; align-items:center; justify-content:center;
+		background:#fff; border:1px solid rgba(184,137,60,.4); color:#B8893C; cursor:pointer;
+		box-shadow:0 8px 20px -12px rgba(184,137,60,.6);
+		transition:border-color .2s ease, transform .15s ease, opacity .2s ease;
+		-webkit-tap-highlight-color:transparent;
+	}
+	.pwc-next-arrow:hover:not(:disabled) { border-color:#B8893C; transform:translateY(-1px); }
+	.pwc-next-arrow:focus-visible { outline:2px solid #B8893C; outline-offset:3px; }
+	.pwc-next-arrow:disabled { opacity:.35; cursor:default; box-shadow:none; }
+	.pwc-next-arrow svg { width:20px; height:20px; }
+
+	/* ── Tablet / mobile: horizontal scroll-snap carousel (one step at a time) ─── */
+	@media (max-width:760px){
+		.pwc-next { padding:34px 18px 30px; }
+		.pwc-next-title { font-size:29px; }
+		.pwc-next-divider { margin:12px 0 26px; }
+		.pwc-next-divider-line { width:50px; }
+
+		.pwc-next-steps {
+			display:flex; gap:14px; overflow-x:auto;
+			scroll-snap-type:x mandatory; scroll-padding:0 2px;
+			-webkit-overflow-scrolling:touch; scrollbar-width:none;
+			margin:0; padding:4px 2px 2px;
+		}
+		.pwc-next-steps::-webkit-scrollbar { display:none; }
+
+		.pwc-next-step { flex:0 0 80%; max-width:80%; scroll-snap-align:start; padding:6px 6px 2px; }
+		.pwc-next-step:not(:last-child)::after,
+		.pwc-next-step:not(:last-child)::before { display:none; }  /* no connectors in carousel */
+
+		.pwc-next-iconrow { height:auto; margin:0 auto 16px; }
+		.pwc-next-icon { width:66px; height:66px; }
+		.pwc-next-icon svg { width:30px; height:30px; }
+		.pwc-next-step-title { font-size:18px; margin:0 0 8px; }
+		.pwc-next-step-body { font-size:13.5px; line-height:1.72; }
+
+		.pwc-next-nav { display:flex; }
+	}
 
 	@media (max-width:600px){
 		.pwc-confirmation-card { padding:24px 20px; }
+		.pwc-confirmation-logo { width:158px; margin-bottom:18px; }
 		.pwc-confirmation-title { font-size:36px; }
+		.pwc-confirmation-note { margin:20px auto 0; padding:12px 16px; gap:11px; }
+		.pwc-confirmation-note-text { font-size:13px; }
+		.pwc-next { padding:30px 16px 26px; }
+		.pwc-next-step { flex-basis:84%; max-width:84%; }
 		.pwc-confirmation-k2 { min-width:0; display:block; margin-bottom:2px; }
 	}
 	</style>
 	<?php
 }, 99 );
+
+/* 4a. JS — "What Happens Next" mobile carousel paging.
+ *     Manual only: arrows scroll the snap track by one step. No autoplay, no loop.
+ *     Inert on desktop (arrows hidden; track is a grid with nothing to scroll). */
+add_action( 'wp_footer', function () {
+	if ( ! pwc_oc_is_received() ) return;
+	?>
+	<script>
+	document.addEventListener('DOMContentLoaded', function () {
+		var track = document.querySelector('.pwc-next-steps');
+		var prev  = document.querySelector('.pwc-next-arrow[data-dir="prev"]');
+		var next  = document.querySelector('.pwc-next-arrow[data-dir="next"]');
+		if ( ! track || ! prev || ! next ) return;
+
+		function stepSize() {
+			var step = track.querySelector('.pwc-next-step');
+			if ( ! step ) return track.clientWidth;
+			var cs  = getComputedStyle(track);
+			var gap = parseFloat(cs.columnGap || cs.gap || '0') || 0;
+			return step.getBoundingClientRect().width + gap;
+		}
+		function update() {
+			var max = track.scrollWidth - track.clientWidth - 1;
+			prev.disabled = track.scrollLeft <= 1;
+			next.disabled = track.scrollLeft >= max;   // never loops back to start
+		}
+		prev.addEventListener('click', function () { track.scrollBy({ left: -stepSize(), behavior: 'smooth' }); });
+		next.addEventListener('click', function () { track.scrollBy({ left:  stepSize(), behavior: 'smooth' }); });
+		track.addEventListener('scroll', function () { window.requestAnimationFrame(update); }, { passive: true });
+		window.addEventListener('resize', update);
+		update();
+	});
+	</script>
+	<?php
+}, 100 );
 
 /* 4b. JS catch-all — move the custom layout to safety, then hide the default
  *     WooCommerce confirmation output. Works for ANY markup (classic or Blocks)

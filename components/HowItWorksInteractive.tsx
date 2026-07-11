@@ -22,6 +22,10 @@ interface Step {
    *  animation is always visible (never cropped). The frame adapts to the media's
    *  own ratio, so there is no letterboxing. */
   mediaFit?: 'cover' | 'contain'
+  /** Force the media frame to a fixed aspect ratio ("W / H") instead of adapting
+   *  to the media's own ratio. Used to keep a step's frame the same rendered size
+   *  as another step; 'contain' still keeps the full image visible. */
+  frameRatio?: string
 }
 
 // ── Fallback visuals — premium PWC UI mockups, shown until real media lands in /public/howitworks ──
@@ -119,8 +123,11 @@ const steps: Step[] = [
   {
     id: 'step-5',
     short: 'Wrist',
-    title: 'From Winner to Wrist',
-    copy: 'The winning entry is selected through RandomDraws. We contact the winner, arrange the prize and document the watch reaching its new wrist.',
+    title: 'Meet the Winner',
+    copy: 'After the live draw, we contact the winner, verify their details and arrange secure delivery of the prize. Every winner becomes part of the Premium Watch Club story.',
+    // Match Step 4's frame exactly (both are 1672×941, 16:9) so Step 5 renders
+    // at the same size; 'contain' keeps the full image visible with no crop.
+    frameRatio: '1672 / 941',
   },
 ]
 
@@ -202,7 +209,8 @@ function StepMedia({
           preload="metadata"
           onLoadedMetadata={e => {
             const v = e.currentTarget
-            if (v.videoWidth && v.videoHeight) onRatioChange(`${v.videoWidth} / ${v.videoHeight}`)
+            if (step.frameRatio) onRatioChange(step.frameRatio)
+            else if (v.videoWidth && v.videoHeight) onRatioChange(`${v.videoWidth} / ${v.videoHeight}`)
           }}
           onError={() => setStage('fallback')}
         >
@@ -222,7 +230,8 @@ function StepMedia({
           // identically for animated GIFs and static PNGs.
           onLoad={e => {
             const im = e.currentTarget
-            if (im.naturalWidth && im.naturalHeight) onRatioChange(`${im.naturalWidth} / ${im.naturalHeight}`)
+            if (step.frameRatio) onRatioChange(step.frameRatio)
+            else if (im.naturalWidth && im.naturalHeight) onRatioChange(`${im.naturalWidth} / ${im.naturalHeight}`)
           }}
           onError={() => setStage('fallback')}
         />

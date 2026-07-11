@@ -4704,17 +4704,21 @@ img { max-width: 100%; display: block; }
 .sch-sub { font-size: 13px; color: var(--text-muted); line-height: 1.55; }
 .skill-card-body { padding: 28px 32px; }
 
-/* ACF-driven challenge: compact square image block */
+/* ACF-driven challenge: image sits flush in the card at its own aspect ratio.
+   No forced square + no contain background, so there are no letterbox bands —
+   the container hugs the image (no crop, no stretch). */
 .sch-challenge-image {
   display: block;
   width: 100%;
-  max-width: 320px;
-  aspect-ratio: 1 / 1;
-  object-fit: contain;
-  background: #05101f;
   border-radius: 6px;
   border: 1px solid var(--border-light);
+  overflow: hidden;
   margin: 0 auto 24px;
+}
+.sch-challenge-image img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* Visual watch identification — challenge image + magnifier (hardcoded mode) */

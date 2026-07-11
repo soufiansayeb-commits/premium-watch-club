@@ -4,10 +4,6 @@ import Image from 'next/image'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import type { Competition } from '@/lib/competition-data'
 import { parseEditorialDescription } from '@/lib/parse-editorial'
-import { useMoney } from '@/context/StoreSettingsContext'
-
-/** Format a whole-currency value with the live Woo currency (no decimals). */
-type MoneyFmt = (n: number, opts?: { decimals?: number }) => string
 
 interface Props {
   competition: Competition
@@ -26,7 +22,6 @@ interface ImageSlot {
 function buildImageSlots(
   competition: Competition,
   featureLabels: string[],
-  money: MoneyFmt,
 ): ImageSlot[] {
   const allImages = competition.galleryImages ?? (
     competition.image ? [{ src: competition.image, alt: competition.title }] : []
@@ -35,7 +30,6 @@ function buildImageSlots(
 
   const getLabel    = (i: number) => featureLabels[i] ?? (i === 0 ? competition.shortName : `Detail ${i + 1}`)
   const getSublabel = (i: number) => {
-    if (i === 0 && competition.retailValue)     return `Est. ${money(competition.retailValue, { decimals: 0 })}`
     if (i === 1 && competition.reference)       return competition.reference
     if (i === 2 && competition.drawDateDisplay) return competition.drawDateDisplay.split(',')[0] ?? ''
     return ''
@@ -105,7 +99,6 @@ function FallbackImg({
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ProductEditorial({ competition }: Props) {
-  const money = useMoney()
   const [activeIdx, setActiveIdx] = useState(0)
   const [visible,   setVisible]   = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
@@ -143,7 +136,7 @@ export default function ProductEditorial({ competition }: Props) {
 
   // ── Build image slots (gallery is independent of the removed accordion) ────
   const slots = useMemo(
-    () => buildImageSlots(competition, [], money),
+    () => buildImageSlots(competition, []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [competition.id, competition.galleryImages]
   )

@@ -126,14 +126,17 @@ export default function SkillChallenge({
 
           <div className="skill-card-body">
 
-            {/* Challenge image: display uploaded Canva image as-is, no zoom/magnifier */}
-            <div className="sch-challenge-image" style={{ position: 'relative' }}>
+            {/* Challenge image: display uploaded Canva image as-is, no zoom/magnifier.
+                The container follows the image's natural aspect ratio so it sits
+                flush in the card — no letterbox bands, no crop, no distortion. */}
+            <div className="sch-challenge-image">
               <Image
                 src={c.challengeImage!}
                 alt="Skill challenge"
-                fill
-                style={{ objectFit: 'contain' }}
-                sizes="320px"
+                width={960}
+                height={540}
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+                sizes="(max-width: 640px) 100vw, 480px"
               />
             </div>
 
