@@ -20,7 +20,7 @@ import ScrollReveal from '@/components/ScrollReveal'
 
 export const metadata: Metadata = {
   title: 'Premium Watch Club — Win Luxury Watches in Skill-Based Competitions',
-  description: 'Enter skill-based competitions to win luxury watches from Rolex, Omega and more. One competition at a time, with a free postal entry route available.',
+  description: 'Enter skill-based competitions to win luxury watches from Rolex, Omega and more. One competition at a time — answer a skill question to enter.',
 }
 
 export default async function HomePage() {

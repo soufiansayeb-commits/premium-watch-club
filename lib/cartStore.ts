@@ -104,7 +104,7 @@ export function buildWooCheckoutUrl(productId: number, quantity: number): string
     quantity,
     price: 0,
     total: 0,
-    currency: '£',
+    currency: '$',
     selectedSkillAnswer: '',
     skillQuestion: '',
     timestampAdded: 0,

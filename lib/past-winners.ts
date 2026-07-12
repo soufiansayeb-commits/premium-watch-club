@@ -93,7 +93,7 @@ async function mapPastWinner(p: WooProduct): Promise<PastWinner> {
   const prizeValue = p.prize_value
   const prizeValueDisplay =
     typeof prizeValue === 'number' && prizeValue > 0
-      ? `£${prizeValue.toLocaleString('en-GB')}`
+      ? `$${prizeValue.toLocaleString('en-US')}`
       : undefined
 
   // A filled proof URL always shows its button — an explicit admin action wins.

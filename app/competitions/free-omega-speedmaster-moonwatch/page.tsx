@@ -1,70 +1,15 @@
-import { getCompetitionBySlug } from '@/lib/competition-data'
-import { fetchWooProductById, mergeWooData } from '@/lib/woocommerce'
-import { notFound } from 'next/navigation'
-import Header from '@/components/Header'
-import CompetitionEntryFlow from '@/components/competition/CompetitionEntryFlow'
-import HomepageWinners from '@/components/HomepageWinners'
-import ProductEditorial from '@/components/competition/ProductEditorial'
-import HomeFaqSection from '@/components/HomeFaqSection'
-import ScrollReveal from '@/components/ScrollReveal'
-import Footer from '@/components/Footer'
-import { JsonLd } from '@/components/JsonLd'
-import { fetchStoreSettings, formatMoney } from '@/lib/store-settings'
+import { permanentRedirect } from 'next/navigation'
 
-export const metadata = {
-  title: 'Free Omega Speedmaster Moonwatch Competition — Premium Watch Club',
-  description: 'Enter for free to win an Omega Speedmaster Moonwatch worth £6,100. One watch, limited entries — no purchase required.',
-  openGraph: {
-    images: [{ url: '/assets/images/omega-speedmaster-correct.avif' }],
-  },
-}
-
-export default async function FreeCompetitionPage() {
-  const competition = getCompetitionBySlug('free-omega-speedmaster-moonwatch')
-  if (!competition) notFound()
-
-  const { product: wooProduct } = await fetchWooProductById(competition.wooProductId)
-  const mergedCompetition = wooProduct ? mergeWooData(competition, wooProduct) : competition
-  const settings = await fetchStoreSettings()
-
-  const image = mergedCompetition.galleryImages?.[0]?.src ?? mergedCompetition.heroImage
-
-  const productSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: mergedCompetition.title,
-    image,
-    description: mergedCompetition.description ?? `Enter to win a ${mergedCompetition.title} worth ${formatMoney(mergedCompetition.retailValue, settings, { decimals: 0 })}.`,
-    offers: {
-      '@type': 'Offer',
-      price: String(mergedCompetition.entryPrice),
-      priceCurrency: settings.currency,
-      availability: mergedCompetition.ticketsLeft > 0
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/SoldOut',
-    },
-  }
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://premiumwatchclub.com' },
-      { '@type': 'ListItem', position: 2, name: mergedCompetition.title, item: 'https://premiumwatchclub.com/competitions/free-omega-speedmaster-moonwatch' },
-    ],
-  }
-
-  return (
-    <>
-      <JsonLd data={productSchema} />
-      <JsonLd data={breadcrumbSchema} />
-      <Header />
-      <CompetitionEntryFlow competition={mergedCompetition} />
-      <HomepageWinners />
-      <ProductEditorial competition={mergedCompetition} />
-      <HomeFaqSection />
-      <ScrollReveal />
-      <Footer />
-    </>
-  )
+// Legacy competition URL. The slug names an old "free Omega Speedmaster" competition
+// that no longer exists; the underlying WooCommerce product (#13) has since been
+// repurposed, so this route must NOT render the current product under a stale,
+// misleading Omega/free URL (see Phase 2E). No internal links point here and it is
+// absent from the sitemap. Forward permanently to the branded winners archive —
+// the same pattern used by /competitions/closed → /past-winners.
+//
+// Owner decision (see PWC_OWNER_DECISIONS_REQUIRED.md): if a genuine historical
+// Omega competition page is wanted, replace this redirect with a real ended-state
+// page; if the URL should be retired entirely, return 410 instead.
+export default function LegacyFreeOmegaCompetitionPage() {
+  permanentRedirect('/past-winners')
 }

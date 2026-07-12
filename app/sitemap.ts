@@ -23,7 +23,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const { products } = await fetchWooProducts()
     competitionRoutes = products
-      .filter(p => p.slug)
+      // Exclude admin/archive-only products (e.g. "PAST WINNER 001") that exist for
+      // organisation on the Past Winners page but are not competition-entry pages.
+      // Their /competitions/{slug} URLs render no live competition and must not be
+      // advertised to crawlers as current competition pages.
+      .filter(p => {
+        if (!p.slug) return false
+        const isArchiveAdmin =
+          p.name.toUpperCase().includes('PAST WINNER') ||
+          (p.show_on_past_winners === true && !p.competition_type)
+        return !isArchiveAdmin
+      })
       .map(p => ({
         url: `${BASE_URL}/competitions/${p.slug}`,
         changeFrequency: 'daily' as const,

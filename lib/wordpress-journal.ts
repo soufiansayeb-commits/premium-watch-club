@@ -54,7 +54,7 @@ export interface RelatedProduct {
   slug:             string
   price:            string      // raw string e.g. "95.00"
   entryPrice:       number      // numeric
-  currency:         string      // "£"
+  currency:         string      // "$"
   images:           string[]    // up to 4 image URLs, ordered
   competitionType:  string
   competitionLabel: string      // "Weekly Drop" etc.
@@ -135,7 +135,7 @@ function buildRelatedProduct(product: WooProduct): RelatedProduct {
     slug:              product.slug,
     price,
     entryPrice:        priceNum,
-    currency:          '£',
+    currency:          '$',
     images:            allImages,       // all images: [main, ...gallery]
     competitionType:   type,
     competitionLabel:  label,

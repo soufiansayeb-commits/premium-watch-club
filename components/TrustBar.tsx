@@ -42,7 +42,7 @@ export default function TrustBar() {
           <p className="tp-count">Based on 1,247 reviews</p>
           <Image
             src="/brand-assets/trustpilot-stars.png"
-            alt="Rated 5 out of 5"
+            alt="Trustpilot rating"
             width={935}
             height={180}
             className="tp-stars-img"

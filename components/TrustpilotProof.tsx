@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { COMPANY_STATS } from '@/lib/company-stats'
 
 interface Props {
   /** Extra class for context-specific spacing (e.g. 'tp-proof--mobile'). */
@@ -31,7 +32,7 @@ export default function TrustpilotProof({ className = '', variant = 'stacked' }:
           />
           <Image
             src="/brand-assets/trustpilot-stars.png"
-            alt="Rated 5 out of 5"
+            alt="Trustpilot rating"
             width={935}
             height={180}
             className="tp-proof-stars"
@@ -41,14 +42,14 @@ export default function TrustpilotProof({ className = '', variant = 'stacked' }:
       ) : (
         <Image
           src="/brand-assets/trustpilot-logo.png"
-          alt="Trustpilot — rated 5 out of 5"
+          alt="Trustpilot"
           width={1048}
           height={453}
           className="tp-proof-logo"
           priority={false}
         />
       )}
-      <span className="tp-proof-count">Based on 1,247 reviews</span>
+      <span className="tp-proof-count">Based on {COMPANY_STATS.trustpilotReviews} reviews</span>
     </div>
   )
 }

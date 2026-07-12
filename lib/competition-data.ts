@@ -114,12 +114,13 @@ export const competitions: Competition[] = [
     shortName: 'Rolex Cosmograph Daytona',
     reference: '116500LN',
     detail: 'Oystersteel · Calibre 4130',
-    // Images below are static fallbacks — WooCommerce gallery images take precedence at render time
-    image: '/assets/images/omega-speedmaster-correct.avif',
-    heroImage: '/assets/images/omega-speedmaster-correct.avif',
+    // Images below are static fallbacks — WooCommerce gallery images take precedence at render time.
+    // Correct Rolex Cosmograph Daytona asset (owner-supplied). Must never fall back to another watch.
+    image: '/assets/rolex-platinum-daytona-fallback.webp',
+    heroImage: '/assets/rolex-platinum-daytona-fallback.webp',
     retailValue: 14000,
     entryPrice: 5.95,
-    currency: '£',
+    currency: '$',
     totalTickets: 500,
     ticketsSold: 101,
     ticketsLeft: 399,
@@ -165,7 +166,7 @@ export const competitions: Competition[] = [
     retailValue: 6100,
     entryPrice: 0,
     isFree: true,
-    currency: '£',
+    currency: '$',
     totalTickets: 500,
     ticketsSold: 101,
     ticketsLeft: 399,

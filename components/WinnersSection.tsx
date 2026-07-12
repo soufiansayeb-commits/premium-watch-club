@@ -113,11 +113,17 @@ export default function WinnersSection({ winners }: { winners: CarouselWinner[] 
           >
             {TRACK.map((winner, i) => {
               const isCenter = i === pos
+              // Only the middle copy [N, 2N) is the authoritative record set; the two
+              // surrounding copies exist purely for the infinite-scroll animation.
+              // Hide the clones from assistive tech and crawlers so winners are not
+              // counted three times. Visual appearance is unchanged.
+              const isClone = i < N || i >= 2 * N
               return (
                 <div
                   key={i}
                   className={`wsc${isCenter ? " wsc-center" : ""}`}
                   style={{ width: cardW > 0 ? cardW : undefined, flexShrink: 0 }}
+                  aria-hidden={isClone || undefined}
                 >
                   <div className="wsc-photo-wrap">
                     <Image

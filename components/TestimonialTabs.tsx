@@ -143,7 +143,7 @@ function Stars({ className }: { className?: string }) {
   return (
     <Image
       src="/brand-assets/trustpilot-stars.png"
-      alt="Rated 5 out of 5"
+      alt="Trustpilot rating"
       width={935}
       height={180}
       className={`tt-stars-img ${className ?? ''}`}

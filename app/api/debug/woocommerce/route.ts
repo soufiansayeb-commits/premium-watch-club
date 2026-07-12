@@ -11,9 +11,11 @@ import { NextResponse } from 'next/server'
 import { fetchWooProducts } from '@/lib/woocommerce'
 
 export async function GET() {
-  // Hard-block in production — never expose this in deployed builds
+  // Hard-block outside local development — never expose this in deployed builds.
+  // Returns a genuine, bodyless 404 so the route is indistinguishable from a
+  // non-existent path in production/preview (no "disabled" hint leaked).
   if (process.env.NODE_ENV !== 'development') {
-    return NextResponse.json({ disabled: true }, { status: 404 })
+    return new Response('Not Found', { status: 404 })
   }
 
   const { products, error } = await fetchWooProducts()

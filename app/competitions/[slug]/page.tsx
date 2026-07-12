@@ -74,8 +74,12 @@ export async function generateMetadata({ params }: Props) {
     const staticComp = getCompetitionBySlug(slug)
     if (staticComp) {
       const { product: wooProduct } = await fetchWooProductById(staticComp.wooProductId)
-      const merged = wooProduct ? mergeWooData(staticComp, wooProduct) : staticComp
-      competition = wooProduct ? await resolveCompetitionMedia(merged, wooProduct) : merged
+      // Never build metadata from stale static-template facts (old title/price/draw
+      // date) when live WooCommerce data is unavailable — fall through to a
+      // canonical-only response below instead of advertising an obsolete competition.
+      if (wooProduct) {
+        competition = await resolveCompetitionMedia(mergeWooData(staticComp, wooProduct), wooProduct)
+      }
     } else {
       const { product: wooProduct } = await fetchWooProductBySlug(slug)
       if (wooProduct) {
@@ -84,7 +88,10 @@ export async function generateMetadata({ params }: Props) {
     }
   }
 
-  if (!competition) return {}
+  // Self-canonical only — no stale title/description/image when live data is missing.
+  if (!competition) {
+    return { alternates: { canonical: `https://premiumwatchclub.com/competitions/${slug}` } }
+  }
 
   const settings = await fetchStoreSettings()
   const ogImage = competition.galleryImages?.[0]?.src ?? competition.heroImage
@@ -138,9 +145,16 @@ export default async function CompetitionPage({ params }: Props) {
   const staticComp = getCompetitionBySlug(slug)
 
   if (staticComp) {
-    const { product: wooProduct } = await fetchWooProductById(staticComp.wooProductId)
-    const merged = wooProduct ? mergeWooData(staticComp, wooProduct) : staticComp
-    const mergedCompetition = wooProduct ? await resolveCompetitionMedia(merged, wooProduct) : merged
+    const { product: wooProduct, error } = await fetchWooProductById(staticComp.wooProductId)
+    // Do not render stale static-template facts (old price, draw date, image) as the
+    // current competition when live WooCommerce data is missing. On a fetch error,
+    // throw so Next.js ISR keeps serving the last good page (same resilience strategy
+    // as the homepage); on a genuine not-found, return a 404.
+    if (!wooProduct) {
+      if (error) throw new Error(`[PWC] WooCommerce product #${staticComp.wooProductId} unavailable: ${error}`)
+      notFound()
+    }
+    const mergedCompetition = await resolveCompetitionMedia(mergeWooData(staticComp, wooProduct), wooProduct)
     const { productSchema, breadcrumbSchema } = buildCompetitionSchemas(mergedCompetition, slug, storeSettings)
 
     return (
@@ -193,10 +207,11 @@ export async function generateStaticParams() {
   // Type slugs are always pre-built
   const typeSlugs = ['weekly', 'monthly', 'special']
 
-  // Static template slugs
+  // Static template slugs. NOTE: 'free-omega-speedmaster-moonwatch' is intentionally
+  // omitted — that route is a permanent redirect to /past-winners (legacy URL) and
+  // must not be pre-built as a competition page here.
   const staticSlugs = [
     'rolex-cosmograph-daytona',
-    'free-omega-speedmaster-moonwatch',
   ]
 
   try {

@@ -18,7 +18,7 @@ import { routes } from '@/lib/routes'
 
 export const metadata: Metadata = {
   title: 'Weekly Luxury Watch Competitions | Premium Watch Club',
-  description: 'Fast-turnaround weekly competitions to win luxury watches from Rolex, Omega and more. Enter now for a quick chance to win, with a free postal entry route available.',
+  description: 'Fast-turnaround weekly competitions to win luxury watches from Rolex, Omega and more. Answer a skill-based question and enter now for a quick chance to win.',
 }
 
 export default async function WeeklyLandingPage() {
