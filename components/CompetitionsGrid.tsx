@@ -25,7 +25,11 @@ function useCountdown(targetDate: string) {
       closed: false,
     }
   }
-  const [time, setTime] = useState({ d: 0, h: 0, m: 0, s: 0, closed: false })
+  // Seed from the real draw date so the server renders the actual remaining time
+  // instead of a false 00:00:00 card. `calc()` guards a null/invalid date. Digits
+  // are suppressHydrationWarning'd (see CountdownBlock) so the sub-second
+  // server/client delta never causes a hydration mismatch.
+  const [time, setTime] = useState(calc)
   useEffect(() => {
     if (validTs === null) return
     setTime(calc())
@@ -59,7 +63,7 @@ function getBadgeClass(comp: Competition, soldOut: boolean): string {
 function CountdownBlock({ value, label }: { value: number; label: string }) {
   return (
     <div className="cgc-cd-block">
-      <span className="cgc-cd-num">{String(value).padStart(2, '0')}</span>
+      <span className="cgc-cd-num" suppressHydrationWarning>{String(value).padStart(2, '0')}</span>
       <span className="cgc-cd-lbl">{label}</span>
     </div>
   )

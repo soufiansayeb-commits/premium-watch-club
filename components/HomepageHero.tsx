@@ -18,6 +18,25 @@ function pad(n: number) {
   return String(n).padStart(2, '0')
 }
 
+/**
+ * Compute the countdown parts from an authoritative draw timestamp.
+ * Used both to seed initial state (so the server renders a meaningful, real
+ * countdown instead of a false 00:00:00:00) and could be reused by the ticker.
+ * Returns padded strings + a `closed` flag. Null/invalid date → neutral zeros.
+ */
+function remainingFrom(ts: number | null) {
+  if (ts === null) return { closed: false, d: '00', h: '00', m: '00', s: '00' }
+  const diff = ts - Date.now()
+  if (diff <= 0) return { closed: true, d: '00', h: '00', m: '00', s: '00' }
+  return {
+    closed: false,
+    d: pad(Math.floor(diff / 86400000)),
+    h: pad(Math.floor((diff % 86400000) / 3600000)),
+    m: pad(Math.floor((diff % 3600000) / 60000)),
+    s: pad(Math.floor((diff % 60000) / 1000)),
+  }
+}
+
 export default function HomepageHero({ competition, switcherSlot }: Props) {
   const c = competition
   const fmt = useMoney()
@@ -31,8 +50,15 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
 
   const maxOdds = `1:${c.totalTickets}`
 
-  const [time, setTime]           = useState({ d: '00', h: '00', m: '00', s: '00' })
-  const [closed, setClosed]       = useState(false)
+  // Seed from the authoritative draw date so the server-rendered HTML shows the
+  // real remaining time (not a false zero countdown). The client re-computes on
+  // mount via the ticker below; the digits are suppressHydrationWarning'd so the
+  // sub-second server/client difference never triggers a hydration mismatch.
+  const [time, setTime]           = useState(() => {
+    const r = remainingFrom(drawTimestamp)
+    return { d: r.d, h: r.h, m: r.m, s: r.s }
+  })
+  const [closed, setClosed]       = useState(() => remainingFrom(drawTimestamp).closed)
   const [progVisible, setProgVisible] = useState(false)
 
   useEffect(() => {
@@ -96,22 +122,22 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
           ) : (
             <div className="h2-countdown">
               <div className="h2-cd-block">
-                <span className="h2-cd-num">{time.d}</span>
+                <span className="h2-cd-num" suppressHydrationWarning>{time.d}</span>
                 <span className="h2-cd-lbl">DAYS</span>
               </div>
               <span className="h2-cd-sep" aria-hidden="true">:</span>
               <div className="h2-cd-block">
-                <span className="h2-cd-num">{time.h}</span>
+                <span className="h2-cd-num" suppressHydrationWarning>{time.h}</span>
                 <span className="h2-cd-lbl">HRS</span>
               </div>
               <span className="h2-cd-sep" aria-hidden="true">:</span>
               <div className="h2-cd-block">
-                <span className="h2-cd-num">{time.m}</span>
+                <span className="h2-cd-num" suppressHydrationWarning>{time.m}</span>
                 <span className="h2-cd-lbl">MIN</span>
               </div>
               <span className="h2-cd-sep" aria-hidden="true">:</span>
               <div className="h2-cd-block">
-                <span className="h2-cd-num">{time.s}</span>
+                <span className="h2-cd-num" suppressHydrationWarning>{time.s}</span>
                 <span className="h2-cd-lbl">SEC</span>
               </div>
             </div>
@@ -391,10 +417,10 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
             <div className="h2m-countdown h2m-countdown--closed">Competition Closed</div>
           ) : (
             <div className="h2m-countdown" aria-label="Time remaining">
-              <div className="h2m-cd-block"><span className="h2m-cd-num">{time.d}</span><span className="h2m-cd-lbl">Days</span></div>
-              <div className="h2m-cd-block"><span className="h2m-cd-num">{time.h}</span><span className="h2m-cd-lbl">Hrs</span></div>
-              <div className="h2m-cd-block"><span className="h2m-cd-num">{time.m}</span><span className="h2m-cd-lbl">Min</span></div>
-              <div className="h2m-cd-block"><span className="h2m-cd-num">{time.s}</span><span className="h2m-cd-lbl">Sec</span></div>
+              <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{time.d}</span><span className="h2m-cd-lbl">Days</span></div>
+              <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{time.h}</span><span className="h2m-cd-lbl">Hrs</span></div>
+              <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{time.m}</span><span className="h2m-cd-lbl">Min</span></div>
+              <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{time.s}</span><span className="h2m-cd-lbl">Sec</span></div>
             </div>
           )
         )}
