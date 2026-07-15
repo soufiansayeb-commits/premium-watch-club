@@ -4942,6 +4942,70 @@ img { max-width: 100%; display: block; }
   .sticky-cta.is-active .sticky-cta-info { animation: none; }
 }
 
+/* ── Mobile PDP live-activity toast ────────────────────────────────────────────
+   Floating social-proof popup on the competition PDP, mobile only. Sits ABOVE the
+   sticky Continue bar (which reserves ~104px at the bottom) and is purely
+   informational — pointer-events:none means it can never intercept a tap or block
+   the CTA. z-index sits below the sticky CTA, nav and cart drawer so it can never
+   cover a modal. Real WooCommerce order data only (see LiveActivityToast); the
+   component renders nothing when there is no real activity. Desktop: not shown. */
+.la-toast { display: none; }
+@media (max-width: 768px) {
+  .la-toast {
+    display: block;
+    position: fixed;
+    left: 14px; right: 14px;
+    margin-inline: auto;
+    max-width: 390px;                                       /* ≈ calc(100vw - 28px), capped */
+    bottom: calc(116px + env(safe-area-inset-bottom, 0px)); /* just above the sticky Continue bar */
+    z-index: 890;                     /* below sticky CTA (900), nav (1001), cart drawer (1100) */
+    padding: 12px 14px;
+    background: rgba(8, 18, 38, 0.92);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(197, 160, 101, 0.25);
+    border-radius: 16px;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
+    pointer-events: none;             /* never blocks the CTA or anything beneath it */
+    opacity: 0;
+    transform: translateY(10px);      /* hidden: slightly lower → slides up on show */
+    transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .la-toast.is-shown {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.la-toast-head {
+  display: flex; align-items: center; gap: 7px; margin-bottom: 4px;
+}
+.la-toast-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(39, 174, 96, 0.75);
+  animation: la-toast-dot 2s ease-in-out infinite;
+}
+.la-toast-label {
+  font-family: var(--font-sans);
+  font-size: 9px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
+  color: rgba(197, 160, 101, 0.85);
+}
+.la-toast-text {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 13.5px; font-weight: 500; line-height: 1.35;
+  color: rgba(245, 244, 240, 0.92);
+}
+@keyframes la-toast-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .la-toast { transition: opacity 0.16s linear; transform: none; }
+  .la-toast.is-shown { transform: none; }
+  .la-toast-dot { animation: none; }
+}
+
 /* ── STEP 3: Checkout ── */
 .checkout-card {
   background: var(--bg-white);

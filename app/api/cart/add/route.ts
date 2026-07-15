@@ -10,7 +10,7 @@ interface AddToCartBody {
 function buildCheckoutUrl(productId: number, quantity: number): string {
   const base =
     process.env.NEXT_PUBLIC_WOOCOMMERCE_CHECKOUT_URL ||
-    'https://premiumwatchclub3471.live-website.com/checkout/'
+    'https://checkout.premiumwatchclub.com/checkout/'
   try {
     const url = new URL(base)
     url.searchParams.set('add-to-cart', String(productId))

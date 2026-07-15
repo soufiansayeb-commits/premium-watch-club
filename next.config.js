@@ -2,6 +2,11 @@
 const nextConfig = {
   images: {
     remotePatterns: [
+      // Current WooCommerce/WordPress backend — product, gallery, ACF and hero images
+      // are served from here (WordPress site URL after the checkout.* migration).
+      { protocol: 'https', hostname: 'checkout.premiumwatchclub.com' },
+      // Legacy backend host — kept temporarily in case any historical media URL
+      // still resolves here. Safe to remove once no old-host URLs remain in WordPress.
       { protocol: 'https', hostname: 'premiumwatchclub3471.live-website.com' },
     ],
   },

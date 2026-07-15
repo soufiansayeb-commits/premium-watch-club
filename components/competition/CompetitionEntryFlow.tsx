@@ -13,6 +13,7 @@ import WatchInfoPanel from './WatchInfoPanel'
 import TicketSelector from './TicketSelector'
 import SkillChallenge from './SkillChallenge'
 import CheckoutStep from './CheckoutStep'
+import LiveActivityToast from './LiveActivityToast'
 
 interface Props {
   competition: Competition
@@ -214,6 +215,13 @@ export default function CompetitionEntryFlow({ competition }: Props) {
           </div>
         </div>
       </main>
+
+      {/* Mobile-only live-activity toast — real order data, floats above the sticky
+          Continue bar. Shown only during the buying steps (1–2); hidden on the
+          checkout step (3) so it never distracts at the conversion/handoff moment. */}
+      {(currentStep === 1 || currentStep === 2) && (
+        <LiveActivityToast productId={competition.wooProductId} />
+      )}
     </>
   )
 }
