@@ -13,42 +13,24 @@ interface Props {
 }
 
 /**
- * Compact Trustpilot proof block — logo (with 5 stars) + review count.
- * Uses the approved assets and the approved "Based on 1,247 reviews" wording.
+ * Compact review-proof block — 5 green stars + review count.
+ * Uses the approved "Based on 1,247 reviews" wording. The brand wordmark is
+ * intentionally omitted site-wide; the stars-only asset carries the rating.
  * Reused on the competition PDP (mobile above the gallery, desktop in the buy box).
+ * `variant` is kept for layout callers ('inline' rows vs 'stacked') — both render
+ * the same stars + count lockup.
  */
 export default function TrustpilotProof({ className = '', variant = 'stacked' }: Props) {
   return (
-    <div className={`tp-proof${className ? ` ${className}` : ''}`}>
-      {variant === 'inline' ? (
-        <>
-          <Image
-            src="/brand-assets/trustpilot-wordmark.png"
-            alt="Trustpilot"
-            width={935}
-            height={236}
-            className="tp-proof-wordmark"
-            priority={false}
-          />
-          <Image
-            src="/brand-assets/trustpilot-stars.png"
-            alt="Trustpilot rating"
-            width={935}
-            height={180}
-            className="tp-proof-stars"
-            priority={false}
-          />
-        </>
-      ) : (
-        <Image
-          src="/brand-assets/trustpilot-logo.png"
-          alt="Trustpilot"
-          width={1048}
-          height={453}
-          className="tp-proof-logo"
-          priority={false}
-        />
-      )}
+    <div className={`tp-proof tp-proof--${variant}${className ? ` ${className}` : ''}`}>
+      <Image
+        src="/brand-assets/trustpilot-stars.png"
+        alt="Rated 5 out of 5 stars"
+        width={935}
+        height={180}
+        className="tp-proof-stars"
+        priority={false}
+      />
       <span className="tp-proof-count">Based on {COMPANY_STATS.trustpilotReviews} reviews</span>
     </div>
   )

@@ -391,7 +391,10 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
         {!isComingSoon && (
           <div className="h2m-progress">
             <div className="h2m-prog-label">
-              <span>{c.soldPercentage}% sold</span>
+              <span className="h2m-prog-live">
+                <span className="h2m-prog-dot" aria-hidden="true" />
+                {c.soldPercentage}% sold
+              </span>
               <span className="h2m-prog-left">{c.ticketsLeft} tickets left</span>
             </div>
             <div className="h2m-prog-track">

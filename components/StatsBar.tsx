@@ -19,7 +19,7 @@ export default function StatsBar() {
           </div>
           <div className="stat-item reveal d3">
             <div className="stat-val">{COMPANY_STATS.trustpilotScore} <span style={{ color: '#00B67A' }}>★</span></div>
-            <div className="stat-lbl">Trustpilot Score</div>
+            <div className="stat-lbl">Review Score</div>
           </div>
         </div>
       </div>

@@ -305,7 +305,7 @@ export default function CheckoutStep({
         </div>
       </div>
 
-      {/* Trustpilot strip */}
+      {/* Review-rating strip */}
       <div className="tp-strip">
         <div className="tp-label">Rated Excellent</div>
         <div className="tp-stars-row">
@@ -313,7 +313,7 @@ export default function CheckoutStep({
         </div>
         <div className="tp-score">4.9 · 3,000+ reviews</div>
         <div style={{ width: '1px', height: '16px', background: 'var(--border-light)' }} />
-        <div className="tp-label">Verified by Trustpilot</div>
+        <div className="tp-label">Verified Reviews</div>
       </div>
     </>
   )

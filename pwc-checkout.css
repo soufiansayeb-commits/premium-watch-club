@@ -849,6 +849,21 @@ button.wc-block-components-checkout-place-order-button {
     font-size: 1.25rem !important;
   }
 
+  /* ── Align the Subtotal/Total ROWS with the "Add coupons" row ──
+     A symmetric 16px inset on both sides so, on mobile:
+       • labels (Subtotal / TOTAL) line up with the "A" of "Add coupons";
+       • values ($…) line up with the product-row price column (which is inset
+         from the card edge by the item list's right gutter).
+     Only the row padding moves; totals/values are unchanged. Mobile only.
+     Tune this one value up/down a few px if the columns need a nudge.
+     The footer selector needs the extra class to beat the footer's padding
+     shorthand (same specificity, later declaration wins). */
+  .wc-block-components-totals-item,
+  .wc-block-components-totals-footer-item.wc-block-components-totals-item {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
   /* ── Place order button ── */
   .wc-block-components-checkout-place-order-button {
     padding: 18px 24px !important;
@@ -977,41 +992,68 @@ button.wc-block-components-checkout-place-order-button {
   line-height: 1;
 }
 
-/* ── 2. Trust strip under Place Order (payment icons → Trustpilot) ────
-   Injected by the "PWC Checkout Trust Strip" snippet as the last child of
-   the actions block, so it sits between the button and the (::after)
-   secure-checkout fine-print line. Transparent PNGs — no box, no bg. */
-.pwc-trust-strip {
+/* ── 2. Payment icons + Trust row (TWO separate placements) ───────────
+   Injected by the "PWC Checkout Trust Strip" snippet:
+     • .pwc-pay-strip  → directly under the Place Order button (centered)
+     • .pwc-trust-row  → under the Total, inside the Order Summary card
+   They are deliberately NOT combined. Transparent PNGs — no box, no bg. */
+
+/* Stack the actions area as a single full-width column so the button spans the
+   column (reads as centered) and the payment icons sit directly beneath it —
+   instead of being pushed into a flex row beside the button (which shifted the
+   button left on desktop). align-items:stretch keeps the button full-width. */
+.wp-block-woocommerce-checkout-actions-block {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+/* The button (and its row wrapper, if any) fill the column width. */
+.wp-block-woocommerce-checkout-actions-block .wc-block-checkout__actions-row {
+  width: 100% !important;
+}
+.wp-block-woocommerce-checkout-actions-block
+  .wc-block-components-checkout-place-order-button {
+  width: 100% !important;
+}
+
+/* A) Payment icons — centered under the button, sized to match the PDP strip. */
+.pwc-pay-strip {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  margin: 10px 0 0;
+  justify-content: center;
+  width: 100%;
+  margin: 14px 0 0;
   line-height: 0;
 }
-.pwc-trust-strip .pwc-trust-pay {
-  width: 80%;
-  max-width: 300px;
+.pwc-pay-strip img {
+  width: 88%;
+  max-width: 320px;
   height: auto;
   object-fit: contain;
-  opacity: 0.92;
+  opacity: 0.9;
 }
-.pwc-trust-strip .pwc-trust-tp {
+
+/* B) Trust row — green stars (left) + real review text (right), centered under
+   the Total. Stars-only asset; no Trustpilot wordmark/logo. */
+.pwc-trust-row {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--pwc-divider);
   line-height: 1;
 }
-.pwc-trust-strip .pwc-trust-tp img {
+.pwc-trust-row img {
   width: auto;
-  height: 26px;
+  height: 20px;
   object-fit: contain;
 }
-.pwc-trust-strip .pwc-trust-tp span {
+.pwc-trust-row span {
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.64rem;
-  letter-spacing: 0.04em;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
   color: var(--pwc-text-mid);
 }
 
@@ -1048,5 +1090,6 @@ button.wc-block-components-checkout-place-order-button {
   .wc-block-components-main {
     order: 1 !important;
   }
-  .pwc-trust-strip .pwc-trust-pay { width: 84%; }
+  /* Keep the mobile payment-icons strip at its existing (good) size. */
+  .pwc-pay-strip img { width: 84%; max-width: 300px; }
 }

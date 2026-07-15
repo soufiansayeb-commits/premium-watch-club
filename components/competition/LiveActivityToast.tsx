@@ -111,10 +111,7 @@ export default function LiveActivityToast({ productId }: Props) {
       aria-live="polite"
       aria-hidden={!shown}
     >
-      <div className="la-toast-head">
-        <span className="la-toast-dot" aria-hidden="true" />
-        <span className="la-toast-label">Live activity</span>
-      </div>
+      <span className="la-toast-dot" aria-hidden="true" />
       <span className="la-toast-text">{text}</span>
     </div>
   )

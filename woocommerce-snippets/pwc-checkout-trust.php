@@ -1,34 +1,39 @@
 <?php
 /**
- * PWC — Checkout Trust Strip (payment icons + Trustpilot under Place Order)
+ * PWC — Checkout Trust & Payment (two SEPARATE rows)
  * ════════════════════════════════════════════════════════════════════
- * Inserts a small, centered trust strip immediately UNDER the WooCommerce
- * Checkout Blocks "Place Order" button:
+ * Places two distinct, real-element rows on the Blocks checkout:
  *
- *     [ Place Order ]
- *     Visa · Mastercard · Amex · Discover · PayPal · Apple Pay · G Pay   (payment-methods.png)
- *     Trustpilot  ★★★★★  ·  Based on 1,247 reviews
- *     Secure Checkout · 18+ Only · Skill-Based Competition · …           (existing CSS ::after)
+ *   A) PAYMENT ICONS  → directly under the "Place Order" button, centered
+ *        [ Place Order ]
+ *        Visa · Mastercard · Amex · Discover · PayPal · Apple Pay · G Pay
  *
- * WHY A SNIPPET (not CSS): WooCommerce Checkout Blocks renders the actions
- * area in React and offers no hook to place two real <img> elements there.
- * This injects real image elements and re-inserts them if Blocks re-render.
- * It NEVER touches totals, payment methods, coupons, quantities, order
- * creation or validation — it only adds trust imagery.
+ *   B) TRUST ROW      → inside the Order Summary card, under the Total
+ *        ★★★★★  Based on 1,247 reviews        (stars only — no wordmark)
+ *
+ * These are intentionally NOT combined — payment lives by the button, the
+ * review proof lives under the order total (same on mobile and desktop).
+ *
+ * WHY A SNIPPET (not CSS): WooCommerce Checkout Blocks renders these areas
+ * in React and offers no hook to place real <img>/<span> elements there.
+ * This injects them and re-inserts if Blocks re-render. It NEVER touches
+ * totals, payment methods, coupons, quantities, order creation or
+ * validation — presentation only.
  *
  * INSTALLATION (Code Snippets plugin)
  * ───────────────────────────────────
- * 1. WordPress admin → Snippets → Add New.
- * 2. Title: "PWC Checkout Trust Strip".
- * 3. Paste EVERYTHING BELOW the `if ( ! defined( 'ABSPATH' ) ) exit;` line
- *    (Code Snippets adds its own opening <?php — do not paste the <?php line).
- * 4. Set to run "Everywhere" (frontend only is fine too), Save and Activate.
- * 5. Paste the matching CSS (.pwc-trust-strip …) into
+ * 1. WordPress admin → Snippets → open "PWC Checkout Trust Strip"
+ *    (or Add New with that title).
+ * 2. Replace its body with EVERYTHING BELOW the
+ *    `if ( ! defined( 'ABSPATH' ) ) exit;` line (Code Snippets adds its own
+ *    opening <?php — do not paste the <?php line).
+ * 3. Run "Everywhere" (frontend is fine), Save and Activate.
+ * 4. Paste the matching CSS (.pwc-pay-strip / .pwc-trust-row …) into
  *    Appearance → Customize → Additional CSS — it ships in pwc-checkout.css.
  *
  * Assets are loaded from the frontend domain (where /public is served):
  *   /brand-assets/payment-methods.png   (transparent PNG — same as the PDP)
- *   /brand-assets/trustpilot-logo.png
+ *   /brand-assets/trustpilot-stars.png  (stars only — no wordmark, matches the PDP)
  * Override the frontend URL in wp-config.php if needed:
  *   define('PWC_FRONTEND_URL', 'https://premiumwatchclub.com');
  */
@@ -48,45 +53,67 @@ function pwc_ts_is_checkout_form() {
 	return true;
 }
 
-/** The trust-strip markup (payment icons + Trustpilot). */
-function pwc_ts_strip_html() {
+/** Payment icons row (goes directly under the Place Order button). */
+function pwc_ts_pay_html() {
 	$base = rtrim( PWC_FRONTEND_URL, '/' );
 	$pay  = $base . '/brand-assets/payment-methods.png';
-	$tp   = $base . '/brand-assets/trustpilot-logo.png';
-	return '<div class="pwc-trust-strip" aria-hidden="false">'
-		. '<img class="pwc-trust-pay" src="' . esc_url( $pay ) . '" '
+	return '<div class="pwc-pay-strip" aria-hidden="false">'
+		. '<img src="' . esc_url( $pay ) . '" '
 		. 'alt="Accepted payment methods: Visa, Mastercard, American Express, Discover, PayPal, Apple Pay, Google Pay" />'
-		. '<span class="pwc-trust-tp">'
-		. '<img src="' . esc_url( $tp ) . '" alt="Trustpilot — rated 5 out of 5" />'
-		. '<span>Based on 1,247 reviews</span>'
-		. '</span>'
 		. '</div>';
 }
 
-/* ── Inject into the Blocks checkout, keep it present across re-renders ─────── */
+/** Trust row — stars only + real review text (goes under the order Total). */
+function pwc_ts_trust_html() {
+	$base = rtrim( PWC_FRONTEND_URL, '/' );
+	$tp   = $base . '/brand-assets/trustpilot-stars.png'; // stars only — no wordmark
+	return '<div class="pwc-trust-row" aria-hidden="false">'
+		. '<img src="' . esc_url( $tp ) . '" alt="Rated 5 out of 5 stars" />'
+		. '<span>Based on 1,247 reviews</span>'
+		. '</div>';
+}
+
+/* ── Inject into the Blocks checkout, keep both present across re-renders ───── */
 add_action( 'wp_footer', function () {
 	if ( ! pwc_ts_is_checkout_form() ) return;
-	$html = wp_json_encode( pwc_ts_strip_html() );
+	$pay   = wp_json_encode( pwc_ts_pay_html() );
+	$trust = wp_json_encode( pwc_ts_trust_html() );
 	?>
 	<script>
 	(function () {
-		var STRIP_HTML = <?php echo $html; // phpcs:ignore — escaped in PHP ?>;
+		var PAY_HTML   = <?php echo $pay;   // phpcs:ignore — escaped in PHP ?>;
+		var TRUST_HTML = <?php echo $trust; // phpcs:ignore — escaped in PHP ?>;
 
-		function place() {
+		function toEl(html) {
+			var wrap = document.createElement('div');
+			wrap.innerHTML = html;
+			return wrap.firstChild;
+		}
+
+		/* A) Payment icons — directly under the Place Order button.
+		   Append to the actions BLOCK (not right after the button): WooCommerce
+		   nests the button inside a flex row, so btn.after() would drop the strip
+		   beside the button. As the block's last child it stacks cleanly below. */
+		function placePay() {
 			var actions = document.querySelector('.wp-block-woocommerce-checkout-actions-block');
 			if ( ! actions ) return;
-			if ( actions.querySelector('.pwc-trust-strip') ) return; // already there
-			var wrap = document.createElement('div');
-			wrap.innerHTML = STRIP_HTML;
-			var strip = wrap.firstChild;
-			if ( ! strip ) return;
-			var btn = actions.querySelector('.wc-block-components-checkout-place-order-button');
-			if ( btn ) {
-				btn.after( strip );          // directly under the Place Order button
-			} else {
-				actions.appendChild( strip );
-			}
+			if ( actions.querySelector('.pwc-pay-strip') ) return; // already there
+			var el = toEl(PAY_HTML);
+			if ( ! el ) return;
+			actions.appendChild( el );
 		}
+
+		/* B) Trust row — under the Total, inside the Order Summary card. */
+		function placeTrust() {
+			var summary = document.querySelector('.wp-block-woocommerce-checkout-order-summary-block');
+			if ( ! summary ) return;
+			if ( summary.querySelector('.pwc-trust-row') ) return; // already there
+			var el = toEl(TRUST_HTML);
+			if ( ! el ) return;
+			summary.appendChild( el );    // after the totals (Total is the last row)
+		}
+
+		function place() { placePay(); placeTrust(); }
 
 		function init() {
 			place();

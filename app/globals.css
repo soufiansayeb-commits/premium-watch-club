@@ -406,7 +406,7 @@ img { max-width: 100%; display: block; }
 }
 .h2-prog-label {
   font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--red-light);
+  color: #FFFFFF;
 }
 .h2-prog-track {
   height: 7px; background: rgba(255,255,255,0.08);
@@ -1782,12 +1782,10 @@ img { max-width: 100%; display: block; }
   color: var(--text-muted); margin: 0;
 }
 .tp-stars-img { height: 31px; width: auto; display: block; }
-.tp-wordmark-img { height: 25px; width: auto; display: block; }
 @media (max-width: 600px) {
   .trust-tp { margin-top: 36px; gap: 15px; }
   .tp-count { font-size: 14px; }
   .tp-stars-img { height: 36px; }
-  .tp-wordmark-img { height: 28px; }
 }
 
 /* ════════════════════════════════
@@ -4647,7 +4645,7 @@ img { max-width: 100%; display: block; }
   display: flex; flex-direction: row; align-items: center; justify-content: center;
   gap: 12px; flex-wrap: wrap;
 }
-.tp-proof-logo { width: auto; height: 34px; }   /* asset already includes 5 stars */
+.tp-proof-stars { width: auto; height: 20px; display: block; }
 .tp-proof-count { font-size: 12px; color: var(--text-muted); letter-spacing: 0.01em; }
 /* Desktop: shown inside the buy box, under the Continue button. Tighter top pull
    sits it nearer the button; real bottom padding keeps it clear of the footer
@@ -4674,8 +4672,7 @@ img { max-width: 100%; display: block; }
   justify-content: flex-start;
   gap: 8px;
 }
-/* Single-row lockup: wordmark + 5 stars inline with the price (matches reference). */
-.tp-proof--buybox-top .tp-proof-wordmark { height: 17px; width: auto; }
+/* Single-row lockup: 5 stars inline with the price (wordmark omitted site-wide). */
 .tp-proof--buybox-top .tp-proof-stars { height: 15px; width: auto; }
 .tp-proof--buybox-top .tp-proof-count { font-size: 12px; }
 /* Mobile head (Trustpilot + clean product title) — hidden on desktop */
@@ -4951,58 +4948,61 @@ img { max-width: 100%; display: block; }
    component renders nothing when there is no real activity. Desktop: not shown. */
 .la-toast { display: none; }
 @media (max-width: 768px) {
+  /* Text-only micro-toast: green dot + message, NOT a card or navy bar. The
+     background is a barely-there dark wash (just enough to keep white text
+     legible over the page) — the readability really comes from the text-shadow.
+     Sits ~6px above the sticky Continue bar; centered via translateX(-50%),
+     with the slide-up animation stacked on top. */
   .la-toast {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     position: fixed;
-    left: 14px; right: 14px;
-    margin-inline: auto;
-    max-width: 390px;                                       /* ≈ calc(100vw - 28px), capped */
-    bottom: calc(116px + env(safe-area-inset-bottom, 0px)); /* just above the sticky Continue bar */
+    left: 50%;
+    bottom: calc(96px + env(safe-area-inset-bottom, 0px)); /* ~6px above the sticky Continue bar */
     z-index: 890;                     /* below sticky CTA (900), nav (1001), cart drawer (1100) */
-    padding: 12px 14px;
-    background: rgba(8, 18, 38, 0.92);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-    border: 1px solid rgba(197, 160, 101, 0.25);
-    border-radius: 16px;
-    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
+    max-width: 90vw;                  /* never overflows; hugs its content */
+    padding: 4px 10px;
+    background: rgba(8, 18, 38, 0.18); /* near-transparent wash, not a solid navy rectangle */
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    border-radius: 999px;             /* soft pill edge only; no border, no card shadow */
     pointer-events: none;             /* never blocks the CTA or anything beneath it */
+    white-space: nowrap;
+    overflow: hidden;
     opacity: 0;
-    transform: translateY(10px);      /* hidden: slightly lower → slides up on show */
-    transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translateX(-50%) translateY(6px); /* hidden: lower → slides up on show */
+    transition: opacity 0.24s ease, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .la-toast.is-shown {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 }
-.la-toast-head {
-  display: flex; align-items: center; gap: 7px; margin-bottom: 4px;
-}
 .la-toast-dot {
-  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
   background: var(--green);
-  box-shadow: 0 0 6px rgba(39, 174, 96, 0.75);
+  box-shadow: 0 0 6px rgba(39, 174, 96, 0.85);
   animation: la-toast-dot 2s ease-in-out infinite;
 }
-.la-toast-label {
-  font-family: var(--font-sans);
-  font-size: 9px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
-  color: rgba(197, 160, 101, 0.85);
-}
 .la-toast-text {
-  display: block;
+  display: inline-block;
+  min-width: 0;
   font-family: var(--font-sans);
-  font-size: 13.5px; font-weight: 500; line-height: 1.35;
-  color: rgba(245, 244, 240, 0.92);
+  font-size: 13px; font-weight: 700; line-height: 1.2;
+  color: #FFFFFF;
+  /* Carries legibility so the background can stay near-transparent. */
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 0 2px rgba(0, 0, 0, 0.5);
+  overflow: hidden; text-overflow: ellipsis;
 }
 @keyframes la-toast-dot {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.45; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .la-toast { transition: opacity 0.16s linear; transform: none; }
-  .la-toast.is-shown { transform: none; }
+  /* Keep the horizontal centering transform; only drop the slide-up motion. */
+  .la-toast { transition: opacity 0.16s linear; transform: translateX(-50%); }
+  .la-toast.is-shown { transform: translateX(-50%); }
   .la-toast-dot { animation: none; }
 }
 
@@ -5287,7 +5287,7 @@ img { max-width: 100%; display: block; }
     width: 100%; box-sizing: border-box;
   }
   .tp-proof--mobile { display: flex; margin-bottom: 16px; }
-  .tp-proof--mobile .tp-proof-logo { height: 36px; }
+  .tp-proof--mobile .tp-proof-stars { height: 22px; }
   /* Mobile: divider structures the Trustpilot → title transition. The desktop
      buy-box divider is redundant here (mobile title lives above the gallery). */
   .pdp-divider--mobile { display: block; width: 86%; margin: 0 auto 16px; }
@@ -7757,6 +7757,15 @@ img { max-width: 100%; display: block; }
   margin-bottom: 8px;
 }
 .h2m-prog-left { color: var(--red-light); font-weight: 700; }
+/* Left group: red live dot + "% sold" text, mirroring the desktop hero
+   (.h2-prog-live / .h2-prog-live-dot). The dot stays red; the text is white. */
+.h2m-prog-live { display: inline-flex; align-items: center; gap: 7px; }
+.h2m-prog-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: var(--red);
+  box-shadow: 0 0 0 0 rgba(225,90,76,0.55);
+  animation: h2-pulse-ring-red 2.2s ease-in-out infinite;
+}
 .h2m-prog-track {
   height: 6px; border-radius: 99px; overflow: hidden;
   background: rgba(255,255,255,0.10);
@@ -8040,9 +8049,10 @@ img { max-width: 100%; display: block; }
   object-fit: contain;
 }
 
-/* red tickets-left text matches progress bar fill (scarcity signal) */
-.h2m-prog-label { color: var(--red-light); }
-.h2m-prog-left  { color: var(--red-light); }
+/* Mobile hero sold/tickets-left text: white for readability over the hero image
+   (matches the desktop .h2-prog-label treatment). The red bar itself is unchanged. */
+.h2m-prog-label { color: #FFFFFF; }
+.h2m-prog-left  { color: #FFFFFF; }
 .h2m-prog-track { height: 7px; background: rgba(255,255,255,0.09); }
 .h2m-prog-fill {
   background: linear-gradient(90deg, var(--red-dark), var(--red), var(--red-light));
