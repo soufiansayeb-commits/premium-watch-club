@@ -6039,89 +6039,102 @@ img { max-width: 100%; display: block; }
 /* ════════════════════════════════
    CONTACT PAGE
 ════════════════════════════════ */
-.contact-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 48px;
-}
-.contact-card {
+.contact-panel {
+  max-width: 620px;
+  margin: 0 auto;
   background: var(--bg-white);
   border: 1px solid var(--border-light);
   border-radius: 6px;
-  padding: 32px 28px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-  transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s;
+  padding: 48px 40px 40px;
+  box-shadow: 0 2px 16px rgba(10,31,68,0.05);
+  text-align: center;
 }
-.contact-card:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.07);
-  transform: translateY(-3px);
-  border-color: var(--gold);
-}
-.contact-card-icon {
-  width: 48px; height: 48px;
+.contact-panel-icon {
+  width: 52px; height: 52px;
   border-radius: 50%;
   background: rgba(197,160,101,0.1);
   border: 1px solid rgba(197,160,101,0.25);
   display: flex; align-items: center; justify-content: center;
   color: var(--gold-dark);
-  margin-bottom: 18px;
+  margin: 0 auto 20px;
 }
-.contact-card h3 {
+.contact-panel-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.contact-email-link {
+  display: inline-block;
   font-family: var(--font-serif);
-  font-size: 17px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--navy);
-  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(197,160,101,0.45);
+  padding-bottom: 3px;
+  transition: color 0.18s, border-color 0.18s;
+  word-break: break-word;
 }
-.contact-card p {
+.contact-email-link:hover {
+  color: var(--gold-dark);
+  border-bottom-color: var(--gold);
+}
+.contact-email-link:focus-visible {
+  outline: 2px solid var(--gold-dark);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+.contact-panel-note {
   font-size: 13px;
   color: var(--text-muted);
-  line-height: 1.75;
+  line-height: 1.7;
+  margin-top: 16px;
+}
+.contact-panel-rule {
+  height: 1px;
+  background: var(--border-light);
+  margin: 32px auto;
+  max-width: 140px;
+}
+.contact-social-intro {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.7;
   margin-bottom: 16px;
 }
-.contact-card-email {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--gold-dark);
-  text-decoration: underline;
-  letter-spacing: 0.02em;
-  transition: color 0.18s;
+.contact-social-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
-.contact-card-email:hover {
-  color: var(--gold);
+.contact-social-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-mid);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--navy);
+  transition: color 0.18s, border-color 0.18s, background 0.18s, transform 0.18s;
+}
+.contact-social-btn:hover {
+  color: var(--gold-dark);
+  border-color: var(--gold);
+  background: rgba(197,160,101,0.07);
+  transform: translateY(-2px);
+}
+.contact-social-btn:focus-visible {
+  outline: 2px solid var(--gold-dark);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-social-btn { transition: none; }
+  .contact-social-btn:hover { transform: none; }
 }
 
-.contact-form-card {
-  background: var(--bg-white);
-  border: 1px solid var(--border-light);
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.04);
-}
-.contact-form-header {
-  padding: 32px 40px 24px;
-  border-bottom: 1px solid var(--border-light);
-}
-.contact-form-header h2 {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--navy);
-  margin-bottom: 6px;
-}
-.contact-form-header p {
-  font-size: 13px;
-  color: var(--text-muted);
-}
-.contact-form-body {
-  padding: 32px 40px;
-}
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
 .form-group {
   display: flex;
   flex-direction: column;
@@ -6162,56 +6175,6 @@ img { max-width: 100%; display: block; }
 }
 .form-input::placeholder {
   color: var(--text-muted);
-}
-.form-select {
-  cursor: pointer;
-}
-.form-textarea {
-  resize: vertical;
-  min-height: 140px;
-  line-height: 1.6;
-}
-.contact-form-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border-light);
-  flex-wrap: wrap;
-}
-.contact-form-note {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.5;
-  flex: 1;
-}
-.btn-contact-submit {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--gold);
-  color: var(--bg-white);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  padding: 13px 28px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.18s, transform 0.15s;
-  flex-shrink: 0;
-}
-.btn-contact-submit:hover:not(:disabled) {
-  background: var(--gold-dark);
-  transform: translateY(-1px);
-}
-.btn-contact-submit:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
 }
 
 /* ════════════════════════════════
@@ -6517,22 +6480,16 @@ img { max-width: 100%; display: block; }
   .closed-draws-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .contact-cards-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .contact-form-body {
-    padding: 24px 28px;
-  }
-  .contact-form-header {
-    padding: 24px 28px 20px;
-  }
 }
 @media (max-width: 640px) {
   .closed-draws-grid {
     grid-template-columns: 1fr;
   }
-  .contact-cards-grid {
-    grid-template-columns: 1fr;
+  .contact-panel {
+    padding: 36px 24px 32px;
+  }
+  .contact-email-link {
+    font-size: 20px;
   }
   .faq-hero-eyebrow-line { width: 28px; }
   .faq-hero-sub { font-size: 15px; }
@@ -6542,13 +6499,6 @@ img { max-width: 100%; display: block; }
   .faq-content { padding: 0 20px; }
   .signin-card {
     padding: 32px 24px 28px;
-  }
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  .contact-form-footer {
-    flex-direction: column;
-    align-items: flex-start;
   }
   .page-content {
     padding: 0 20px;

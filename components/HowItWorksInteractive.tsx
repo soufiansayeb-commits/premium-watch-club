@@ -18,6 +18,9 @@ interface Step {
   copy: string
   /** Optional placeholder shown only if the step's media file is missing. */
   fallback?: React.ReactNode
+  /** Explicit media file under /public, for steps whose filename does not follow
+   *  the `${id}.mp4|gif|png` convention. Written unencoded; encoded on use. */
+  media?: string
   /** object-fit for this step's GIF/video. Defaults to 'contain' so the full
    *  animation is always visible (never cropped). The frame adapts to the media's
    *  own ratio, so there is no letterboxing. */
@@ -97,6 +100,7 @@ const steps: Step[] = [
     short: 'Choose',
     title: 'Choose Your Competition',
     copy: 'Pick the live Weekly, Monthly or Special competition you want to enter.',
+    media: '/howitworks/step 1 howitworks.gif',
     fallback: <CompetitionFallback />,
   },
   {
@@ -104,6 +108,7 @@ const steps: Step[] = [
     short: 'Entries',
     title: 'Select Your Entries',
     copy: 'Choose how many entries you want. More entries means more chances in the draw.',
+    media: '/howitworks/step 2 howitworks.gif',
     fallback: <EntriesFallback />,
   },
   {
@@ -111,6 +116,7 @@ const steps: Step[] = [
     short: 'Skill',
     title: 'Answer the Skill Question',
     copy: 'Every order includes a skill-based question. Your selected answer is recorded with your entry.',
+    media: '/howitworks/step 3 howitworks.gif',
     fallback: <SkillFallback />,
   },
   {
@@ -158,6 +164,21 @@ function StepMedia({
     setStage('checking')
 
     async function resolve() {
+      // An explicit file wins over the id-based convention. encodeURI keeps
+      // spaces in the filename valid in the request URL.
+      if (step.media) {
+        const src = encodeURI(step.media)
+        const ok = await mediaExists(src)
+        if (cancelled) return
+        if (ok) {
+          setImgSrc(src)
+          setStage('image')
+        } else {
+          setStage('fallback')
+        }
+        return
+      }
+
       // Priority: video → animated GIF → static PNG → fallback UI.
       const [hasVideo, hasGif, hasPng] = await Promise.all([
         mediaExists(`/howitworks/${step.id}.mp4`),
@@ -182,7 +203,7 @@ function StepMedia({
     return () => {
       cancelled = true
     }
-  }, [step.id])
+  }, [step.id, step.media])
 
   // Fallback steps carry no intrinsic media ratio → use the frame default.
   useEffect(() => {

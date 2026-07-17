@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import SocialIconLinks from '@/components/SocialIconLinks'
+import { SOCIAL_LINKS } from '@/lib/social'
 
 export default function Footer() {
   const [email, setEmail] = useState('')
@@ -79,10 +81,13 @@ export default function Footer() {
             <div className="footer-col">
               <h4>Follow</h4>
               <ul>
-                <li><Link href="#">Instagram</Link></li>
-                <li><Link href="#">Facebook</Link></li>
-                <li><Link href="#">YouTube</Link></li>
-                <li><Link href="#">X / Twitter</Link></li>
+                {SOCIAL_LINKS.map(social => (
+                  <li key={social.name}>
+                    <a href={social.href} aria-label={social.ariaLabel} target="_blank" rel="noopener noreferrer">
+                      {social.name}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -98,17 +103,7 @@ export default function Footer() {
           <p className="footer-legal">Premium Watch Club is a skill-based competition platform. Promoter: PREMIUM WATCH CLUB LTD is a company registered in England and Wales (company number 17233368). Registered office: 71-75 Shelton Street, Covent Garden, London, United Kingdom, WC2H 9JQ. A correct answer to a skill question is required to win. All competitions are subject to full terms and conditions. 18+ only. Please compete responsibly.</p>
 
           <div className="footer-meta-end">
-            <div className="social-row">
-              <Link href="#" className="social-btn" aria-label="Instagram">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5"/><circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor"/></svg>
-              </Link>
-              <Link href="#" className="social-btn" aria-label="Facebook">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3V2z" stroke="currentColor" strokeWidth="1.5"/></svg>
-              </Link>
-              <Link href="#" className="social-btn" aria-label="YouTube">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="4" stroke="currentColor" strokeWidth="1.5"/><path d="M10 9l6 3-6 3V9z" fill="currentColor"/></svg>
-              </Link>
-            </div>
+            <SocialIconLinks />
             <div className="footer-policies">
               <Link href="/terms">Terms</Link>
               <Link href="/privacy">Privacy</Link>
