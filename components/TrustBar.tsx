@@ -39,7 +39,7 @@ export default function TrustBar() {
           </div>
         </div>
         <div className="trust-tp reveal">
-          <p className="tp-count">Based on 1,247 reviews</p>
+          <p className="tp-count">Based on 1,200+ reviews</p>
           <Image
             src="/brand-assets/trustpilot-stars.png"
             alt="Rated 5 out of 5 stars"

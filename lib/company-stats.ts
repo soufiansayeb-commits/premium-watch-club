@@ -16,5 +16,5 @@ export const COMPANY_STATS = {
   /** Trustpilot rating. Approved value is 4.9 — never "5 out of 5". */
   trustpilotScore: '4.9',
   /** Approved review count wording used by the Trustpilot proof block. */
-  trustpilotReviews: '1,247',
+  trustpilotReviews: '1,200+',
 } as const

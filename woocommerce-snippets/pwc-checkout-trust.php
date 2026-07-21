@@ -9,7 +9,7 @@
  *        Visa · Mastercard · Amex · Discover · PayPal · Apple Pay · G Pay
  *
  *   B) TRUST ROW      → inside the Order Summary card, under the Total
- *        ★★★★★  Based on 1,247 reviews        (stars only — no wordmark)
+ *        ★★★★★  Based on 1,200+ reviews        (stars only — no wordmark)
  *
  * These are intentionally NOT combined — payment lives by the button, the
  * review proof lives under the order total (same on mobile and desktop).
@@ -59,6 +59,7 @@ function pwc_ts_pay_html() {
 	$pay  = $base . '/brand-assets/payment-methods.png';
 	return '<div class="pwc-pay-strip" aria-hidden="false">'
 		. '<img src="' . esc_url( $pay ) . '" '
+		. 'style="display:block;width:100%;max-width:300px;height:auto;margin:0 auto;opacity:.9" '
 		. 'alt="Accepted payment methods: Visa, Mastercard, American Express, Discover, PayPal, Apple Pay, Google Pay" />'
 		. '</div>';
 }
@@ -68,8 +69,8 @@ function pwc_ts_trust_html() {
 	$base = rtrim( PWC_FRONTEND_URL, '/' );
 	$tp   = $base . '/brand-assets/trustpilot-stars.png'; // stars only — no wordmark
 	return '<div class="pwc-trust-row" aria-hidden="false">'
-		. '<img src="' . esc_url( $tp ) . '" alt="Rated 5 out of 5 stars" />'
-		. '<span>Based on 1,247 reviews</span>'
+		. '<img src="' . esc_url( $tp ) . '" style="width:auto;height:20px;display:block" alt="Rated 5 out of 5 stars" />'
+		. '<span>Based on 1,200+ reviews</span>'
 		. '</div>';
 }
 

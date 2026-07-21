@@ -70,10 +70,10 @@ export default async function HomePage() {
       <ComparisonSection />
       {/* Current Competitions section — always rendered when any non-Coming-Soon comp exists */}
       <CompetitionsGrid competitions={gridComps} />
+      {/* "What our winners say" — sits directly above the Journal section */}
+      <TestimonialTabs />
       <JournalPreview />
       <WhyNotBuyIt ctaHref="#competitions-grid" />
-      {/* "What our winners say" — moved to sit directly above the FAQ */}
-      <TestimonialTabs />
       <HomeFaqSection />
       <Footer />
       <ScrollReveal />

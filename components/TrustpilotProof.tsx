@@ -14,7 +14,7 @@ interface Props {
 
 /**
  * Compact review-proof block — 5 green stars + review count.
- * Uses the approved "Based on 1,247 reviews" wording. The brand wordmark is
+ * Uses the approved "Based on 1,200+ reviews" wording. The brand wordmark is
  * intentionally omitted site-wide; the stars-only asset carries the rating.
  * Reused on the competition PDP (mobile above the gallery, desktop in the buy box).
  * `variant` is kept for layout callers ('inline' rows vs 'stacked') — both render
