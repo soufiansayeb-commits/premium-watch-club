@@ -15,6 +15,7 @@ import JournalPreview from '@/components/JournalPreview'
 import WhyNotBuyIt from '@/components/WhyNotBuyIt'
 import HomeFaqSection from '@/components/HomeFaqSection'
 import CompetitionsGrid from '@/components/CompetitionsGrid'
+import ReviewWall from '@/components/ReviewWall'
 import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
 
@@ -64,12 +65,15 @@ export default async function HomePage() {
       />
       {/* CTA scrolls to the current competitions section on this page, not the Special comp. */}
       <HowItWorksInteractive ctaHref="#competitions-grid" />
+      {/* General WiserReview "wall of love" — sits directly below How It Works */}
+      <ReviewWall />
       <ComparisonSection />
-      <TestimonialTabs />
       {/* Current Competitions section — always rendered when any non-Coming-Soon comp exists */}
       <CompetitionsGrid competitions={gridComps} />
       <JournalPreview />
       <WhyNotBuyIt ctaHref="#competitions-grid" />
+      {/* "What our winners say" — moved to sit directly above the FAQ */}
+      <TestimonialTabs />
       <HomeFaqSection />
       <Footer />
       <ScrollReveal />

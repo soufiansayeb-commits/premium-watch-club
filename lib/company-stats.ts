@@ -13,8 +13,8 @@ export const COMPANY_STATS = {
   prizesAwarded:   '$480K+',
   entriesPlaced:   '30,000+',
   verifiedWinners: '25+',
-  /** Trustpilot rating. Approved value is 4.8 — never "5 out of 5". */
-  trustpilotScore: '4.8',
+  /** Trustpilot rating. Approved value is 4.9 — never "5 out of 5". */
+  trustpilotScore: '4.9',
   /** Approved review count wording used by the Trustpilot proof block. */
   trustpilotReviews: '1,247',
 } as const

@@ -1797,6 +1797,20 @@ img { max-width: 100%; display: block; }
   border-top: 1px solid var(--border-light);
 }
 
+/* ── WiserReview review wall (single general wall of love) ──
+   Only a thin outer wrapper for page alignment — the widget owns its own
+   layout, width, cards, colours AND its mint background. We deliberately add
+   NO background or vertical padding so the widget's mint begins immediately
+   after the previous section (no white spacer). The widget's own internal
+   padding supplies the section's breathing room. */
+.review-wall-section {
+  overflow-x: hidden; /* the embed must never trigger horizontal page scroll */
+}
+.review-wall-section .wiser_review_wall {
+  min-height: 640px; /* reserve space to limit layout shift; irrelevant once reviews render */
+  max-width: 100%;
+}
+
 /* 3-column equal grid */
 .journal-grid {
   display: grid;
@@ -5483,6 +5497,7 @@ img { max-width: 100%; display: block; }
   .how-section { padding: 44px 0 56px; }
   #trust-bar { padding: 44px 0 36px; }
   .journal-section { padding: 44px 0; }
+  .review-wall-section .wiser_review_wall { min-height: 520px; }
   /* #current-draw responsive handled inside its own block */
   .newsletter-section { padding: 44px 0; }
   footer { padding: 44px 0 24px; }
