@@ -11,6 +11,8 @@ import HowItWorksInteractive from '@/components/HowItWorksInteractive'
 import JournalPreview from '@/components/JournalPreview'
 import WhyNotBuyIt from '@/components/WhyNotBuyIt'
 import CompetitionsGrid from '@/components/CompetitionsGrid'
+import ReviewWall from '@/components/ReviewWall'
+import TestimonialTabs from '@/components/TestimonialTabs'
 import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
 import { routes } from '@/lib/routes'
@@ -51,7 +53,11 @@ export default async function SpecialLandingPage() {
         ctaHref={offerCtaHref}
       />
       <HowItWorksInteractive ctaHref={routes.competitionSpecial} />
+      {/* Review wall + winners — kept in sync with the homepage so a refresh
+          (which lands on this route via the hero URL sync) keeps both sections. */}
+      <ReviewWall />
       <CompetitionsGrid competitions={gridComps} />
+      <TestimonialTabs />
       <WhyNotBuyIt ctaHref={routes.competitionSpecial} />
       <JournalPreview />
       <Footer />
