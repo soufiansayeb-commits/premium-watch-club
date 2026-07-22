@@ -1,6 +1,7 @@
 // app/api/prepare-checkout/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
+import { fetchWooProductById, isWooEntryClosed } from '@/lib/woocommerce'
 
 export async function POST(req: NextRequest) {
   const secret = process.env.PWC_CART_HANDOFF_SECRET
@@ -42,6 +43,26 @@ export async function POST(req: NextRequest) {
 
   if (validItems.length === 0) {
     return NextResponse.json({ error: 'No valid items' }, { status: 400 })
+  }
+
+  // Server-side entry gate — the final checkout handoff must never sign a payload
+  // for a competition that is archived (To Past Winners) or past its draw date,
+  // even if the frontend UI is bypassed. Mirrors the client entryGate(). Products
+  // are looked up in parallel; if any is closed the whole checkout is rejected.
+  try {
+    const products = await Promise.all(
+      validItems.map(i => fetchWooProductById(i.id).then(r => r.product).catch(() => null))
+    )
+    const closed = products.some(p => p != null && isWooEntryClosed(p))
+    if (closed) {
+      return NextResponse.json(
+        { error: 'One or more competitions in your basket are closed and no longer accepting entries.' },
+        { status: 409 }
+      )
+    }
+  } catch {
+    // A transient WooCommerce failure must not brick checkout; the signed payload
+    // still carries a 5-minute expiry enforced server-side in WordPress.
   }
 
   // Build signed payload with timestamp (5-minute expiry enforced server-side in WordPress)

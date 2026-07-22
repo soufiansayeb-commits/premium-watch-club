@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompetitionBySlug } from '@/lib/competition-data'
+import { fetchWooProductById, isWooEntryClosed } from '@/lib/woocommerce'
 
 interface AddToCartBody {
   productId: number
@@ -72,6 +73,23 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+  }
+
+  // Server-side entry gate — never let a competition that is archived (To Past
+  // Winners) or past its draw date be added to cart, even if the frontend UI is
+  // bypassed. Mirrors the client entryGate(). Lenient on lookup errors: the
+  // final checkout handoff (/api/prepare-checkout) re-checks, so a transient
+  // WooCommerce failure here never blocks an otherwise-valid purchase.
+  try {
+    const { product } = await fetchWooProductById(productId)
+    if (product && isWooEntryClosed(product)) {
+      return NextResponse.json(
+        { success: false, error: 'This competition is closed and no longer accepting entries.' },
+        { status: 409 }
+      )
+    }
+  } catch {
+    // Ignore — see note above.
   }
 
   // TODO: WooCommerce Store API integration — replace URL-based add-to-cart with proper cart session

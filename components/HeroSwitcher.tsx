@@ -30,8 +30,8 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
   const fmt = useMoney()
   const visibleCards = CARD_CONFIG.filter(({ type }) => {
     const comp = competitionsByType[type]
-    // Closed products (slot = null) and explicitly-Closed status → hidden
-    return comp !== null && comp.competitionStatus !== 'Closed'
+    // Archived products (slot = null) and 'To Past Winners' status → hidden
+    return comp !== null && comp.competitionStatus !== 'To Past Winners'
   })
 
   if (visibleCards.length === 0) return null
@@ -158,8 +158,7 @@ function slugify(status: string): string {
     case 'Live':              return 'live'
     case 'Coming Soon':       return 'soon'
     case 'Sold Out':          return 'soldout'
-    case 'Draw Pending':      return 'draw'
-    case 'Winner Announced':  return 'winner'
+    case 'To Past Winners':   return 'soldout'
     default:                  return 'live'
   }
 }

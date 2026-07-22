@@ -32,7 +32,7 @@ export interface WooProduct {
   max_entries_percentage?: number
   /** WooCommerce native field: when true, product is limited to 1 per order (source of truth for single-entry products). */
   sold_individually?: boolean
-  /** ACF custom field: lifecycle status. Values: 'Coming Soon' | 'Live' | 'Sold Out' | 'Draw Pending' | 'Winner Announced' | 'Closed' */
+  /** ACF custom field: lifecycle status. Values: 'Coming Soon' | 'Live' | 'Sold Out' | 'To Past Winners' */
   competition_status?: string
   /** ACF custom field: category type. Values: 'weekly' | 'monthly' | 'free' | 'special' */
   competition_type?: string
@@ -292,10 +292,26 @@ function normalizeCompetitionStatus(raw: string): string {
   if (s === 'live')                                 return 'Live'
   if (s === 'coming soon' || s === 'coming')        return 'Coming Soon'
   if (s === 'sold out')                             return 'Sold Out'
-  if (s === 'draw pending' || s === 'draw')         return 'Draw Pending'
-  if (s === 'winner announced' || s === 'winner')   return 'Winner Announced'
-  if (s === 'closed')                               return 'Closed'
+  // 'To Past Winners' archives the competition (moves it to /past-winners and
+  // hides it from active listings). 'closed' is the legacy value for the same.
+  if (s === 'to past winners' || s === 'closed')    return 'To Past Winners'
   return raw.trim()
+}
+
+/**
+ * Server-side entry gate for a raw WooProduct — the checkout/cart API routes use
+ * this to reject orders for competitions that are no longer purchasable, even if
+ * the frontend UI is bypassed. Entries are closed when the competition has been
+ * archived to Past Winners OR the draw date/time has already passed.
+ * Mirrors the client-side `entryGate()` in lib/competition-status.ts.
+ */
+export function isWooEntryClosed(product: WooProduct, now: number = Date.now()): boolean {
+  if (product.competition_status === 'To Past Winners') return true
+  if (product.draw_date) {
+    const t = Date.parse(parseWooDrawDate(product.draw_date))
+    if (Number.isFinite(t) && t <= now) return true
+  }
+  return false
 }
 
 /**
@@ -1191,11 +1207,11 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
     // After normalisation in toSafeProduct, competition_type is already 'starter'/'weekly'/etc.
     const typed = products.filter(p =>
       p.competition_type === type &&
-      p.competition_status !== 'Closed'
+      p.competition_status !== 'To Past Winners'
     )
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[PWC] slot="${type}": ${typed.length} candidate(s) (excl. Closed)`)
+      console.log(`[PWC] slot="${type}": ${typed.length} candidate(s) (excl. To Past Winners)`)
     }
 
     if (typed.length === 0) continue
@@ -1248,7 +1264,7 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
       if (comingSoon.length > 0) selected = comingSoon[0]
     }
 
-    // Tier 5: "Closed" is filtered out above — slot stays null (card hidden).
+    // Tier 5: "To Past Winners" is filtered out above — slot stays null (card hidden).
 
     if (process.env.NODE_ENV === 'development') {
       console.log(

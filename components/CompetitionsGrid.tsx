@@ -74,11 +74,12 @@ function CompCard({ competition: c }: { competition: Competition }) {
   const time    = useCountdown(c.drawDate)
   const imgRef  = useRef<HTMLDivElement>(null)
   const soldOut = isSoldOut(c)
+  const blocked = time.closed || soldOut          // not purchasable (timer ended or sold out)
   const label   = getDropLabel(c)
-  const badge   = getBadgeClass(c, soldOut)
+  const badge   = getBadgeClass(c, blocked)       // reuse the sold-out badge styling when closed
 
   return (
-    <article className={`cgc-card${soldOut ? ' cgc-card--soldout' : ''}`}>
+    <article className={`cgc-card${blocked ? ' cgc-card--soldout' : ''}`}>
       {/* image area */}
       <div className="cgc-img-wrap" ref={imgRef}>
         <div className="cgc-img-shine" />
@@ -91,7 +92,7 @@ function CompCard({ competition: c }: { competition: Competition }) {
           sizes="(max-width: 480px) 100vw, (max-width: 900px) 50vw, 360px"
           draggable={false}
         />
-        <div className={`cgc-badge ${badge}`}>{soldOut ? 'SOLD OUT' : label}</div>
+        <div className={`cgc-badge ${badge}`}>{time.closed ? 'CLOSED' : soldOut ? 'SOLD OUT' : label}</div>
         <div className="cgc-img-overlay" />
       </div>
 
@@ -138,8 +139,9 @@ function CompCard({ competition: c }: { competition: Competition }) {
           </div>
         </div>
 
-        {/* CTA — disabled when sold out */}
-        {soldOut ? (
+        {/* CTA — disabled when the draw timer has ended or the drop is sold out.
+            time.closed takes priority so an expired draw always reads "Closed". */}
+        {time.closed || soldOut ? (
           <button
             disabled
             aria-disabled="true"
@@ -157,7 +159,7 @@ function CompCard({ competition: c }: { competition: Competition }) {
               justifyContent: 'center',
             }}
           >
-            <span>SOLD OUT</span>
+            <span>{time.closed ? 'COMPETITION CLOSED' : 'SOLD OUT'}</span>
           </button>
         ) : (
           <Link href={c.ctaLink} className="cgc-cta">

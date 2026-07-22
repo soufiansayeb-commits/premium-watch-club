@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
-import { isSoldOut, getStatusLabel } from '@/lib/competition-status'
+import { isSoldOut, isArchived, getStatusLabel } from '@/lib/competition-status'
 import { getOptionLabel } from '@/lib/skill-challenge-config'
 import { bundleLineTotal, getEligibleTiers } from '@/lib/bundle-discounts'
 import { useCart } from '@/context/CartContext'
@@ -19,86 +19,122 @@ interface Props {
   competition: Competition
 }
 
+/**
+ * Entry gate wrapper. Blocks ordering — and swaps in a notice — when the
+ * competition is archived (To Past Winners), its draw timer has ended, or it is
+ * sold out. The timer is evaluated after mount (SSG-safe: no hydration mismatch)
+ * and ticks every second, so entries close the moment the countdown hits zero.
+ */
 export default function CompetitionEntryFlow({ competition }: Props) {
-  // ── Sold-out gate — blocks all entry steps ────────────────────────────────
+  const [drawEnded, setDrawEnded] = useState(false)
+  useEffect(() => {
+    if (!competition.drawDate) return
+    const target = Date.parse(competition.drawDate)
+    if (!Number.isFinite(target)) return
+    const check = () => setDrawEnded(Date.now() >= target)
+    check()
+    const id = setInterval(check, 1000)
+    return () => clearInterval(id)
+  }, [competition.drawDate])
+
+  if (isArchived(competition) || drawEnded) {
+    return <EntryBlockedNotice competition={competition} reason="closed" />
+  }
   if (isSoldOut(competition)) {
-    return (
-      <>
-        <ProgressSteps currentStep={1} />
-        <main id="entry-main">
-          <div className="entry-grid">
-            <WatchInfoPanel competition={competition} />
-            <div className="entry-right">
-              <div className="step-panel active" id="panel-step-1">
-                <div className="entry-card">
-                  <div className="entry-card-header" style={{ textAlign: 'center', padding: '40px 32px 24px' }}>
-                    <div
-                      style={{
-                        display: 'inline-block',
-                        padding: '6px 20px',
-                        background: 'rgba(18,12,4,0.92)',
-                        border: '1px solid rgba(212,175,55,0.3)',
-                        color: 'rgba(212,175,55,0.7)',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        letterSpacing: '0.2em',
-                        borderRadius: '2px',
-                        marginBottom: '20px',
-                      }}
-                    >
-                      {getStatusLabel(competition)}
-                    </div>
-                    <div className="ech-title" style={{ marginBottom: '12px' }}>{competition.title}</div>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6, maxWidth: '360px', margin: '0 auto' }}>
-                      All entries for this competition have been sold. The draw will be conducted among the registered entries.
-                    </p>
+    return <EntryBlockedNotice competition={competition} reason="sold-out" />
+  }
+  return <EntryFlowOpen competition={competition} />
+}
+
+/**
+ * Full-page "not purchasable" notice, styled exactly like the existing sold-out
+ * card — only the labels/copy differ between the closed and sold-out states.
+ */
+function EntryBlockedNotice({ competition, reason }: { competition: Competition; reason: 'closed' | 'sold-out' }) {
+  const isClosed = reason === 'closed'
+  const badge    = isClosed ? 'Competition Closed' : getStatusLabel(competition)
+  const bigLabel = isClosed ? 'COMPETITION CLOSED' : 'SOLD OUT'
+  const body = isClosed
+    ? 'Entries for this competition have closed. The draw will be conducted among the registered entries.'
+    : 'All entries for this competition have been sold. The draw will be conducted among the registered entries.'
+  return (
+    <>
+      <ProgressSteps currentStep={1} />
+      <main id="entry-main">
+        <div className="entry-grid">
+          <WatchInfoPanel competition={competition} />
+          <div className="entry-right">
+            <div className="step-panel active" id="panel-step-1">
+              <div className="entry-card">
+                <div className="entry-card-header" style={{ textAlign: 'center', padding: '40px 32px 24px' }}>
+                  <div
+                    style={{
+                      display: 'inline-block',
+                      padding: '6px 20px',
+                      background: 'rgba(18,12,4,0.92)',
+                      border: '1px solid rgba(212,175,55,0.3)',
+                      color: 'rgba(212,175,55,0.7)',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.2em',
+                      borderRadius: '2px',
+                      marginBottom: '20px',
+                    }}
+                  >
+                    {badge}
                   </div>
-                  <div className="entry-card-body" style={{ textAlign: 'center', paddingBottom: '32px' }}>
-                    <div
+                  <div className="ech-title" style={{ marginBottom: '12px' }}>{competition.title}</div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1.6, maxWidth: '360px', margin: '0 auto' }}>
+                    {body}
+                  </p>
+                </div>
+                <div className="entry-card-body" style={{ textAlign: 'center', paddingBottom: '32px' }}>
+                  <div
+                    style={{
+                      display: 'inline-block',
+                      padding: '14px 40px',
+                      background: 'rgba(18,12,4,0.92)',
+                      border: '1px solid rgba(212,175,55,0.22)',
+                      color: 'rgba(212,175,55,0.45)',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      letterSpacing: '0.18em',
+                      borderRadius: '2px',
+                      cursor: 'not-allowed',
+                      marginBottom: '24px',
+                    }}
+                  >
+                    {bigLabel}
+                  </div>
+                  <div>
+                    <Link
+                      href="/"
                       style={{
                         display: 'inline-block',
-                        padding: '14px 40px',
-                        background: 'rgba(18,12,4,0.92)',
-                        border: '1px solid rgba(212,175,55,0.22)',
-                        color: 'rgba(212,175,55,0.45)',
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        letterSpacing: '0.18em',
+                        padding: '10px 24px',
+                        border: '1px solid var(--border-mid)',
+                        color: 'var(--text-muted)',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        letterSpacing: '0.1em',
                         borderRadius: '2px',
-                        cursor: 'not-allowed',
-                        marginBottom: '24px',
+                        textDecoration: 'none',
                       }}
                     >
-                      SOLD OUT
-                    </div>
-                    <div>
-                      <Link
-                        href="/"
-                        style={{
-                          display: 'inline-block',
-                          padding: '10px 24px',
-                          border: '1px solid var(--border-mid)',
-                          color: 'var(--text-muted)',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          letterSpacing: '0.1em',
-                          borderRadius: '2px',
-                          textDecoration: 'none',
-                        }}
-                      >
-                        Browse Other Competitions
-                      </Link>
-                    </div>
+                      Browse Other Competitions
+                    </Link>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
         </main>
       </>
     )
   }
 
+function EntryFlowOpen({ competition }: Props) {
   const [currentStep, setCurrentStep] = useState(1)
   // No preselection: the visitor must explicitly choose a ticket package. null =
   // nothing selected yet (the buy box + sticky bar render a neutral state).

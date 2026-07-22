@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
-import { isSoldOut } from '@/lib/competition-status'
+import { isSoldOut, isArchived } from '@/lib/competition-status'
 import TrustpilotProof from '@/components/TrustpilotProof'
 import SoldProgress from '@/components/competition/SoldProgress'
 import StickyMobileCta from '@/components/competition/StickyMobileCta'
@@ -42,9 +42,12 @@ function TicketGlyph() {
 export default function TicketSelector({ competition: c, selectedQty, onQtyChange, onContinue }: Props) {
   const fmt = useMoney()
 
-  // Defense-in-depth: CompetitionEntryFlow already gates on isSoldOut before
-  // rendering TicketSelector. This guard handles any direct-render edge cases.
-  if (isSoldOut(c)) {
+  // Defense-in-depth: CompetitionEntryFlow already gates (incl. the reactive
+  // draw-timer) before rendering TicketSelector. This guard handles any
+  // direct-render edge cases for the non-time states (no time-based check here,
+  // so it can never cause a hydration mismatch — the timer lives in the parent).
+  if (isArchived(c) || isSoldOut(c)) {
+    const closed = isArchived(c)
     return (
       <div className="step-panel active" id="panel-step-1">
         <div className="entry-card">
@@ -64,10 +67,12 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                 marginBottom: '16px',
               }}
             >
-              SOLD OUT
+              {closed ? 'COMPETITION CLOSED' : 'SOLD OUT'}
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-              All entries for this competition have been sold.
+              {closed
+                ? 'Entries for this competition have closed.'
+                : 'All entries for this competition have been sold.'}
             </p>
           </div>
         </div>

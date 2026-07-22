@@ -52,7 +52,7 @@ export interface Competition {
   wooStockQuantity?: number | null;
   /**
    * ACF field: competition lifecycle status.
-   * Values: 'Coming Soon' | 'Live' | 'Sold Out' | 'Draw Pending' | 'Winner Announced' | 'Closed'
+   * Values: 'Coming Soon' | 'Live' | 'Sold Out' | 'To Past Winners'
    * Controls entry gates across homepage, competition page, and checkout.
    */
   competitionStatus?: string;

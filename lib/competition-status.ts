@@ -31,6 +31,44 @@ export function isEnterable(competition: Competition): boolean {
 }
 
 /**
+ * True once the competition's draw date/time has passed (the countdown timer
+ * has run out). Time-based, so pass a live `now` from a ticking component to
+ * have it flip exactly when the timer hits zero. Missing/invalid dates are
+ * treated as "not ended" (never accidentally close a competition without a date).
+ */
+export function hasDrawEnded(competition: Competition, now: number = Date.now()): boolean {
+  if (!competition.drawDate) return false
+  const t = Date.parse(competition.drawDate)
+  return Number.isFinite(t) && t <= now
+}
+
+/**
+ * The competition has been archived to Past Winners by an admin
+ * (ACF competition_status = 'To Past Winners').
+ */
+export function isArchived(competition: Competition): boolean {
+  return competition.competitionStatus === 'To Past Winners'
+}
+
+export type EntryGate = 'open' | 'sold-out' | 'closed'
+
+/**
+ * Single source of truth for whether a competition can be entered, in priority
+ * order:
+ *   archived (To Past Winners) OR draw timer ended → 'closed'   (never purchasable)
+ *   sold out                                       → 'sold-out'
+ *   otherwise                                      → 'open'
+ *
+ * Pass a live `now` from a component that ticks every second so 'closed' appears
+ * the instant the countdown reaches zero.
+ */
+export function entryGate(competition: Competition, now: number = Date.now()): EntryGate {
+  if (isArchived(competition) || hasDrawEnded(competition, now)) return 'closed'
+  if (isSoldOut(competition)) return 'sold-out'
+  return 'open'
+}
+
+/**
  * Human-readable status label derived from ACF field or stock state.
  * Falls back to stock-derived labels when ACF status is not set.
  */
@@ -52,16 +90,20 @@ export type CompetitionCtaState = 'enter' | 'sold-out' | 'closed'
 
 /**
  * Derive the CTA lifecycle state from a competition_status value.
- * Accepts both normalised ('Sold Out', 'Closed', 'Live') and raw
- * ('sold_out', 'closed') forms. Post-draw states (Draw Pending, Winner
- * Announced) and Closed all collapse to 'closed' (never purchasable).
+ * Accepts both normalised ('Sold Out', 'To Past Winners', 'Live') and raw
+ * ('sold_out', 'to_past_winners') forms. 'To Past Winners' (and the legacy
+ * 'Closed' value) collapse to 'closed' (never purchasable).
+ *
+ * NOTE: this is status-string only — it cannot see the draw timer. Callers that
+ * have a full Competition object should use `entryGate()` instead, which also
+ * closes entries once the countdown has ended.
  */
 export function deriveCtaState(
   status: string | null | undefined,
   ticketsLeft?: number | null,
 ): CompetitionCtaState {
   const s = (status ?? '').toLowerCase().replace(/_/g, ' ').trim()
-  if (s === 'closed' || s === 'draw pending' || s === 'winner announced') return 'closed'
+  if (s === 'to past winners' || s === 'closed') return 'closed'
   if (s === 'sold out' || (typeof ticketsLeft === 'number' && ticketsLeft <= 0)) return 'sold-out'
   return 'enter'
 }

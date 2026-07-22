@@ -19,7 +19,7 @@ export interface PastWinner {
   galleryImages:         string[]
   /** Best image for the Past Winners card (fallback chain applied). */
   cardImage:             string | null
-  status:                string            // 'Closed' | 'Sold Out' | …
+  status:                string            // 'To Past Winners' | 'Sold Out' | …
   drawNumber?:           string
   drawDate?:             string            // raw ACF value
   drawDateDisplay:       string            // "10 June 2026"
@@ -120,7 +120,7 @@ async function mapPastWinner(p: WooProduct): Promise<PastWinner> {
     productImage,
     galleryImages,
     cardImage,
-    status:                p.competition_status ?? 'Closed',
+    status:                p.competition_status ?? 'To Past Winners',
     drawNumber:            p.draw_number,
     drawDate:              p.draw_date,
     drawDateDisplay:       formatDrawDate(p.draw_date),
@@ -157,7 +157,7 @@ async function mapPastWinner(p: WooProduct): Promise<PastWinner> {
 export async function getPastWinners(): Promise<PastWinner[]> {
   const { products } = await fetchWooProducts()
   const filtered = products.filter(
-    p => p.competition_status === 'Closed' && p.show_on_past_winners === true
+    p => p.competition_status === 'To Past Winners' && p.show_on_past_winners === true
   )
   const mapped = await Promise.all(filtered.map(mapPastWinner))
   return mapped.sort((a, b) => {
@@ -174,7 +174,7 @@ export async function getPastWinners(): Promise<PastWinner[]> {
 export async function getHomepageWinners(): Promise<PastWinner[]> {
   const { products } = await fetchWooProducts()
   const filtered = products.filter(
-    p => p.competition_status === 'Closed' && p.show_on_homepage_winners === true
+    p => p.competition_status === 'To Past Winners' && p.show_on_homepage_winners === true
   )
   const mapped = await Promise.all(filtered.map(mapPastWinner))
   return mapped

@@ -180,7 +180,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
             >
               <span>COMING SOON</span>
             </button>
-          ) : soldOut ? (
+          ) : (soldOut || closed) ? (
             <button
               disabled
               aria-disabled="true"
@@ -194,7 +194,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
                 letterSpacing: '0.18em',
               }}
             >
-              <span>SOLD OUT</span>
+              <span>{closed ? 'COMPETITION CLOSED' : 'SOLD OUT'}</span>
             </button>
           ) : (
             <Link href={c.ctaLink} className="h2-cta-btn">
@@ -289,7 +289,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
               >
                 COMING SOON
               </button>
-            ) : soldOut ? (
+            ) : (soldOut || closed) ? (
               <button
                 disabled
                 aria-disabled="true"
@@ -305,7 +305,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
                   display: 'block',
                 }}
               >
-                SOLD OUT
+                {closed ? 'COMPETITION CLOSED' : 'SOLD OUT'}
               </button>
             ) : (
               <Link href={c.ctaLink} className="h2-card-cta">
@@ -332,9 +332,9 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
       <div className="h2-mobile">
 
         {/* Top eyebrow — only for sold-out and coming-soon states */}
-        {(soldOut || isComingSoon) && (
+        {(soldOut || isComingSoon || closed) && (
           <div className="h2m-eyebrow">
-            <span>{isComingSoon ? 'COMING SOON · NOTIFY ME' : 'SOLD OUT · DRAW PENDING'}</span>
+            <span>{isComingSoon ? 'COMING SOON · NOTIFY ME' : closed ? 'ENTRIES CLOSED' : 'SOLD OUT'}</span>
           </div>
         )}
 
@@ -367,9 +367,9 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
             <button disabled aria-disabled="true" className="h2m-cta h2m-cta--disabled">
               COMING SOON
             </button>
-          ) : soldOut ? (
+          ) : (soldOut || closed) ? (
             <button disabled aria-disabled="true" className="h2m-cta h2m-cta--disabled">
-              SOLD OUT
+              {closed ? 'COMPETITION CLOSED' : 'SOLD OUT'}
             </button>
           ) : (
             <Link href={c.ctaLink} className="h2m-cta">
