@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 import { fetchWooProducts } from '@/lib/woocommerce'
 import { getJournalPosts } from '@/lib/wordpress-journal'
 
-const BASE_URL = 'https://premiumwatchclub.com'
+const BASE_URL = 'https://www.premiumwatchclub.com'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [

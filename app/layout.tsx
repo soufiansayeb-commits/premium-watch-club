@@ -11,18 +11,27 @@ import { fetchBundleConfig } from '@/lib/bundle-discounts'
 import { fetchStoreSettings } from '@/lib/store-settings'
 import { JsonLd } from '@/components/JsonLd'
 
+const SITE_URL = 'https://www.premiumwatchclub.com'
+
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Premium Watch Club',
-  url: 'https://premiumwatchclub.com',
-  logo: 'https://premiumwatchclub.com/brand-assets/pwc-logo-wordmark-gold.png',
+  url: SITE_URL,
+  logo: `${SITE_URL}/brand-assets/pwc-logo-wordmark-gold.png`,
+}
+
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Premium Watch Club',
+  url: SITE_URL,
 }
 
 export const metadata: Metadata = {
   title: 'Premium Watch Club — Win Luxury Watches',
   description: 'Enter skill-based competitions to win your dream luxury watch. One competition at a time.',
-  metadataBase: new URL('https://premiumwatchclub.com'),
+  metadataBase: new URL(SITE_URL),
   openGraph: {
     siteName: 'Premium Watch Club',
     type: 'website',
@@ -53,6 +62,7 @@ export default async function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <JsonLd data={organizationSchema} />
+        <JsonLd data={websiteSchema} />
         <StoreSettingsProvider settings={storeSettings}>
           <BundleConfigProvider config={bundleConfig}>
             <CartProvider>

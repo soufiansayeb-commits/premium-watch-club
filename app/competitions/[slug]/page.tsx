@@ -56,8 +56,8 @@ function buildCompetitionSchemas(competition: Competition, slug: string, setting
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://premiumwatchclub.com' },
-      { '@type': 'ListItem', position: 2, name: competition.title, item: `https://premiumwatchclub.com/competitions/${slug}` },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.premiumwatchclub.com' },
+      { '@type': 'ListItem', position: 2, name: competition.title, item: `https://www.premiumwatchclub.com/competitions/${slug}` },
     ],
   }
 
@@ -90,7 +90,7 @@ export async function generateMetadata({ params }: Props) {
 
   // Self-canonical only — no stale title/description/image when live data is missing.
   if (!competition) {
-    return { alternates: { canonical: `https://premiumwatchclub.com/competitions/${slug}` } }
+    return { alternates: { canonical: `https://www.premiumwatchclub.com/competitions/${slug}` } }
   }
 
   const settings = await fetchStoreSettings()
@@ -102,7 +102,7 @@ export async function generateMetadata({ params }: Props) {
     title: `${competition.title} — Win for ${entry} — Premium Watch Club`,
     description: `Enter to win a ${competition.title} worth ${retail} for just ${entry} a ticket. Draw: ${competition.drawDateDisplay}.`,
     alternates: {
-      canonical: `https://premiumwatchclub.com/competitions/${slug}`,
+      canonical: `https://www.premiumwatchclub.com/competitions/${slug}`,
     },
     openGraph: ogImage ? { images: [{ url: ogImage }] } : undefined,
   }

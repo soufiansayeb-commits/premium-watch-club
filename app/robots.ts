@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', '/cart', '/account/'],
       },
     ],
-    sitemap: 'https://premiumwatchclub.com/sitemap.xml',
+    sitemap: 'https://www.premiumwatchclub.com/sitemap.xml',
   }
 }

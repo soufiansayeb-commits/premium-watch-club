@@ -19,9 +19,29 @@ import ReviewWall from '@/components/ReviewWall'
 import Footer from '@/components/Footer'
 import ScrollReveal from '@/components/ScrollReveal'
 
+const HOME_TITLE = 'Premium Watch Club | Skill-Based Luxury Watch Competitions'
+const HOME_DESCRIPTION =
+  'Enter skill-based competitions for the chance to win authentic luxury watches. Transparent entry limits, independently verified draws and guaranteed cash alternatives.'
+
 export const metadata: Metadata = {
-  title: 'Premium Watch Club — Win Luxury Watches in Skill-Based Competitions',
-  description: 'Enter skill-based competitions to win luxury watches from Rolex, Omega and more. One competition at a time — answer a skill question to enter.',
+  title: HOME_TITLE,
+  description: HOME_DESCRIPTION,
+  // Canonical resolves against metadataBase (www) → https://www.premiumwatchclub.com
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    url: '/',
+    siteName: 'Premium Watch Club',
+    type: 'website',
+    locale: 'en_GB',
+    // OG image is supplied automatically by app/opengraph-image.png
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+  },
 }
 
 export default async function HomePage() {

@@ -40,9 +40,9 @@ export default async function JournalArticlePage({ params }: { params: { slug: s
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://premiumwatchclub.com' },
-      { '@type': 'ListItem', position: 2, name: 'Journal', item: 'https://premiumwatchclub.com/journal' },
-      { '@type': 'ListItem', position: 3, name: post.title, item: `https://premiumwatchclub.com/journal/${params.slug}` },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.premiumwatchclub.com' },
+      { '@type': 'ListItem', position: 2, name: 'Journal', item: 'https://www.premiumwatchclub.com/journal' },
+      { '@type': 'ListItem', position: 3, name: post.title, item: `https://www.premiumwatchclub.com/journal/${params.slug}` },
     ],
   }
 

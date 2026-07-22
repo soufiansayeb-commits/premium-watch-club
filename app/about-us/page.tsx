@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: 'About Us — Premium Watch Club',
   description: 'Premium Watch Club is a premium watch competition platform built on curated drops, skill-based entry, transparent mechanics and verified winners.',
   alternates: {
-    canonical: 'https://premiumwatchclub.com/about-us',
+    canonical: 'https://www.premiumwatchclub.com/about-us',
   },
 }
 
