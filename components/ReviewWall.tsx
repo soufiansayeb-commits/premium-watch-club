@@ -11,31 +11,42 @@ import Script from 'next/script'
 const WIDGET_ID = '6a5f50fe5b7d132eab6d1352'
 const WIDGET_SRC = `https://embed.wiserreview.com/embed/${WIDGET_ID}/widget.js`
 
-// The embed is a run-once IIFE: on load it finds `[data-id]` and paints the
-// wall, but exposes no public re-init hook. It sets a global the first time it
-// runs. We flip this flag once <Script> has executed on the initial load; it
-// lives at module scope so it survives client-side navigation but resets on a
-// full page reload — exactly when next/script loads the embed fresh again.
-let embedInitialised = false
+// WiserReview's embed is a run-once IIFE with NO public re-init hook and NO
+// guard against running twice. Each execution attaches its own document-level
+// click listeners (event-delegated — they outlive the <script> element), starts
+// a resize interval, and paints the container lazily via IntersectionObserver.
+// Running it twice therefore duplicates those handlers (this is what left
+// "Load more" spinning) and races two paints on one container (which could wipe
+// the section on a hard refresh). So the script MUST load exactly once.
+//
+// To keep the wall working after a client-side navigation away and back —
+// without re-executing the embed — we stash the painted widget DOM on unmount
+// and re-attach it on the next mount. This is safe because the embed's click
+// handlers are delegated on `document` (they work on the re-attached nodes) and
+// its resize loop no-ops when the nodes are detached.
+let paintedWidget: DocumentFragment | null = null
 
 export default function ReviewWall() {
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // The initial page load is owned by <Script> below. On a client-side
-  // navigation back to the homepage the cached embed will not re-execute and
-  // the freshly mounted container is empty, so we re-run the embed once to
-  // repaint it. Guarding on `embedInitialised` + an empty container prevents a
-  // second initialisation on first load and under React Strict Mode.
   useEffect(() => {
     const el = containerRef.current
-    if (!el || !embedInitialised || el.childElementCount > 0) return
+    if (!el) return
 
-    const s = document.createElement('script')
-    s.src = WIDGET_SRC
-    s.async = true
-    document.body.appendChild(s)
+    // Client-side nav back: restore a widget painted on a previous visit rather
+    // than re-running the embed (the initial load is owned by <Script> below).
+    if (paintedWidget && el.childElementCount === 0) {
+      el.appendChild(paintedWidget)
+      paintedWidget = null
+    }
+
     return () => {
-      s.remove()
+      // Nav away: keep the painted widget so we can re-attach it later.
+      if (el.childElementCount > 0) {
+        const frag = document.createDocumentFragment()
+        while (el.firstChild) frag.appendChild(el.firstChild)
+        paintedWidget = frag
+      }
     }
   }, [])
 
@@ -49,13 +60,10 @@ export default function ReviewWall() {
         className="wiser_review_wall"
         suppressHydrationWarning
       />
-      <Script
-        src={WIDGET_SRC}
-        strategy="afterInteractive"
-        onReady={() => {
-          embedInitialised = true
-        }}
-      />
+      {/* Load the embed once for the document's lifetime — next/script dedupes by
+          id/src, so it never runs twice (incl. React Strict Mode). The container
+          above is in the server-rendered HTML, so it exists before this runs. */}
+      <Script id="wiser-review-wall" src={WIDGET_SRC} strategy="afterInteractive" />
     </section>
   )
 }
