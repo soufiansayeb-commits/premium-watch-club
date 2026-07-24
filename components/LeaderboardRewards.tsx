@@ -26,10 +26,10 @@ interface Tier {
 // Runner-up ladder. Static frontend data for now, kept in one place so it is
 // trivial to make backend-driven later without touching the layout.
 const TIERS: Tier[] = [
-  { start: '#2', end: '#5', reward: 50, winners: 4, total: 200, acc: 1, note: 'Each of these 4 members receives a $50 reward.' },
-  { start: '#6', end: '#15', reward: 25, winners: 10, total: 250, acc: 0.8, note: 'Each of these 10 members receives a $25 reward.' },
-  { start: '#16', end: '#25', reward: 15, winners: 10, total: 150, acc: 0.62, note: 'Each of these 10 members receives a $15 reward.' },
-  { start: '#26', end: '#50', reward: 10, winners: 25, total: 250, acc: 0.48, note: 'Each of these 25 members receives a $10 reward.' },
+  { start: '#2', end: '#5', reward: 50, winners: 4, total: 200, acc: 1, note: 'Each of these 4 members receives a £50 reward.' },
+  { start: '#6', end: '#15', reward: 25, winners: 10, total: 250, acc: 0.8, note: 'Each of these 10 members receives a £25 reward.' },
+  { start: '#16', end: '#25', reward: 15, winners: 10, total: 150, acc: 0.62, note: 'Each of these 10 members receives a £15 reward.' },
+  { start: '#26', end: '#50', reward: 10, winners: 25, total: 250, acc: 0.48, note: 'Each of these 25 members receives a £10 reward.' },
 ]
 
 export default function LeaderboardRewards({ competition, ctaHref = '#entry-main' }: Props) {
@@ -124,7 +124,7 @@ export default function LeaderboardRewards({ competition, ctaHref = '#entry-main
                     <span className="lbr-rank-b">{t.end}</span>
                   </div>
                   <div className="lbr-reward">
-                    <span className="lbr-reward-amt">${t.reward}</span>
+                    <span className="lbr-reward-amt">£{t.reward}</span>
                     <span className="lbr-reward-lab">per member</span>
                   </div>
                   <div className="lbr-meta">
@@ -140,7 +140,7 @@ export default function LeaderboardRewards({ competition, ctaHref = '#entry-main
                 <span className="lbr-sum-lab">Total runner-up rewards</span>
                 <span className="lbr-sum-sub">49 members rewarded beyond the watch</span>
               </div>
-              <span className="lbr-sum-val">$850</span>
+              <span className="lbr-sum-val">£850</span>
             </motion.div>
           </div>
         </div>

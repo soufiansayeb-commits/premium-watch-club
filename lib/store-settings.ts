@@ -17,9 +17,9 @@
 export type CurrencyPosition = 'left' | 'right' | 'left_space' | 'right_space'
 
 export interface StoreSettings {
-  /** ISO code, e.g. "USD". */
+  /** ISO code, e.g. "GBP". */
   currency: string
-  /** Display symbol, e.g. "$". */
+  /** Display symbol, e.g. "£". */
   currencySymbol: string
   currencyPosition: CurrencyPosition
   thousandSeparator: string
@@ -28,13 +28,13 @@ export interface StoreSettings {
 }
 
 /**
- * Safe fallback — mirrors the store's current live Woo currency (USD). Used only
+ * Safe fallback — mirrors the store's current live Woo currency (GBP). Used only
  * when /wp-json/pwc/v1/store-settings is unreachable. The live endpoint always
  * wins, so changing the Woo currency propagates without touching this file.
  */
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
-  currency: 'USD',
-  currencySymbol: '$',
+  currency: 'GBP',
+  currencySymbol: '£',
   currencyPosition: 'left',
   thousandSeparator: ',',
   decimalSeparator: '.',

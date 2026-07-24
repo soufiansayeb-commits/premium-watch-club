@@ -999,7 +999,7 @@ export function wooProductToCompetition(wooProduct: WooProduct): Competition {
     condition:             wooProduct.condition,
     entryPrice:            parsedPrice,
     isFree:                parsedPrice === 0,
-    currency:              '$',
+    currency:              '£',
     totalTickets:          totalEntries,
     ticketsSold:           sold,
     ticketsLeft:           remaining,

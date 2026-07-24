@@ -35,8 +35,8 @@ export function useStoreSettings(): StoreSettings {
  * `${currency}${n.toFixed(2)}` template so prices follow WooCommerce everywhere.
  *
  *   const fmt = useMoney()
- *   fmt(95)                 // "$95.00"
- *   fmt(6100, { decimals: 0 }) // "$6,100"
+ *   fmt(95)                 // "£95.00"
+ *   fmt(6100, { decimals: 0 }) // "£6,100"
  */
 export function useMoney(): (amount: number, opts?: FormatMoneyOptions) => string {
   const settings = useStoreSettings()
