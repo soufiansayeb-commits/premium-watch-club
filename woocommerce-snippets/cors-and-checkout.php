@@ -12,6 +12,8 @@
  *      (required for cart sync — clears old cart, adds exact quantity before checkout)
  *   2. Adds quantity +/− controls to the checkout order summary
  *      (matches the frontend cart drawer style)
+ *   3. Defaults NEW guest customers to United States (US) as their billing
+ *      country, without overriding a returning customer's saved choice.
  */
 
 // ── 1. CORS for WooCommerce Store API ────────────────────────────────────────
@@ -43,6 +45,26 @@ add_action( 'init', function () {
 
 // Allow Store API requests without nonce check (safe because CORS restricts the origin)
 add_filter( 'woocommerce_store_api_disable_nonce_check', '__return_true' );
+
+
+// ── 3. Default guest billing country → United States (US) ─────────────────────
+// Pre-selects "United States (US)" for NEW guest customers who have not yet
+// chosen a country. WooCommerce seeds a fresh customer session from
+// wc_get_customer_default_location(); this filter changes only that DEFAULT seed
+// to US. Because it is only the default:
+//   • a returning customer's saved billing country (kept in their WooCommerce
+//     session) is NEVER overridden — once they pick a country, that wins;
+//   • it works with the Blocks (Store API) checkout, which reads the same
+//     WC()->customer session that this seed feeds;
+//   • it is the supported WooCommerce hook — no DOM manipulation;
+//   • it does NOT touch the store base address, currency or selling locations.
+// NOTE: this assumes WooCommerce → Settings → General → "Default customer
+// location" is "Shop base address" or "No location by default" (the usual case
+// when the base country is not US). If it is set to "Geolocate", geolocation
+// takes priority over this filter — say so and it can be adjusted.
+add_filter( 'woocommerce_customer_default_location', function ( $default_location ) {
+    return 'US';
+} );
 
 
 // ── 2. Checkout quantity controls ─────────────────────────────────────────────
