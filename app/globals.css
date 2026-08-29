@@ -7524,7 +7524,15 @@ img { max-width: 100%; display: block; }
     display: flex;
     flex-direction: row;
     overflow-x: auto;
+    /* Reset the desktop grid's centring. On a scroll container, centred content
+       splits the overflow across BOTH sides and the left half lands in negative
+       scroll space that can never be reached — scrollLeft:0 is already as far
+       left as it goes. That silently amputated the first card on every phone
+       (106px on a 320px iPhone SE, 51px on a 14 Pro Max). */
+    justify-content: flex-start;
     scroll-snap-type: x mandatory;
+    /* Snapped cards line up with the section's own 16px gutter. */
+    scroll-padding-left: 0;
     gap: 10px;
     padding-bottom: 8px;
     -webkit-overflow-scrolling: touch;
@@ -7533,9 +7541,14 @@ img { max-width: 100%; display: block; }
   }
   .hs-cards::-webkit-scrollbar { display: none; }
   .hs-card {
-    min-width: 160px;
+    /* Two cards fill the viewport with the third peeking, so the row reads as
+       swipeable without needing a scrollbar. Percentage-based so it scales with
+       the device; clamped so it stays readable on a 320px screen and does not
+       balloon on a 430px one. Replaces a fixed 160px min-width, which needed
+       500px for three cards and overflowed every phone. */
+    flex: 0 0 clamp(124px, 43%, 178px);
+    min-width: 0;
     scroll-snap-align: start;
-    flex-shrink: 0;
     padding: 14px 12px 12px;
   }
   .hs-card__label  { font-size: 12px; }
@@ -7611,6 +7624,22 @@ img { max-width: 100%; display: block; }
     display: flex;
     justify-self: start;
     color: var(--text-dark);
+  }
+  /* Touch targets — Apple HIG asks for 44x44pt. The hamburger measured 26x23
+     and the cart 35x31, both comfortably below it. A centred transparent
+     pseudo-element enlarges the tappable area without moving, resizing or
+     restyling the icons: no layout shift at all, purely a bigger hit box. */
+  .hamburger,
+  .nav-cart-btn { position: relative; }
+  .hamburger::after,
+  .nav-cart-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
   }
   .nav-logo { justify-self: center; }
   .nav-logo-img {
