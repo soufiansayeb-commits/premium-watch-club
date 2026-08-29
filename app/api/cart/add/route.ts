@@ -75,11 +75,16 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Server-side entry gate — never let a competition that is archived (To Past
-  // Winners) or past its draw date be added to cart, even if the frontend UI is
-  // bypassed. Mirrors the client entryGate(). Lenient on lookup errors: the
-  // final checkout handoff (/api/prepare-checkout) re-checks, so a transient
-  // WooCommerce failure here never blocks an otherwise-valid purchase.
+  // Server-side entry gate — never let a competition that is closed (entries
+  // deadline reached, every ticket sold, or manually closed), archived, or not
+  // yet at its Go Live moment be added to cart, even if the frontend UI is
+  // bypassed. Mirrors getEffectiveStatus() on the client.
+  //
+  // Lenient on lookup errors, deliberately: the checkout handoff re-checks, and
+  // WordPress itself rejects the purchase at add-to-cart, cart re-validation,
+  // checkout and order creation (pwc-competition-lifecycle.php). A transient
+  // WooCommerce failure here therefore cannot let a closed competition be
+  // bought — it only avoids blocking an otherwise-valid one.
   try {
     const { product } = await fetchWooProductById(productId)
     if (product && isWooEntryClosed(product)) {

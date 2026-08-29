@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { CompetitionType, CompetitionsByType } from '@/lib/woocommerce'
+import { getEffectiveStatus } from '@/lib/competition-status'
 import HomepageHero from './HomepageHero'
 import HeroSwitcher from './HeroSwitcher'
 
@@ -27,26 +28,26 @@ const PATH_TO_TYPE: Record<string, CompetitionType> = {
 
 /**
  * Pick the initial active competition type.
- * If defaultType is provided (ad landing route) and that slot is not Coming Soon, use it.
- * Otherwise: Live+enterable (Weekly first) → any non-Coming-Soon → first non-null.
+ * If defaultType is provided (ad landing route) and that slot is selectable, use it.
+ * Otherwise: effectively Live (Weekly first) → any selectable slot → first non-null.
  */
 function resolveDefault(comps: CompetitionsByType, defaultType?: CompetitionType): CompetitionType | null {
-  // Landing-route override: honour if the slot exists and is not Coming Soon
+  // Landing-route override: honour it whenever the slot has something to show
   if (defaultType) {
     const c = comps[defaultType]
-    if (c && c.competitionStatus !== 'Coming Soon') return defaultType
+    if (c && isSelectable(c)) return defaultType
   }
-  // Prefer a fully enterable Live competition — Weekly Drop has highest priority
+  // Prefer an enterable Live competition — Weekly Drop has highest priority
   for (const t of TYPE_ORDER) {
     const c = comps[t]
-    if (c && c.competitionStatus === 'Live' && c.ticketsLeft > 0) return t
+    if (c && getEffectiveStatus(c) === 'live') return t
   }
-  // Fall back to sold-out (Live with no stock, or explicit Sold Out) — still worth showing
+  // Fall back to a closed competition — still worth showing
   for (const t of TYPE_ORDER) {
     const c = comps[t]
-    if (c && c.competitionStatus !== 'Coming Soon') return t
+    if (c && isSelectable(c)) return t
   }
-  // Last resort: first non-null slot (Coming Soon)
+  // Last resort: first non-null slot
   for (const t of TYPE_ORDER) {
     if (comps[t] !== null) return t
   }
@@ -54,12 +55,13 @@ function resolveDefault(comps: CompetitionsByType, defaultType?: CompetitionType
 }
 
 /**
- * A competition is selectable (card click changes the hero) unless it is Coming Soon.
- * Sold Out is selectable — users can view the sold-out hero; the CTA is disabled inside HomepageHero.
- * Coming Soon is not selectable — there is nothing useful to show yet.
+ * A competition is selectable (card click changes the hero) unless it is archived
+ * or has not reached its Go Live moment. Closed competitions ARE selectable —
+ * visitors can view the closed hero; the CTA is disabled inside HomepageHero.
  */
 function isSelectable(comp: NonNullable<CompetitionsByType[CompetitionType]>): boolean {
-  return comp.competitionStatus !== 'Coming Soon'
+  const status = getEffectiveStatus(comp)
+  return status !== 'archived' && status !== 'scheduled'
 }
 
 export default function HomepageHeroContainer({ competitionsByType, defaultType }: Props) {

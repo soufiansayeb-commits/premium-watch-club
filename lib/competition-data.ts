@@ -28,8 +28,28 @@ export interface Competition {
   ticketsSold: number;
   ticketsLeft: number;
   soldPercentage: number;
+  /**
+   * ACF draw_date as a UTC ISO string — the date/time of the live draw.
+   * DISPLAY ONLY. It no longer gates ticket sales; `entriesCloseDate` does.
+   * Kept as the countdown fallback for legacy records that have no
+   * entriesCloseDate, so old competitions behave exactly as they did before.
+   */
   drawDate: string; // ISO string — use new Date(drawDate) in components
   drawDateDisplay: string;
+  /**
+   * ACF go_live_date as a UTC ISO string — when a scheduled competition becomes
+   * Live and tickets go on sale. Absent/empty → the competition is live
+   * immediately (no scheduled phase).
+   */
+  goLiveDate?: string;
+  /**
+   * ACF entries_close_date as a UTC ISO string — the ticket sales deadline and
+   * the countdown target. NOT the draw date. When this passes the competition is
+   * Competition Closed even if tickets remain.
+   */
+  entriesCloseDate?: string;
+  /** Human-readable entries-close moment in the WordPress site timezone. */
+  entriesCloseDateDisplay?: string;
   cashAlternative: number;
   ticketOptions: TicketOption[];
   maxTicketsPerPurchase: number;
@@ -51,9 +71,16 @@ export interface Competition {
   /** Stock quantity from WooCommerce — populated at page render time. */
   wooStockQuantity?: number | null;
   /**
-   * ACF field: competition lifecycle status.
-   * Values: 'Coming Soon' | 'Live' | 'Sold Out' | 'To Past Winners'
-   * Controls entry gates across homepage, competition page, and checkout.
+   * ACF field: competition lifecycle status, normalised to display case.
+   * Values: 'Live' | 'Competition Closed' | 'To Past Winners'
+   *
+   * Legacy values still stored on older records are read and folded in:
+   *   'Sold Out'    → treated as Competition Closed
+   *   'Coming Soon' → treated as Scheduled (retired)
+   *
+   * This is the STORED value only. Never branch on it directly — use
+   * getEffectiveStatus() from lib/competition-status.ts, which also applies the
+   * entries-close deadline and remaining inventory.
    */
   competitionStatus?: string;
   /**

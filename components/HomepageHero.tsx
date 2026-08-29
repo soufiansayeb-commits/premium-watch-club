@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
-import { isSoldOut } from '@/lib/competition-status'
+import { getEffectiveStatus, getCountdownDeadline } from '@/lib/competition-status'
 import { useMoney } from '@/context/StoreSettingsContext'
 import LiveActivity from '@/components/LiveActivity'
 
@@ -19,17 +19,18 @@ function pad(n: number) {
 }
 
 /**
- * Compute the countdown parts from an authoritative draw timestamp.
+ * Compute the countdown parts from the authoritative entries-close timestamp.
  * Used both to seed initial state (so the server renders a meaningful, real
- * countdown instead of a false 00:00:00:00) and could be reused by the ticker.
- * Returns padded strings + a `closed` flag. Null/invalid date → neutral zeros.
+ * countdown instead of a false 00:00:00:00) and by the ticker.
+ * Returns padded strings + an `expired` flag. Null/invalid date → neutral zeros.
  */
 function remainingFrom(ts: number | null) {
-  if (ts === null) return { closed: false, d: '00', h: '00', m: '00', s: '00' }
+  if (ts === null) return { expired: false, d: '00', h: '00', m: '00', s: '00' }
   const diff = ts - Date.now()
-  if (diff <= 0) return { closed: true, d: '00', h: '00', m: '00', s: '00' }
+  // Clamped at zero — the timer never goes negative, never wraps, never restarts.
+  if (diff <= 0) return { expired: true, d: '00', h: '00', m: '00', s: '00' }
   return {
-    closed: false,
+    expired: false,
     d: pad(Math.floor(diff / 86400000)),
     h: pad(Math.floor((diff % 86400000) / 3600000)),
     m: pad(Math.floor((diff % 3600000) / 60000)),
@@ -40,38 +41,51 @@ function remainingFrom(ts: number | null) {
 export default function HomepageHero({ competition, switcherSlot }: Props) {
   const c = competition
   const fmt = useMoney()
-  const soldOut    = isSoldOut(c)
-  const isComingSoon = c.competitionStatus === 'Coming Soon'
 
-  const drawTimestamp = useMemo(() => {
-    const ts = new Date(c.drawDate).getTime()
-    return isNaN(ts) ? null : ts
-  }, [c.drawDate])
+  /**
+   * Non-time lifecycle facts: archived, every ticket sold, or an admin set
+   * Competition Closed. These do not change while the page is open, so they are
+   * evaluated once. The entries-close deadline is handled by the ticking timer
+   * below, which is what flips the page to closed live, without a reload.
+   */
+  const closedByStatus = getEffectiveStatus(c) !== 'live'
+
+  // The countdown counts down to ENTRIES CLOSE, not the draw date. Legacy
+  // competitions with no entries-close date fall back to their draw date.
+  const deadline = useMemo(() => getCountdownDeadline(c), [c])
 
   const maxOdds = `1:${c.totalTickets}`
 
-  // Seed from the authoritative draw date so the server-rendered HTML shows the
+  // Seed from the authoritative deadline so the server-rendered HTML shows the
   // real remaining time (not a false zero countdown). The client re-computes on
   // mount via the ticker below; the digits are suppressHydrationWarning'd so the
   // sub-second server/client difference never triggers a hydration mismatch.
   const [time, setTime]           = useState(() => {
-    const r = remainingFrom(drawTimestamp)
+    const r = remainingFrom(deadline)
     return { d: r.d, h: r.h, m: r.m, s: r.s }
   })
-  const [closed, setClosed]       = useState(() => remainingFrom(drawTimestamp).closed)
+  const [expired, setExpired]     = useState(() => remainingFrom(deadline).expired)
   const [progVisible, setProgVisible] = useState(false)
 
+  /**
+   * Entries are closed when the deadline has passed OR any non-time rule already
+   * closed the competition (sold out, archived, manually closed). In either case
+   * the countdown resolves to zero — from the customer's point of view,
+   * "entries are closed" and "the countdown is finished" are the same thing.
+   */
+  const closed = closedByStatus || expired
+
   useEffect(() => {
-    if (drawTimestamp === null) return
-    const ts = drawTimestamp
+    if (deadline === null) return
+    const ts = deadline
     function tick() {
       const diff = ts - Date.now()
       if (diff <= 0) {
-        setClosed(true)
+        setExpired(true)
         setTime({ d: '00', h: '00', m: '00', s: '00' })
         return
       }
-      setClosed(false)
+      setExpired(false)
       setTime({
         d: pad(Math.floor(diff / 86400000)),
         h: pad(Math.floor((diff % 86400000) / 3600000)),
@@ -82,7 +96,11 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
-  }, [drawTimestamp])
+  }, [deadline])
+
+  // A competition closed by sold-out/archive/manual status shows zeros straight
+  // away, even though its deadline may still be in the future.
+  const shown = closed ? { d: '00', h: '00', m: '00', s: '00' } : time
 
   useEffect(() => {
     const t = setTimeout(() => setProgVisible(true), 500)
@@ -108,40 +126,45 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
         {/* ── COL 1: LEFT — all text content ── */}
         <div className="h2-left">
 
+          {/* Eyebrow — the live wording is never shown alongside a closed state. */}
           <div className="h2-eyebrow">
-            <span className="h2-pulse-dot" />
-            <span>LIVE COMPETITION</span>
-            <span className="h2-eyebrow-sep">·</span>
-            <span>ENTRIES CLOSE IN</span>
+            {closed ? (
+              <span>COMPETITION CLOSED</span>
+            ) : (
+              <>
+                <span className="h2-pulse-dot" />
+                <span>LIVE COMPETITION</span>
+                <span className="h2-eyebrow-sep">·</span>
+                <span>ENTRIES CLOSE IN</span>
+              </>
+            )}
           </div>
 
-          {closed ? (
-            <div className="h2-countdown h2-countdown-closed">
-              <span className="h2-closed-label">Competition Closed</span>
+          {/* Countdown — ALWAYS rendered, in the same layout, closed or not.
+              Once entries close it simply rests at 00:00:00:00: it is never
+              removed from the DOM, never replaced by a message, never negative
+              and never restarted. */}
+          <div className="h2-countdown">
+            <div className="h2-cd-block">
+              <span className="h2-cd-num" suppressHydrationWarning>{shown.d}</span>
+              <span className="h2-cd-lbl">DAYS</span>
             </div>
-          ) : (
-            <div className="h2-countdown">
-              <div className="h2-cd-block">
-                <span className="h2-cd-num" suppressHydrationWarning>{time.d}</span>
-                <span className="h2-cd-lbl">DAYS</span>
-              </div>
-              <span className="h2-cd-sep" aria-hidden="true">:</span>
-              <div className="h2-cd-block">
-                <span className="h2-cd-num" suppressHydrationWarning>{time.h}</span>
-                <span className="h2-cd-lbl">HRS</span>
-              </div>
-              <span className="h2-cd-sep" aria-hidden="true">:</span>
-              <div className="h2-cd-block">
-                <span className="h2-cd-num" suppressHydrationWarning>{time.m}</span>
-                <span className="h2-cd-lbl">MIN</span>
-              </div>
-              <span className="h2-cd-sep" aria-hidden="true">:</span>
-              <div className="h2-cd-block">
-                <span className="h2-cd-num" suppressHydrationWarning>{time.s}</span>
-                <span className="h2-cd-lbl">SEC</span>
-              </div>
+            <span className="h2-cd-sep" aria-hidden="true">:</span>
+            <div className="h2-cd-block">
+              <span className="h2-cd-num" suppressHydrationWarning>{shown.h}</span>
+              <span className="h2-cd-lbl">HRS</span>
             </div>
-          )}
+            <span className="h2-cd-sep" aria-hidden="true">:</span>
+            <div className="h2-cd-block">
+              <span className="h2-cd-num" suppressHydrationWarning>{shown.m}</span>
+              <span className="h2-cd-lbl">MIN</span>
+            </div>
+            <span className="h2-cd-sep" aria-hidden="true">:</span>
+            <div className="h2-cd-block">
+              <span className="h2-cd-num" suppressHydrationWarning>{shown.s}</span>
+              <span className="h2-cd-lbl">SEC</span>
+            </div>
+          </div>
 
           <div className="h2-progress">
             <div className="h2-prog-meta">
@@ -164,7 +187,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
             <span className="h2-headline-prefix">Win the </span>{c.title}
           </h1>
 
-          {isComingSoon ? (
+          {closed ? (
             <button
               disabled
               aria-disabled="true"
@@ -178,23 +201,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
                 letterSpacing: '0.18em',
               }}
             >
-              <span>COMING SOON</span>
-            </button>
-          ) : (soldOut || closed) ? (
-            <button
-              disabled
-              aria-disabled="true"
-              className="h2-cta-btn"
-              style={{
-                background: 'rgba(18,12,4,0.92)',
-                border: '1px solid rgba(212,175,55,0.22)',
-                color: 'rgba(212,175,55,0.45)',
-                cursor: 'not-allowed',
-                pointerEvents: 'none',
-                letterSpacing: '0.18em',
-              }}
-            >
-              <span>{closed ? 'COMPETITION CLOSED' : 'SOLD OUT'}</span>
+              <span>COMPETITION CLOSED</span>
             </button>
           ) : (
             <Link href={c.ctaLink} className="h2-cta-btn">
@@ -214,7 +221,10 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
             </span>
           </div>
 
-          <LiveActivity key={c.wooProductId} productId={c.wooProductId} />
+          {/* Live Activity renders ONLY while the competition is genuinely live.
+              Conditional render, not a CSS hide — it must not fetch or mount for
+              a closed, archived or not-yet-open competition. */}
+          {!closed && <LiveActivity key={c.wooProductId} productId={c.wooProductId} />}
 
         </div>
 
@@ -271,7 +281,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
                 <span className="h2-card-val">{c.drawDateDisplay.split(',')[0] || c.drawDateDisplay}</span>
               </div>
             </div>
-            {isComingSoon ? (
+            {closed ? (
               <button
                 disabled
                 aria-disabled="true"
@@ -287,25 +297,7 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
                   display: 'block',
                 }}
               >
-                COMING SOON
-              </button>
-            ) : (soldOut || closed) ? (
-              <button
-                disabled
-                aria-disabled="true"
-                className="h2-card-cta"
-                style={{
-                  background: 'rgba(18,12,4,0.92)',
-                  border: '1px solid rgba(212,175,55,0.22)',
-                  color: 'rgba(212,175,55,0.45)',
-                  cursor: 'not-allowed',
-                  pointerEvents: 'none',
-                  letterSpacing: '0.18em',
-                  textAlign: 'center',
-                  display: 'block',
-                }}
-              >
-                {closed ? 'COMPETITION CLOSED' : 'SOLD OUT'}
+                COMPETITION CLOSED
               </button>
             ) : (
               <Link href={c.ctaLink} className="h2-card-cta">
@@ -315,10 +307,12 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
           </div>
         </div>
 
-        {/* Mobile-only ticker — below competition details */}
-        <div className="act-ticker-mobile-wrap">
-          <LiveActivity key={`mob-${c.wooProductId}`} productId={c.wooProductId} />
-        </div>
+        {/* Mobile-only ticker — below competition details. Live state only. */}
+        {!closed && (
+          <div className="act-ticker-mobile-wrap">
+            <LiveActivity key={`mob-${c.wooProductId}`} productId={c.wooProductId} />
+          </div>
+        )}
 
       </div>
 
@@ -331,10 +325,10 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
       ════════════════════════════════════════════════════════ */}
       <div className="h2-mobile">
 
-        {/* Top eyebrow — only for sold-out and coming-soon states */}
-        {(soldOut || isComingSoon || closed) && (
+        {/* Top eyebrow — closed state only */}
+        {closed && (
           <div className="h2m-eyebrow">
-            <span>{isComingSoon ? 'COMING SOON · NOTIFY ME' : closed ? 'ENTRIES CLOSED' : 'SOLD OUT'}</span>
+            <span>COMPETITION CLOSED</span>
           </div>
         )}
 
@@ -363,13 +357,9 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
 
         {/* 4 — CTA + price */}
         <div className="h2m-cta-wrap">
-          {isComingSoon ? (
+          {closed ? (
             <button disabled aria-disabled="true" className="h2m-cta h2m-cta--disabled">
-              COMING SOON
-            </button>
-          ) : (soldOut || closed) ? (
-            <button disabled aria-disabled="true" className="h2m-cta h2m-cta--disabled">
-              {closed ? 'COMPETITION CLOSED' : 'SOLD OUT'}
+              COMPETITION CLOSED
             </button>
           ) : (
             <Link href={c.ctaLink} className="h2m-cta">
@@ -388,45 +378,38 @@ export default function HomepageHero({ competition, switcherSlot }: Props) {
         </div>
 
         {/* 5 — Tickets left / progress */}
-        {!isComingSoon && (
-          <div className="h2m-progress">
-            <div className="h2m-prog-label">
-              <span className="h2m-prog-live">
-                <span className="h2m-prog-dot" aria-hidden="true" />
-                {c.soldPercentage}% sold
-              </span>
-              <span className="h2m-prog-left">{c.ticketsLeft} tickets left</span>
-            </div>
-            <div className="h2m-prog-track">
-              <div
-                className="h2m-prog-fill"
-                style={{ width: progVisible ? `${c.soldPercentage}%` : '0%' }}
-              />
-            </div>
+        <div className="h2m-progress">
+          <div className="h2m-prog-label">
+            <span className="h2m-prog-live">
+              <span className="h2m-prog-dot" aria-hidden="true" />
+              {c.soldPercentage}% sold
+            </span>
+            <span className="h2m-prog-left">{c.ticketsLeft} tickets left</span>
           </div>
-        )}
+          <div className="h2m-prog-track">
+            <div
+              className="h2m-prog-fill"
+              style={{ width: progVisible ? `${c.soldPercentage}%` : '0%' }}
+            />
+          </div>
+        </div>
 
         {/* 6 — Live label directly above the timer (live state only) */}
-        {!isComingSoon && !soldOut && !closed && (
+        {!closed && (
           <div className="h2m-eyebrow h2m-eyebrow--timer">
             <span className="h2m-dot" aria-hidden="true" />
             <span>LIVE COMPETITION · ENTRIES CLOSE IN</span>
           </div>
         )}
 
-        {/* 7 — Countdown */}
-        {!isComingSoon && (
-          closed ? (
-            <div className="h2m-countdown h2m-countdown--closed">Competition Closed</div>
-          ) : (
-            <div className="h2m-countdown" aria-label="Time remaining">
-              <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{time.d}</span><span className="h2m-cd-lbl">Days</span></div>
-              <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{time.h}</span><span className="h2m-cd-lbl">Hrs</span></div>
-              <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{time.m}</span><span className="h2m-cd-lbl">Min</span></div>
-              <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{time.s}</span><span className="h2m-cd-lbl">Sec</span></div>
-            </div>
-          )
-        )}
+        {/* 7 — Countdown. Same rule as the desktop timer: always present, resting
+            at zero once entries close. Never removed, never replaced. */}
+        <div className="h2m-countdown" aria-label="Time remaining">
+          <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{shown.d}</span><span className="h2m-cd-lbl">Days</span></div>
+          <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{shown.h}</span><span className="h2m-cd-lbl">Hrs</span></div>
+          <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{shown.m}</span><span className="h2m-cd-lbl">Min</span></div>
+          <div className="h2m-cd-block"><span className="h2m-cd-num" suppressHydrationWarning>{shown.s}</span><span className="h2m-cd-lbl">Sec</span></div>
+        </div>
 
         {/* 8 — Trust line */}
         <div className="h2m-trust">

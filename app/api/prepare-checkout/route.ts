@@ -45,10 +45,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No valid items' }, { status: 400 })
   }
 
-  // Server-side entry gate — the final checkout handoff must never sign a payload
-  // for a competition that is archived (To Past Winners) or past its draw date,
-  // even if the frontend UI is bypassed. Mirrors the client entryGate(). Products
+  // Server-side entry gate — the checkout handoff must never sign a payload for a
+  // competition that is not effectively Live (entries deadline reached, every
+  // ticket sold, manually closed, archived, or not yet open), even if the
+  // frontend UI is bypassed. Mirrors getEffectiveStatus() on the client. Products
   // are looked up in parallel; if any is closed the whole checkout is rejected.
+  //
+  // This closes the "cart built at 17:59, checkout at 18:01" window at the
+  // handoff; WordPress closes it again at add-to-cart, cart re-validation,
+  // checkout and — finally — order creation, which is the guarantee.
   try {
     const products = await Promise.all(
       validItems.map(i => fetchWooProductById(i.id).then(r => r.product).catch(() => null))

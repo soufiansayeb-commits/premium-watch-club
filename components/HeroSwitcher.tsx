@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import type { CompetitionType, CompetitionsByType } from '@/lib/woocommerce'
+import { getEffectiveStatus } from '@/lib/competition-status'
 import { useMoney } from '@/context/StoreSettingsContext'
 
 interface CardConfig {
@@ -30,8 +31,12 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
   const fmt = useMoney()
   const visibleCards = CARD_CONFIG.filter(({ type }) => {
     const comp = competitionsByType[type]
-    // Archived products (slot = null) and 'To Past Winners' status → hidden
-    return comp !== null && comp.competitionStatus !== 'To Past Winners'
+    if (comp === null) return false
+    // Archived ('To Past Winners') and not-yet-open competitions have no card.
+    // A scheduled competition should not normally reach here — the data layer
+    // never selects one — but hide it defensively if it ever does.
+    const status = getEffectiveStatus(comp)
+    return status !== 'archived' && status !== 'scheduled'
   })
 
   if (visibleCards.length === 0) return null
@@ -53,35 +58,29 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
         >
           {visibleCards.map(({ type, label, tagline }) => {
             const comp = competitionsByType[type]!
-            const acfStatus  = comp.competitionStatus ?? 'Live'
             const isActive   = activeType === type
 
-            // Sold Out = either admin set ACF status OR stock hit 0 (ticketsLeft <= 0)
-            // This covers both explicit 'Sold Out' and Live-but-zero-stock scenarios.
-            const isSoldOut    = acfStatus === 'Sold Out' || comp.ticketsLeft <= 0
-            const isComingSoon = acfStatus === 'Coming Soon'
-            const isLive       = !isSoldOut && !isComingSoon
+            // Effective status covers all three routes to closed: the entries
+            // deadline passed, every ticket sold, or an admin set it closed.
+            const isClosed = getEffectiveStatus(comp) !== 'live'
+            const isLive   = !isClosed
 
-            // Derived display status for badge (overrides raw ACF when stock=0)
-            const displayStatus = isSoldOut ? 'Sold Out' : acfStatus
+            // Card wording is deliberately the short form — "Competition Closed"
+            // does not fit this card design.
+            const displayStatus = isClosed ? 'Closed' : 'Live'
 
-            // Only Coming Soon is fully non-clickable.
-            // Sold Out can still be selected so users can see the sold-out hero.
-            const isDisabled = isComingSoon
-
+            // Closed cards stay selectable so visitors can open the closed hero.
             const cardClass = [
               'hs-card',
-              isActive   ? 'hs-card--active'   : '',
-              isDisabled ? 'hs-card--disabled'  : '',
-              isSoldOut && !isActive ? 'hs-card--soldout' : '',
+              isActive  ? 'hs-card--active'  : '',
+              isClosed && !isActive ? 'hs-card--soldout' : '',
             ].filter(Boolean).join(' ')
 
             return (
               <button
                 key={type}
                 className={cardClass}
-                onClick={() => !isDisabled && onSelect(type)}
-                disabled={isDisabled}
+                onClick={() => onSelect(type)}
                 aria-pressed={isActive}
                 aria-label={`${label} — ${displayStatus}`}
                 type="button"
@@ -97,7 +96,7 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
                       alt=""
                       aria-hidden="true"
                       fill
-                      className={`hs-card__img${isSoldOut ? ' hs-card__img--soldout' : ''}`}
+                      className={`hs-card__img${isClosed ? ' hs-card__img--soldout' : ''}`}
                       sizes="130px"
                       loading="lazy"
                       onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
@@ -115,17 +114,13 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
                 <span className="hs-card__body">
                   <span className="hs-card__tagline">{tagline}</span>
                   <span className="hs-card__label">{label}</span>
-                  {!isComingSoon && (
-                    <span className="hs-card__name" title={comp.title}>{comp.title}</span>
-                  )}
+                  <span className="hs-card__name" title={comp.title}>{comp.title}</span>
                 </span>
 
                 {/* Bottom price / status strip */}
                 <span className="hs-card__price">
-                  {isComingSoon ? (
-                    <span className="hs-price--soon">Notify me</span>
-                  ) : isSoldOut ? (
-                    <span className="hs-price--soldout">Sold Out</span>
+                  {isClosed ? (
+                    <span className="hs-price--soldout">Closed</span>
                   ) : comp.isFree || comp.entryPrice === 0 ? (
                     <span className="hs-price--free">FREE</span>
                   ) : (
@@ -153,12 +148,11 @@ export default function HeroSwitcher({ competitionsByType, activeType, onSelect 
   )
 }
 
+/**
+ * Badge modifier class. Closed cards deliberately keep the existing
+ * `hs-badge--soldout` styling so the card design is unchanged — only the
+ * wording moves from "Sold Out" to "Closed".
+ */
 function slugify(status: string): string {
-  switch (status) {
-    case 'Live':              return 'live'
-    case 'Coming Soon':       return 'soon'
-    case 'Sold Out':          return 'soldout'
-    case 'To Past Winners':   return 'soldout'
-    default:                  return 'live'
-  }
+  return status === 'Live' ? 'live' : 'soldout'
 }

@@ -19,7 +19,7 @@ export interface PastWinner {
   galleryImages:         string[]
   /** Best image for the Past Winners card (fallback chain applied). */
   cardImage:             string | null
-  status:                string            // 'To Past Winners' | 'Sold Out' | …
+  status:                string            // 'To Past Winners' | 'Competition Closed' | …
   drawNumber?:           string
   drawDate?:             string            // raw ACF value
   drawDateDisplay:       string            // "10 June 2026"

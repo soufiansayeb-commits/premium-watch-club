@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
-import { isSoldOut, isArchived, getStatusLabel } from '@/lib/competition-status'
+import { getEffectiveStatus, getCountdownDeadline } from '@/lib/competition-status'
 import { getOptionLabel } from '@/lib/skill-challenge-config'
 import { bundleLineTotal, getEligibleTiers } from '@/lib/bundle-discounts'
 import { useCart } from '@/context/CartContext'
@@ -20,43 +20,52 @@ interface Props {
 }
 
 /**
- * Entry gate wrapper. Blocks ordering — and swaps in a notice — when the
- * competition is archived (To Past Winners), its draw timer has ended, or it is
- * sold out. The timer is evaluated after mount (SSG-safe: no hydration mismatch)
- * and ticks every second, so entries close the moment the countdown hits zero.
+ * Entry gate wrapper. Blocks ordering — and swaps in a notice — whenever the
+ * competition is not effectively Live: entries closed (deadline reached or every
+ * ticket sold), archived to Past Winners, or not yet at its Go Live moment.
+ *
+ * The entries-close deadline is evaluated after mount (SSG-safe: no hydration
+ * mismatch) and ticks every second, so entries close the moment the countdown
+ * hits zero — no reload needed for a visitor sitting on the page.
+ *
+ * This is a UI gate only. WooCommerce independently rejects add-to-cart,
+ * cart re-validation, checkout and order creation for the same competitions
+ * (woocommerce-snippets/pwc-competition-lifecycle.php), so bypassing this
+ * component buys nothing.
  */
 export default function CompetitionEntryFlow({ competition }: Props) {
-  const [drawEnded, setDrawEnded] = useState(false)
+  const [deadlinePassed, setDeadlinePassed] = useState(false)
   useEffect(() => {
-    if (!competition.drawDate) return
-    const target = Date.parse(competition.drawDate)
-    if (!Number.isFinite(target)) return
-    const check = () => setDrawEnded(Date.now() >= target)
+    const target = getCountdownDeadline(competition)
+    if (target === null) return
+    const check = () => setDeadlinePassed(Date.now() >= target)
     check()
     const id = setInterval(check, 1000)
     return () => clearInterval(id)
-  }, [competition.drawDate])
+  }, [competition])
 
-  if (isArchived(competition) || drawEnded) {
-    return <EntryBlockedNotice competition={competition} reason="closed" />
+  const status = getEffectiveStatus(competition)
+
+  if (status === 'archived') {
+    return <EntryBlockedNotice competition={competition} reason="archived" />
   }
-  if (isSoldOut(competition)) {
-    return <EntryBlockedNotice competition={competition} reason="sold-out" />
+  if (status !== 'live' || deadlinePassed) {
+    return <EntryBlockedNotice competition={competition} reason="closed" />
   }
   return <EntryFlowOpen competition={competition} />
 }
 
 /**
- * Full-page "not purchasable" notice, styled exactly like the existing sold-out
- * card — only the labels/copy differ between the closed and sold-out states.
+ * Full-page "not purchasable" notice. Styling is unchanged — only the copy
+ * differs between the closed and archived states.
  */
-function EntryBlockedNotice({ competition, reason }: { competition: Competition; reason: 'closed' | 'sold-out' }) {
-  const isClosed = reason === 'closed'
-  const badge    = isClosed ? 'Competition Closed' : getStatusLabel(competition)
-  const bigLabel = isClosed ? 'COMPETITION CLOSED' : 'SOLD OUT'
-  const body = isClosed
-    ? 'Entries for this competition have closed. The draw will be conducted among the registered entries.'
-    : 'All entries for this competition have been sold. The draw will be conducted among the registered entries.'
+function EntryBlockedNotice({ competition, reason }: { competition: Competition; reason: 'closed' | 'archived' }) {
+  const isArchivedComp = reason === 'archived'
+  const badge    = 'Competition Closed'
+  const bigLabel = 'COMPETITION CLOSED'
+  const body = isArchivedComp
+    ? 'This competition has finished. The winner has been drawn from the registered entries.'
+    : 'Entries for this competition have closed. The draw will be conducted among the registered entries.'
   return (
     <>
       <ProgressSteps currentStep={1} />
@@ -254,7 +263,9 @@ function EntryFlowOpen({ competition }: Props) {
 
       {/* Mobile-only live-activity toast — real order data, floats above the sticky
           Continue bar. Shown only during the buying steps (1–2); hidden on the
-          checkout step (3) so it never distracts at the conversion/handoff moment. */}
+          checkout step (3) so it never distracts at the conversion/handoff moment.
+          EntryFlowOpen only renders while the competition is effectively Live, so
+          this is already unreachable for closed/archived/scheduled competitions. */}
       {(currentStep === 1 || currentStep === 2) && (
         <LiveActivityToast productId={competition.wooProductId} />
       )}

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getAllActiveCompetitionsByType } from '@/lib/woocommerce'
 import { getActiveOffer, resolveOfferCtaHref } from '@/lib/offer'
 import type { Competition } from '@/lib/competition-data'
+import { getEffectiveStatus } from '@/lib/competition-status'
 import Header from '@/components/Header'
 import OfferBar from '@/components/OfferBar'
 import HomepageHeroContainer from '@/components/HomepageHeroContainer'
@@ -56,9 +57,9 @@ export default async function HomePage() {
     competitionsByType.weekly,
   )
 
-  // Current Competitions grid: show Live + Sold Out competitions.
-  // Coming Soon = excluded (nothing enterable yet).
-  // Closed = already excluded by getAllActiveCompetitionsByType (slot is null).
+  // Current Competitions grid: show Live + Competition Closed competitions.
+  // Scheduled = excluded (has not reached its Go Live Date/Time yet).
+  // To Past Winners = already excluded by getAllActiveCompetitionsByType (slot is null).
   const gridComps = (
     [
       competitionsByType.starter,
@@ -67,7 +68,7 @@ export default async function HomePage() {
       competitionsByType.special,
     ] as (Competition | null)[]
   ).filter((c): c is Competition =>
-    c !== null && c.competitionStatus !== 'Coming Soon'
+    c !== null && getEffectiveStatus(c) !== 'scheduled'
   )
 
   return (

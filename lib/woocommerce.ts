@@ -6,6 +6,27 @@ import { competitions, getCompetitionBySlug } from './competition-data'
 import type { Competition } from './competition-data'
 export type { Competition } from './competition-data'
 
+/**
+ * Lifecycle payload served by the PWC Competition Lifecycle WordPress snippet.
+ * All *_utc fields are UTC ISO 8601 strings converted from the site timezone in PHP.
+ */
+export interface WooLifecycle {
+  effective_status: 'scheduled' | 'live' | 'closed' | 'archived'
+  stored_status: string
+  go_live_utc: string | null
+  entries_close_utc: string | null
+  draw_utc: string | null
+  go_live_display: string | null
+  entries_close_display: string | null
+  draw_display: string | null
+  /** false when entries_close_date is empty and draw_date is standing in for it. */
+  entries_close_is_own_field: boolean
+  tickets_left: number | null
+  /** WordPress site timezone, e.g. 'Europe/London'. */
+  timezone: string
+  server_now_utc: string
+}
+
 // ── Safe product shape returned by fetchWooProducts / fetchWooProductBySlug ──
 export interface WooProduct {
   id: number
@@ -18,8 +39,26 @@ export interface WooProduct {
   status: string
   permalink: string
   images: Array<{ src: string; alt: string }>
-  /** ACF custom field: draw/closing date for this competition. Extracted from meta_data. */
+  /**
+   * ACF custom field: date/time of the live draw. Extracted from meta_data.
+   * DISPLAY ONLY — it no longer gates ticket sales (entries_close_date does).
+   */
   draw_date?: string
+  /** ACF custom field: when a scheduled competition becomes Live. */
+  go_live_date?: string
+  /** ACF custom field: the ticket sales deadline. NOT the draw date. */
+  entries_close_date?: string
+  /**
+   * Timezone-safe lifecycle payload from the WordPress side
+   * (woocommerce-snippets/pwc-competition-lifecycle.php).
+   *
+   * Present only once that snippet is installed. When it is, every datetime has
+   * already been converted from the WordPress site timezone to UTC exactly once,
+   * in PHP, so the frontend never has to guess an offset and BST/GMT changeovers
+   * need no code change. When it is absent the frontend falls back to parsing the
+   * raw ACF values itself (see parseWooDrawDate) — i.e. the pre-existing behaviour.
+   */
+  pwc_lifecycle?: WooLifecycle
   /** ACF custom field: fixed maximum entries for this competition. */
   total_entries?: number
   /** ACF custom field: retail value of the prize (number). */
@@ -32,7 +71,12 @@ export interface WooProduct {
   max_entries_percentage?: number
   /** WooCommerce native field: when true, product is limited to 1 per order (source of truth for single-entry products). */
   sold_individually?: boolean
-  /** ACF custom field: lifecycle status. Values: 'Coming Soon' | 'Live' | 'Sold Out' | 'To Past Winners' */
+  /**
+   * ACF custom field: lifecycle status, normalised to display case.
+   * Values: 'Live' | 'Competition Closed' | 'To Past Winners'
+   * Legacy values still read: 'Sold Out' → Competition Closed, 'Coming Soon' → Scheduled.
+   * Never branch on this directly — use getWooEffectiveStatus().
+   */
   competition_status?: string
   /** ACF custom field: category type. Values: 'weekly' | 'monthly' | 'free' | 'special' */
   competition_type?: string
@@ -284,34 +328,91 @@ export async function resolveWpMediaUrl(id: number): Promise<string | undefined>
 
 /**
  * Normalise an ACF competition_status value to a consistent display-case string.
- * Handles WordPress ACF variations: 'live', 'Live', 'coming_soon', 'Coming Soon', etc.
+ * Handles WordPress ACF variations ('live' / 'Live') and the retired values that
+ * older records still hold ('sold_out', 'coming_soon').
  * Returns the normalised value, or the raw trimmed value if unrecognised (no silent data loss).
  */
 function normalizeCompetitionStatus(raw: string): string {
   const s = raw.toLowerCase().replace(/_/g, ' ').trim()
-  if (s === 'live')                                 return 'Live'
-  if (s === 'coming soon' || s === 'coming')        return 'Coming Soon'
-  if (s === 'sold out')                             return 'Sold Out'
-  // 'To Past Winners' archives the competition (moves it to /past-winners and
-  // hides it from active listings). 'closed' is the legacy value for the same.
-  if (s === 'to past winners' || s === 'closed')    return 'To Past Winners'
+  if (s === 'live')                                       return 'Live'
+  // The lifecycle's closed state. 'sold out' is the retired value for the same
+  // thing — a competition can now close on its deadline without selling out.
+  if (s === 'competition closed' || s === 'sold out')     return 'Competition Closed'
+  // ⚠ 'closed' is the STORED ACF slug for the To Past Winners option on this
+  // site (26 archived products use it). It must never be confused with the
+  // lifecycle's 'competition closed' state above.
+  if (s === 'to past winners' || s === 'closed')          return 'To Past Winners'
+  // Retired. Read-only compatibility: the effective status resolver decides
+  // between Scheduled and Live from the Go Live Date.
+  if (s === 'coming soon' || s === 'coming')              return 'Scheduled'
   return raw.trim()
 }
 
 /**
- * Server-side entry gate for a raw WooProduct — the checkout/cart API routes use
- * this to reject orders for competitions that are no longer purchasable, even if
- * the frontend UI is bypassed. Entries are closed when the competition has been
- * archived to Past Winners OR the draw date/time has already passed.
- * Mirrors the client-side `entryGate()` in lib/competition-status.ts.
+ * Resolve a raw WooProduct's effective lifecycle state.
+ *
+ * Prefers the WordPress-computed `pwc_lifecycle.effective_status` (authoritative,
+ * timezone-correct, and identical to what the checkout guard enforces). Falls
+ * back to computing it here from the same rules when the lifecycle snippet is
+ * not installed yet.
+ *
+ * Mirrors getEffectiveStatus() in lib/competition-status.ts and
+ * pwc_cl_effective_status() in the PHP snippet. Keep all three in sync.
+ */
+export function getWooEffectiveStatus(
+  product: WooProduct,
+  now: number = Date.now(),
+): 'scheduled' | 'live' | 'closed' | 'archived' {
+  if (product.pwc_lifecycle?.effective_status) {
+    const fromWp = product.pwc_lifecycle.effective_status
+    // WordPress computed this when the response was cached (up to 60s ago via
+    // ISR), so a deadline that has passed since then still has to be applied.
+    if (fromWp === 'archived') return 'archived'
+    if (fromWp === 'closed') return 'closed'
+  }
+
+  const status = normalizeCompetitionStatus(product.competition_status ?? '')
+  if (status === 'To Past Winners') return 'archived'
+
+  // Entries-close deadline. Legacy records with no entries_close_date fall back
+  // to draw_date — exactly how the site behaved before this field existed.
+  const closeIso =
+    product.pwc_lifecycle?.entries_close_utc ??
+    (product.entries_close_date ? parseWooDrawDate(product.entries_close_date) : '') ??
+    ''
+  const drawIso = product.pwc_lifecycle?.draw_utc ?? (product.draw_date ? parseWooDrawDate(product.draw_date) : '')
+  const deadline = Date.parse(closeIso || drawIso || '')
+  if (Number.isFinite(deadline) && deadline <= now) return 'closed'
+
+  // Inventory exhausted. stock_quantity === null means tracking is off.
+  if (product.stock_quantity !== null && product.stock_quantity <= 0) return 'closed'
+
+  if (status === 'Competition Closed') return 'closed'
+
+  const goLiveIso =
+    product.pwc_lifecycle?.go_live_utc ??
+    (product.go_live_date ? parseWooDrawDate(product.go_live_date) : '')
+  const goLive = Date.parse(goLiveIso || '')
+  if (Number.isFinite(goLive) && goLive > now) return 'scheduled'
+
+  return 'live'
+}
+
+/**
+ * Server-side entry gate for a raw WooProduct — the cart/checkout API routes use
+ * this to reject orders for competitions that are no longer purchasable, even
+ * when the frontend UI is bypassed (direct add-to-cart URLs, stale tabs, cached
+ * Live pages, hand-crafted requests).
+ *
+ * Entries are open in exactly one state: effectively Live.
+ *
+ * This is a convenience gate, not the control: WordPress enforces the same rules
+ * on add-to-cart, cart re-validation, checkout and order creation
+ * (woocommerce-snippets/pwc-competition-lifecycle.php), so nothing can be bought
+ * even if this layer is skipped entirely.
  */
 export function isWooEntryClosed(product: WooProduct, now: number = Date.now()): boolean {
-  if (product.competition_status === 'To Past Winners') return true
-  if (product.draw_date) {
-    const t = Date.parse(parseWooDrawDate(product.draw_date))
-    if (Number.isFinite(t) && t <= now) return true
-  }
-  return false
+  return getWooEffectiveStatus(product, now) !== 'live'
 }
 
 /**
@@ -425,6 +526,57 @@ function formatDrawDateDisplay(iso: string): string {
   }
 }
 
+// ── Lifecycle date resolution ────────────────────────────────────────────────
+
+interface LifecycleDates {
+  /** UTC ISO — the live draw. Display only. */
+  drawDate: string
+  drawDateDisplay: string
+  /** UTC ISO — when a scheduled competition goes Live. '' when not set. */
+  goLiveDate: string
+  /** UTC ISO — the ticket sales deadline / countdown target. '' when not set. */
+  entriesCloseDate: string
+  entriesCloseDateDisplay: string
+}
+
+/**
+ * Resolve a product's three lifecycle datetimes to UTC ISO strings.
+ *
+ * PREFERS the `pwc_lifecycle` payload, where WordPress has already converted
+ * each value from the site timezone (Europe/London) to UTC using wp_timezone().
+ * That is the only timezone-correct source: the raw ACF values are naive
+ * ("2026-09-07 18:00:00") and carry no offset, so they cannot be interpreted
+ * correctly on this side without knowing the site timezone.
+ *
+ * FALLS BACK to parseWooDrawDate (naive → UTC), which is the behaviour the site
+ * had before the lifecycle snippet existed. This keeps everything working — with
+ * the pre-existing 1-hour BST skew — until that snippet is installed.
+ */
+function resolveLifecycleDates(product: WooProduct): LifecycleDates {
+  const lc = product.pwc_lifecycle
+
+  const drawDate = lc?.draw_utc
+    ?? (product.draw_date ? parseWooDrawDate(product.draw_date) : '')
+    ?? ''
+  const goLiveDate = lc?.go_live_utc
+    ?? (product.go_live_date ? parseWooDrawDate(product.go_live_date) : '')
+    ?? ''
+  // entries_close_utc already falls back to draw_date on the WordPress side for
+  // legacy records; only mirror that fallback when there is no payload at all.
+  const entriesCloseDate = lc
+    ? (lc.entries_close_utc ?? '')
+    : (product.entries_close_date ? parseWooDrawDate(product.entries_close_date) : '')
+
+  return {
+    drawDate,
+    drawDateDisplay: lc?.draw_display ?? (drawDate ? formatDrawDateDisplay(drawDate) : 'Draw date coming soon'),
+    goLiveDate,
+    entriesCloseDate,
+    entriesCloseDateDisplay:
+      lc?.entries_close_display ?? (entriesCloseDate ? formatDrawDateDisplay(entriesCloseDate) : ''),
+  }
+}
+
 // ── Safe field filter — never expose raw WooCommerce response ────────────────
 function toSafeProduct(raw: Record<string, unknown>): WooProduct {
   // Raw-API diagnostic: log the exact sold_individually and price values
@@ -460,10 +612,23 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     )
   }
 
-  const drawDateVal = acf.draw_date ?? getMetaValue(raw, 'draw_date')
-  const drawDateRaw = (drawDateVal !== null && drawDateVal !== undefined && drawDateVal !== false)
-    ? String(drawDateVal).trim()
-    : ''
+  // ── Lifecycle date fields ───────────────────────────────────────────────────
+  // draw_date          → display only (the live draw)
+  // go_live_date       → when a scheduled competition becomes Live
+  // entries_close_date → the ticket sales deadline + countdown target
+  const readDate = (key: string): string => {
+    const v = acf[key] ?? getMetaValue(raw, key)
+    return (v !== null && v !== undefined && v !== false) ? String(v).trim() : ''
+  }
+  const drawDateRaw     = readDate('draw_date')
+  const goLiveRaw       = readDate('go_live_date')
+  const entriesCloseRaw = readDate('entries_close_date')
+
+  // pwc_lifecycle — the authoritative, timezone-converted payload from the
+  // PWC Competition Lifecycle WordPress snippet. Absent until it is installed.
+  const lifecycle = (raw.pwc_lifecycle && typeof raw.pwc_lifecycle === 'object')
+    ? raw.pwc_lifecycle as unknown as WooLifecycle
+    : undefined
 
   // total_entries: prefer ACF object field, fall back to meta_data array
   const rawTotalEntries = acf.total_entries ?? getMetaValue(raw, 'total_entries')
@@ -501,7 +666,7 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
     soldIndividuallyRaw === false ? false :
     undefined
 
-  // competition_status (ACF Select field — e.g. 'Live', 'Sold Out', 'Coming Soon', etc.)
+  // competition_status (ACF Select field — 'live' | 'competition_closed' | 'closed')
   // Normalised immediately so all downstream comparisons use consistent display-case strings.
   const rawCompStatus = acf.competition_status ?? getMetaValue(raw, 'competition_status')
   const competitionStatus = (rawCompStatus != null && rawCompStatus !== '' && rawCompStatus !== false)
@@ -693,6 +858,9 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
       alt: String(img.alt ?? ''),
     })),
     draw_date:              drawDateRaw || undefined,
+    go_live_date:           goLiveRaw || undefined,
+    entries_close_date:     entriesCloseRaw || undefined,
+    pwc_lifecycle:          lifecycle,
     total_entries:          totalEntries,
     retail_value:           retailValue,
     condition:              condition,
@@ -830,15 +998,22 @@ export function mergeWooData(
 
   merged.wooStockQuantity = wooProduct.stock_quantity
 
-  // Pull draw_date from ACF — overrides the static fallback in competition-data.ts.
-  // Only applied when the parsed result is a valid date string (parseWooDrawDate
-  // returns '' for any value it cannot normalise, leaving the static fallback intact).
-  if (wooProduct.draw_date) {
-    const parsed = parseWooDrawDate(wooProduct.draw_date)
-    if (parsed) {
-      merged.drawDate = parsed
-      merged.drawDateDisplay = formatDrawDateDisplay(parsed)
+  // ── Lifecycle dates ────────────────────────────────────────────────────────
+  // Override the static fallbacks in competition-data.ts. Only applied when the
+  // resolved value is a valid date string ('' for anything unparseable), so a
+  // missing ACF value leaves the static fallback intact.
+  {
+    const dates = resolveLifecycleDates(wooProduct)
+    if (dates.drawDate) {
+      merged.drawDate = dates.drawDate
+      merged.drawDateDisplay = dates.drawDateDisplay
     }
+    // Absent go-live / entries-close are left undefined, NOT defaulted: the
+    // status resolver reads "no Go Live Date" as "live immediately" and
+    // "no Entries Close Date" as "fall back to the draw date".
+    merged.goLiveDate = dates.goLiveDate || undefined
+    merged.entriesCloseDate = dates.entriesCloseDate || undefined
+    merged.entriesCloseDateDisplay = dates.entriesCloseDateDisplay || undefined
   }
 
   // ── ACF product-info overrides ────────────────────────────────────────────
@@ -975,7 +1150,7 @@ export function wooProductToCompetition(wooProduct: WooProduct): Competition {
   const sold          = Math.max(0, totalEntries - remaining)
   const soldPct       = totalEntries > 0 ? Math.round((sold / totalEntries) * 1000) / 10 : 0
   const parsedPrice   = parseFloat(wooProduct.price) || 0
-  const drawDateRaw   = wooProduct.draw_date ? parseWooDrawDate(wooProduct.draw_date) : ''
+  const dates         = resolveLifecycleDates(wooProduct)
   const maxPerUser    =
     wooProduct.sold_individually === true
       ? 1
@@ -1004,8 +1179,11 @@ export function wooProductToCompetition(wooProduct: WooProduct): Competition {
     ticketsSold:           sold,
     ticketsLeft:           remaining,
     soldPercentage:        soldPct,
-    drawDate:              drawDateRaw,
-    drawDateDisplay:       drawDateRaw ? formatDrawDateDisplay(drawDateRaw) : 'Draw date coming soon',
+    drawDate:              dates.drawDate,
+    drawDateDisplay:       dates.drawDateDisplay,
+    goLiveDate:            dates.goLiveDate || undefined,
+    entriesCloseDate:      dates.entriesCloseDate || undefined,
+    entriesCloseDateDisplay: dates.entriesCloseDateDisplay || undefined,
     cashAlternative:       wooProduct.cash_alternative ?? 0,
     ticketOptions: [
       { qty: 1,  popular: false },
@@ -1040,14 +1218,27 @@ export function wooProductToCompetition(wooProduct: WooProduct): Competition {
 }
 
 /**
+ * A product's entries-close deadline in ms, for "which competition closes
+ * soonest" ordering. Infinity when it has no deadline at all, so dated
+ * competitions always sort ahead of undated ones.
+ */
+function competitionDeadlineMs(product: WooProduct): number {
+  const { entriesCloseDate, drawDate } = resolveLifecycleDates(product)
+  const t = Date.parse(entriesCloseDate || drawDate || '')
+  return Number.isFinite(t) ? t : Infinity
+}
+
+/**
  * Fetch all published WooCommerce products and return the best active competition
  * for a given competition_type ('weekly' | 'monthly' | 'free' | 'special').
  *
- * Selection logic:
+ * Selection logic (by EFFECTIVE lifecycle status, not the stored ACF value):
  *  1. Filter by competition_type.
- *  2. Among those, prefer Live + stock > 0 → pick the nearest draw date.
- *  3. If no Live product, fall back to the most recent Sold Out product.
- *  4. If none, try Coming Soon.
+ *  2. Prefer effectively Live → pick the nearest entries-close deadline.
+ *  3. Otherwise fall back to the most recent Competition Closed product, so the
+ *     slot still shows the last competition rather than 404-ing.
+ *  4. SCHEDULED competitions are never selected — a competition that has not
+ *     reached its Go Live Date/Time must not appear as the active competition.
  *  5. If no WooCommerce match at all, return null (caller provides static fallback).
  *
  * The returned Competition is built from the matching WooProduct:
@@ -1063,35 +1254,26 @@ export async function getActiveCompetitionByType(type: string): Promise<Competit
 
   let selected: WooProduct | null = null
 
-  // Prefer Live. stock_quantity === null means stock tracking is off → treat as available.
-  const live = typed.filter(p =>
-    p.competition_status === 'Live' &&
-    (p.stock_quantity === null || p.stock_quantity > 0)
-  )
+  const live = typed.filter(p => getWooEffectiveStatus(p) === 'live')
 
   if (live.length > 0) {
-    // Among live products, pick the one with the nearest draw date
+    // Among live products, pick the one closing soonest.
     selected = live.reduce<WooProduct | null>((best, p) => {
       if (!best) return p
-      const bestMs = best.draw_date ? new Date(parseWooDrawDate(best.draw_date)).getTime() : Infinity
-      const pMs    = p.draw_date    ? new Date(parseWooDrawDate(p.draw_date)).getTime()    : Infinity
-      return pMs < bestMs ? p : best
+      return competitionDeadlineMs(p) < competitionDeadlineMs(best) ? p : best
     }, null)
   }
 
   if (!selected) {
-    // No live product — show latest Sold Out as a historical state
-    const soldOut = typed.filter(p => p.competition_status === 'Sold Out')
-    if (soldOut.length > 0) {
-      selected = soldOut[soldOut.length - 1]
+    // No live product — show the most recent closed one as a historical state.
+    const closed = typed.filter(p => getWooEffectiveStatus(p) === 'closed')
+    if (closed.length > 0) {
+      selected = closed[closed.length - 1]
     }
   }
 
-  if (!selected) {
-    // Try Coming Soon (next upcoming competition)
-    const comingSoon = typed.filter(p => p.competition_status === 'Coming Soon')
-    if (comingSoon.length > 0) selected = comingSoon[0]
-  }
+  // Deliberately no scheduled fallback: a competition before its Go Live moment
+  // is not the active competition. The slot stays empty instead.
 
   if (!selected) return null
 
@@ -1162,16 +1344,18 @@ const HERO_TYPES: CompetitionType[] = ['starter', 'weekly', 'monthly', 'special'
  * Fetch all published WooCommerce products once and return the best active
  * competition for each of the four hero types (starter, weekly, monthly, special).
  *
- * Selection per type (Closed products are always excluded):
- *  1. Live (stock_quantity > 0 OR null = tracking off) → nearest draw date.
- *  2. Sold Out   → most recent.
- *  3. Coming Soon → first found.
- *  4. No match   → null (card hidden from switcher).
+ * Selection per type, by EFFECTIVE lifecycle status (To Past Winners always excluded):
+ *  1. Live               → the one closing soonest.
+ *  2. Competition Closed → most recent (stays visible with a CLOSED badge).
+ *  3. Scheduled          → never selected; the slot stays null and its card is
+ *                          hidden. This replaced the old "Coming Soon" card.
+ *  4. No match           → null (card hidden from switcher).
  *
- * Status and type values are normalised in toSafeProduct(), so comparisons here
- * always use consistent display-case strings ('Live', 'Sold Out', etc.) and
- * lowercase type slugs ('starter', 'weekly', 'monthly', 'special').
- * 'free' competition_type is normalised to 'starter' automatically.
+ * Type values are normalised in toSafeProduct() to lowercase slugs ('starter',
+ * 'weekly', 'monthly', 'special'); 'free' is normalised to 'starter'.
+ * Status is resolved through getWooEffectiveStatus() rather than compared as a
+ * string, so the stored ACF value, the entries-close deadline and the remaining
+ * inventory can never disagree about which competition is live.
  */
 export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByType> {
   const result: CompetitionsByType = { starter: null, weekly: null, monthly: null, special: null }
@@ -1186,7 +1370,11 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
       console.log(
         `  #${p.id} "${p.name}"\n` +
         `    competition_type:   ${p.competition_type   ?? '(unset)'}\n` +
-        `    competition_status: ${p.competition_status ?? '(unset)'}\n` +
+        `    competition_status: ${p.competition_status ?? '(unset)'}  → effective: ${getWooEffectiveStatus(p)}\n` +
+        `    go_live_date:       ${p.go_live_date       ?? '(unset — live immediately)'}\n` +
+        `    entries_close_date: ${p.entries_close_date ?? '(unset — falls back to draw_date)'}\n` +
+        `    draw_date:          ${p.draw_date          ?? '(unset)'}  (display only)\n` +
+        `    pwc_lifecycle:      ${p.pwc_lifecycle ? `present (tz=${p.pwc_lifecycle.timezone})` : '⚠ absent — install pwc-competition-lifecycle.php'}\n` +
         `    stock_quantity:     ${p.stock_quantity     ?? '(null = tracking off)'}\n` +
         `    stock_status:       ${p.stock_status}`
       )
@@ -1218,53 +1406,42 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
 
     let selected: WooProduct | null = null
 
-    // ── Tier 1: Live with stock available (enterable) ─────────────────────────
-    // stock_quantity === null = tracking disabled = treat as unlimited (still Live).
-    const liveWithStock = typed.filter(p =>
-      p.competition_status === 'Live' &&
-      (p.stock_quantity === null || p.stock_quantity > 0)
-    )
-    if (liveWithStock.length > 0) {
+    // ── Tier 1: effectively Live ──────────────────────────────────────────────
+    // getWooEffectiveStatus applies the entries-close deadline and remaining
+    // inventory, so a product whose ACF status still says Live but whose deadline
+    // has passed is NOT selected here — it drops to Tier 2 and renders as closed.
+    const liveProducts = typed.filter(p => getWooEffectiveStatus(p) === 'live')
+    if (liveProducts.length > 0) {
       // When multiple Live products share the same type (e.g. an old placeholder and the
       // real product both marked 'special'), prefer products with a matching static template
       // (identified by wooProductId in competition-data.ts). This ensures the known product
-      // always wins over anonymous placeholder products regardless of draw date order.
+      // always wins over anonymous placeholder products regardless of deadline order.
       const hasTemplate = (p: WooProduct) => competitions.some(c => c.wooProductId === p.id)
-      const preferred   = liveWithStock.filter(hasTemplate)
-      const pool        = preferred.length > 0 ? preferred : liveWithStock
+      const preferred   = liveProducts.filter(hasTemplate)
+      const pool        = preferred.length > 0 ? preferred : liveProducts
 
       selected = pool.reduce<WooProduct | null>((best, p) => {
         if (!best) return p
-        const bestMs = best.draw_date ? new Date(parseWooDrawDate(best.draw_date)).getTime() : Infinity
-        const pMs    = p.draw_date    ? new Date(parseWooDrawDate(p.draw_date)).getTime()    : Infinity
-        return pMs < bestMs ? p : best
+        return competitionDeadlineMs(p) < competitionDeadlineMs(best) ? p : best
       }, null)
     }
 
-    // ── Tier 2: Live but zero stock → visually Sold Out, NOT removed ──────────
-    // Keeps the competition visible in switcher + grid. The frontend isSoldOut()
-    // helper detects ticketsLeft <= 0 and disables the CTA without hiding the card.
+    // ── Tier 2: Competition Closed → still shown, NOT removed ─────────────────
+    // Covers all three routes to closed: the deadline passed, every ticket sold,
+    // or an admin set the status manually. Keeps the competition visible in the
+    // switcher + grid with a CLOSED badge and a disabled CTA, rather than
+    // making the card vanish.
     if (!selected) {
-      const liveSoldOut = typed.filter(p =>
-        p.competition_status === 'Live' &&
-        p.stock_quantity !== null && p.stock_quantity <= 0
-      )
-      if (liveSoldOut.length > 0) selected = liveSoldOut[liveSoldOut.length - 1]
+      const closed = typed.filter(p => getWooEffectiveStatus(p) === 'closed')
+      if (closed.length > 0) selected = closed[closed.length - 1]
     }
 
-    // ── Tier 3: Admin explicitly set status = "Sold Out" ──────────────────────
-    if (!selected) {
-      const soldOut = typed.filter(p => p.competition_status === 'Sold Out')
-      if (soldOut.length > 0) selected = soldOut[soldOut.length - 1]
-    }
-
-    // ── Tier 4: Coming Soon ────────────────────────────────────────────────────
-    if (!selected) {
-      const comingSoon = typed.filter(p => p.competition_status === 'Coming Soon')
-      if (comingSoon.length > 0) selected = comingSoon[0]
-    }
-
-    // Tier 5: "To Past Winners" is filtered out above — slot stays null (card hidden).
+    // ── Tier 3: SCHEDULED is deliberately never selected ──────────────────────
+    // A competition before its Go Live Date/Time must not appear as the active
+    // competition. The slot stays null and its card is hidden — this is what
+    // replaced the old "Coming Soon" card.
+    //
+    // "To Past Winners" is filtered out above — slot stays null (card hidden).
 
     if (process.env.NODE_ENV === 'development') {
       console.log(

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
-import { isSoldOut, isArchived } from '@/lib/competition-status'
+import { getEffectiveStatus } from '@/lib/competition-status'
 import TrustpilotProof from '@/components/TrustpilotProof'
 import SoldProgress from '@/components/competition/SoldProgress'
 import StickyMobileCta from '@/components/competition/StickyMobileCta'
@@ -43,11 +43,10 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
   const fmt = useMoney()
 
   // Defense-in-depth: CompetitionEntryFlow already gates (incl. the reactive
-  // draw-timer) before rendering TicketSelector. This guard handles any
-  // direct-render edge cases for the non-time states (no time-based check here,
-  // so it can never cause a hydration mismatch — the timer lives in the parent).
-  if (isArchived(c) || isSoldOut(c)) {
-    const closed = isArchived(c)
+  // entries-close timer) before rendering TicketSelector. This guard handles any
+  // direct-render edge cases. getEffectiveStatus is time-aware, but the parent's
+  // ticking timer is what flips the page live — this only ever runs at render.
+  if (getEffectiveStatus(c) !== 'live') {
     return (
       <div className="step-panel active" id="panel-step-1">
         <div className="entry-card">
@@ -67,12 +66,10 @@ export default function TicketSelector({ competition: c, selectedQty, onQtyChang
                 marginBottom: '16px',
               }}
             >
-              {closed ? 'COMPETITION CLOSED' : 'SOLD OUT'}
+              COMPETITION CLOSED
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-              {closed
-                ? 'Entries for this competition have closed.'
-                : 'All entries for this competition have been sold.'}
+              Entries for this competition have closed.
             </p>
           </div>
         </div>

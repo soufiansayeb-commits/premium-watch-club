@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getAllActiveCompetitionsByType } from '@/lib/woocommerce'
 import { getActiveOffer, resolveOfferCtaHref } from '@/lib/offer'
 import type { Competition } from '@/lib/competition-data'
+import { getEffectiveStatus } from '@/lib/competition-status'
 import Header from '@/components/Header'
 import HomepageHeroContainer from '@/components/HomepageHeroContainer'
 import StatsBar from '@/components/StatsBar'
@@ -37,7 +38,8 @@ export default async function MonthlyLandingPage() {
       competitionsByType.special,
     ] as (Competition | null)[]
   ).filter((c): c is Competition =>
-    c !== null && c.competitionStatus !== 'Coming Soon'
+    // Live + Competition Closed are shown; Scheduled competitions are not.
+    c !== null && getEffectiveStatus(c) !== 'scheduled'
   )
 
   return (

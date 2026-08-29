@@ -4,39 +4,37 @@ import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
-import { isSoldOut } from '@/lib/competition-status'
+import { getEffectiveStatus, getCountdownDeadline } from '@/lib/competition-status'
 import { useMoney } from '@/context/StoreSettingsContext'
 
 // ── Countdown helper ──────────────────────────────────────────────────────────
 
-function useCountdown(targetDate: string) {
-  const ts = new Date(targetDate).getTime()
-  const validTs = isNaN(ts) ? null : ts
-
+/** Counts down to the entries-close deadline. Clamped at zero — never negative. */
+function useCountdown(deadline: number | null) {
   const calc = () => {
-    if (validTs === null) return { d: 0, h: 0, m: 0, s: 0, closed: false }
-    const diff = validTs - Date.now()
-    if (diff <= 0) return { d: 0, h: 0, m: 0, s: 0, closed: true }
+    if (deadline === null) return { d: 0, h: 0, m: 0, s: 0, expired: false }
+    const diff = deadline - Date.now()
+    if (diff <= 0) return { d: 0, h: 0, m: 0, s: 0, expired: true }
     return {
       d: Math.floor(diff / 86400000),
       h: Math.floor((diff % 86400000) / 3600000),
       m: Math.floor((diff % 3600000) / 60000),
       s: Math.floor((diff % 60000) / 1000),
-      closed: false,
+      expired: false,
     }
   }
-  // Seed from the real draw date so the server renders the actual remaining time
+  // Seed from the real deadline so the server renders the actual remaining time
   // instead of a false 00:00:00 card. `calc()` guards a null/invalid date. Digits
   // are suppressHydrationWarning'd (see CountdownBlock) so the sub-second
   // server/client delta never causes a hydration mismatch.
   const [time, setTime] = useState(calc)
   useEffect(() => {
-    if (validTs === null) return
+    if (deadline === null) return
     setTime(calc())
     const id = setInterval(() => setTime(calc()), 1000)
     return () => clearInterval(id)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetDate])
+  }, [deadline])
   return time
 }
 
@@ -52,8 +50,12 @@ function getDropLabel(comp: Competition): string {
   }
 }
 
-function getBadgeClass(comp: Competition, soldOut: boolean): string {
-  if (soldOut) return 'cgc-badge-soldout'
+/**
+ * Closed cards keep the existing `cgc-badge-soldout` styling so the card design
+ * is unchanged — only the wording moves from "SOLD OUT" to "CLOSED".
+ */
+function getBadgeClass(comp: Competition, closed: boolean): string {
+  if (closed) return 'cgc-badge-soldout'
   if (comp.isFree || comp.competitionType === 'starter') return 'cgc-badge-free'
   return 'cgc-badge-paid'
 }
@@ -71,15 +73,19 @@ function CountdownBlock({ value, label }: { value: number; label: string }) {
 
 function CompCard({ competition: c }: { competition: Competition }) {
   const fmt     = useMoney()
-  const time    = useCountdown(c.drawDate)
   const imgRef  = useRef<HTMLDivElement>(null)
-  const soldOut = isSoldOut(c)
-  const blocked = time.closed || soldOut          // not purchasable (timer ended or sold out)
+  // Counts down to ENTRIES CLOSE, not the draw date.
+  const time    = useCountdown(getCountdownDeadline(c))
+  // Non-time closure (sold out / archived / manually closed) plus the live timer.
+  const closed  = getEffectiveStatus(c) !== 'live' || time.expired
   const label   = getDropLabel(c)
-  const badge   = getBadgeClass(c, blocked)       // reuse the sold-out badge styling when closed
+  const badge   = getBadgeClass(c, closed)
+
+  // A card closed for a non-time reason shows zeros immediately.
+  const shown = closed ? { d: 0, h: 0, m: 0, s: 0 } : time
 
   return (
-    <article className={`cgc-card${blocked ? ' cgc-card--soldout' : ''}`}>
+    <article className={`cgc-card${closed ? ' cgc-card--soldout' : ''}`}>
       {/* image area */}
       <div className="cgc-img-wrap" ref={imgRef}>
         <div className="cgc-img-shine" />
@@ -92,7 +98,8 @@ function CompCard({ competition: c }: { competition: Competition }) {
           sizes="(max-width: 480px) 100vw, (max-width: 900px) 50vw, 360px"
           draggable={false}
         />
-        <div className={`cgc-badge ${badge}`}>{time.closed ? 'CLOSED' : soldOut ? 'SOLD OUT' : label}</div>
+        {/* Short wording — "COMPETITION CLOSED" does not fit this badge. */}
+        <div className={`cgc-badge ${badge}`}>{closed ? 'CLOSED' : label}</div>
         <div className="cgc-img-overlay" />
       </div>
 
@@ -100,22 +107,16 @@ function CompCard({ competition: c }: { competition: Competition }) {
       <div className="cgc-body">
         <p className="cgc-comp-name">{c.title}</p>
 
-        {/* countdown */}
-        {time.closed ? (
-          <div className="cgc-cd-row cgc-cd-row-closed">
-            <span className="cgc-closed-label">Competition Closed</span>
-          </div>
-        ) : (
-          <div className="cgc-cd-row">
-            <CountdownBlock value={time.d} label="DAY" />
-            <div className="cgc-cd-sep">:</div>
-            <CountdownBlock value={time.h} label="HR" />
-            <div className="cgc-cd-sep">:</div>
-            <CountdownBlock value={time.m} label="MIN" />
-            <div className="cgc-cd-sep">:</div>
-            <CountdownBlock value={time.s} label="SEC" />
-          </div>
-        )}
+        {/* countdown — always present, resting at zero once entries close */}
+        <div className="cgc-cd-row">
+          <CountdownBlock value={shown.d} label="DAY" />
+          <div className="cgc-cd-sep">:</div>
+          <CountdownBlock value={shown.h} label="HR" />
+          <div className="cgc-cd-sep">:</div>
+          <CountdownBlock value={shown.m} label="MIN" />
+          <div className="cgc-cd-sep">:</div>
+          <CountdownBlock value={shown.s} label="SEC" />
+        </div>
 
         {/* stats */}
         <div className="cgc-stats">
@@ -129,7 +130,7 @@ function CompCard({ competition: c }: { competition: Competition }) {
           <div className="cgc-stat">
             <span className="cgc-stat-label">Tickets Left</span>
             <span className="cgc-stat-val cgc-stat-gold">
-              {soldOut ? '0' : c.ticketsLeft}
+              {c.ticketsLeft > 0 ? c.ticketsLeft : '0'}
             </span>
           </div>
           <div className="cgc-stat-divider" />
@@ -139,9 +140,8 @@ function CompCard({ competition: c }: { competition: Competition }) {
           </div>
         </div>
 
-        {/* CTA — disabled when the draw timer has ended or the drop is sold out.
-            time.closed takes priority so an expired draw always reads "Closed". */}
-        {time.closed || soldOut ? (
+        {/* CTA — disabled whenever the competition is not effectively live. */}
+        {closed ? (
           <button
             disabled
             aria-disabled="true"
@@ -159,7 +159,7 @@ function CompCard({ competition: c }: { competition: Competition }) {
               justifyContent: 'center',
             }}
           >
-            <span>{time.closed ? 'COMPETITION CLOSED' : 'SOLD OUT'}</span>
+            <span>COMPETITION CLOSED</span>
           </button>
         ) : (
           <Link href={c.ctaLink} className="cgc-cta">
@@ -177,7 +177,8 @@ function CompCard({ competition: c }: { competition: Competition }) {
 // ── Grid ──────────────────────────────────────────────────────────────────────
 
 interface Props {
-  /** All active competitions to display (Live + Sold Out; Coming Soon and Closed excluded). */
+  /** Active competitions to display: Live + Competition Closed. Scheduled and
+      To Past Winners competitions are filtered out by the caller. */
   competitions: Competition[]
 }
 
