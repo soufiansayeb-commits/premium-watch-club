@@ -1,6 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Serve images directly from source instead of through Next.js' image
+    // optimizer. The Vercel Image Optimization quota is exhausted, so every
+    // not-yet-cached image (e.g. a freshly changed WooCommerce product image)
+    // returns HTTP 402 OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED and shows as a
+    // broken image. Source URLs (checkout.premiumwatchclub.com/wp-content/...)
+    // load fine on their own, so bypassing the optimizer restores every image
+    // immediately and makes WooCommerce image changes visible without limits.
+    // Remove this line only after the Vercel image-optimization plan/quota is
+    // resolved; the <Image> components and layout stay unchanged either way.
+    unoptimized: true,
     remotePatterns: [
       // Current WooCommerce/WordPress backend — product, gallery, ACF and hero images
       // are served from here (WordPress site URL after the checkout.* migration).
