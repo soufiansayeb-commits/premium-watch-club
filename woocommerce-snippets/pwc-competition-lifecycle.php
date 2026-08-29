@@ -74,6 +74,9 @@ defined( 'PWC_CL_STATUS_KEY' )  || define( 'PWC_CL_STATUS_KEY',  'competition_st
 defined( 'PWC_CL_GO_LIVE_KEY' ) || define( 'PWC_CL_GO_LIVE_KEY', 'go_live_date' );
 defined( 'PWC_CL_CLOSE_KEY' )   || define( 'PWC_CL_CLOSE_KEY',   'entries_close_date' );
 defined( 'PWC_CL_DRAW_KEY' )    || define( 'PWC_CL_DRAW_KEY',    'draw_date' );
+// Marks a Competition Closed that an admin picked by hand, as opposed to one the
+// automatic sync wrote. Private meta (leading underscore) — not an ACF field.
+defined( 'PWC_CL_MANUAL_CLOSE_KEY' ) || define( 'PWC_CL_MANUAL_CLOSE_KEY', '_pwc_cl_manual_close' );
 
 // Stored slugs.
 defined( 'PWC_CL_LIVE' )     || define( 'PWC_CL_LIVE',     'live' );
@@ -280,8 +283,15 @@ function pwc_cl_effective_status( $product_id, $now_ts = null ) {
 		return 'closed';
 	}
 
-	// 4 — admin set it closed manually (or a legacy 'sold_out' record).
-	if ( PWC_CL_CLOSED === $stored ) {
+	// 4 — an admin DELIBERATELY closed it early, while the dates and the stock
+	// would still allow entries. Only a manual pick counts here.
+	//
+	// The auto-sync writes this same 'competition_closed' value whenever rules 2
+	// or 3 fire, so without the marker an automatic close would be
+	// indistinguishable from a deliberate one — and would then stay closed even
+	// after the dates or the stock were fixed. That is the difference between a
+	// status that reflects reality and one that traps you.
+	if ( PWC_CL_CLOSED === $stored && pwc_cl_is_manual_close( $product_id ) ) {
 		return 'closed';
 	}
 
@@ -300,6 +310,42 @@ function pwc_cl_effective_status( $product_id, $now_ts = null ) {
 /** True when tickets may be bought right now. */
 function pwc_cl_is_purchasable_now( $product_id, $now_ts = null ) {
 	return 'live' === pwc_cl_effective_status( $product_id, $now_ts );
+}
+
+/**
+ * Was Competition Closed picked BY HAND in the dropdown, rather than written by
+ * the automatic sync?
+ *
+ * Set only when an admin actually changes the status TO Competition Closed
+ * (see pwc_cl_track_manual_close). Cleared the moment they change it away again,
+ * and whenever the sync writes Live.
+ *
+ * Absent on legacy records — including the old 'sold_out' ones — which therefore
+ * count as automatic. Their dates keep them closed anyway, and treating them as
+ * automatic means a stale stored value can never override a competition whose
+ * dates say it should be open.
+ */
+function pwc_cl_is_manual_close( $product_id ) {
+	return (bool) get_post_meta( $product_id, PWC_CL_MANUAL_CLOSE_KEY, true );
+}
+
+/**
+ * Is the automatic sync the one currently writing the status?
+ *
+ * update_field() runs its value through acf/update_value, which is the very
+ * filter that records a manual close. Without this flag an automatic close
+ * would be indistinguishable from an admin picking Competition Closed — it
+ * would be marked manual and then stick forever, which is exactly the trap the
+ * manual-close marker exists to prevent.
+ *
+ * Call with true/false to open and close the window; call with no argument to test it.
+ */
+function pwc_cl_syncing( $set = null ) {
+	static $active = false;
+	if ( null !== $set ) {
+		$active = (bool) $set;
+	}
+	return $active;
 }
 
 /** Is this product a competition at all? Non-competition products are untouched. */
@@ -471,10 +517,21 @@ function pwc_cl_sync_status( $product_id, $now_ts = null ) {
 	}
 	$writing[ $product_id ] = true;
 
+	// Mark this write as automatic for the whole duration, so the acf/update_value
+	// tracker below does not mistake it for an admin picking Competition Closed.
+	pwc_cl_syncing( true );
 	if ( function_exists( 'update_field' ) ) {
 		update_field( PWC_CL_STATUS_KEY, $target, $product_id );
 	} else {
 		update_post_meta( $product_id, PWC_CL_STATUS_KEY, $target );
+	}
+	pwc_cl_syncing( false );
+
+	// Reopening clears any manual-close marker: whatever an admin decided earlier
+	// has been overtaken by the competition genuinely being open again.
+	// Closing does NOT set the marker — this write is automatic by definition.
+	if ( PWC_CL_LIVE === $target ) {
+		delete_post_meta( $product_id, PWC_CL_MANUAL_CLOSE_KEY );
 	}
 
 	unset( $writing[ $product_id ] );
@@ -493,6 +550,45 @@ function pwc_cl_sync_status( $product_id, $now_ts = null ) {
 	clean_post_cache( $product_id );
 
 	return $target;
+}
+
+/**
+ * Record whether Competition Closed was chosen BY HAND.
+ *
+ * Runs on acf/update_value, i.e. before the new value is written, so
+ * get_post_meta() still returns the previous one and a real change can be told
+ * apart from ACF simply resubmitting the existing value on an unrelated save.
+ *
+ * This is what makes the dropdown a genuine two-way switch:
+ *   pick Competition Closed → marker set    → stays closed, even with dates open
+ *   pick Live               → marker cleared → dates and stock decide again
+ * An expired competition still cannot be reopened this way: rule 2 outranks it.
+ */
+add_filter( 'acf/update_value/name=' . PWC_CL_STATUS_KEY, 'pwc_cl_track_manual_close', 10, 3 );
+function pwc_cl_track_manual_close( $value, $post_id, $field ) {
+	$post_id = absint( $post_id );
+	if ( ! $post_id ) {
+		return $value;
+	}
+
+	// The automatic sync writes through update_field(), which lands here too.
+	// Only a human picking a value in the dropdown counts as a manual close.
+	if ( pwc_cl_syncing() ) {
+		return $value;
+	}
+
+	$new = pwc_cl_normalize_status( $value );
+	$old = pwc_cl_normalize_status( get_post_meta( $post_id, PWC_CL_STATUS_KEY, true ) );
+
+	if ( $new !== $old ) {
+		if ( PWC_CL_CLOSED === $new ) {
+			update_post_meta( $post_id, PWC_CL_MANUAL_CLOSE_KEY, '1' );
+		} else {
+			delete_post_meta( $post_id, PWC_CL_MANUAL_CLOSE_KEY );
+		}
+	}
+
+	return $value;
 }
 
 /** All published competition product IDs. */
@@ -810,6 +906,8 @@ function pwc_cl_payload( $product_id ) {
 		'draw_display'        => pwc_cl_display( $draw ),
 		/** false when entries_close_date is empty and draw_date is standing in. */
 		'entries_close_is_own_field' => (bool) $raw_close,
+		/** true only when an admin picked Competition Closed by hand. */
+		'manual_close'        => pwc_cl_is_manual_close( $product_id ),
 		'tickets_left'        => ( PHP_INT_MAX === $left ) ? null : $left,
 		'timezone'            => wp_timezone_string(),
 		'server_now_utc'      => gmdate( 'Y-m-d\TH:i:s\Z' ),
@@ -862,7 +960,187 @@ function pwc_cl_validate_close_date( $valid, $value, $field, $input ) {
 	return $valid;
 }
 
-/** Admin notice when the Draw Date sits before the Entries Close Date. */
+/**
+ * Explain the effective status in one sentence, naming the SPECIFIC rule that
+ * decided it and the exact moment involved.
+ *
+ * The resolver deliberately lets the dates and the inventory override the ACF
+ * dropdown (so a competition past its deadline can never be reopened by
+ * flipping a select). The cost is that an admin can set the status to Live and
+ * see nothing happen. This is what removes that guesswork — both the products
+ * list column and the edit-screen notice use it.
+ *
+ * `reason` is the full sentence (edit screen, and the column's hover title).
+ * `short`  is a few words that fit a cramped products-list column.
+ *
+ * @return array{label:string, reason:string, short:string, tone:string}
+ */
+function pwc_cl_status_explanation( $product_id ) {
+	$effective = pwc_cl_effective_status( $product_id );
+	$fmt       = 'j M Y H:i';
+	$short_fmt = 'j M H:i';   // compact form for the products-list column
+	$tz        = wp_timezone_string();
+	$product   = wc_get_product( $product_id );
+	$left      = pwc_cl_tickets_left( $product );
+	$close     = pwc_cl_entries_close_at( $product_id );
+	$go_live   = pwc_cl_go_live_at( $product_id );
+	$now       = time();
+
+	if ( 'archived' === $effective ) {
+		return array(
+			'label'  => __( 'Past Winners', 'pwc' ),
+			'reason' => __( 'Archived by an admin. Nothing changes this automatically.', 'pwc' ),
+			'short'  => __( 'archived', 'pwc' ),
+			'tone'   => 'muted',
+		);
+	}
+
+	if ( 'scheduled' === $effective ) {
+		return array(
+			'label'  => __( 'Scheduled', 'pwc' ),
+			'reason' => sprintf(
+				/* translators: 1: date/time, 2: timezone name. */
+				__( 'Goes live automatically at %1$s (%2$s). Until then it is hidden from the site and tickets cannot be bought.', 'pwc' ),
+				$go_live ? $go_live->format( $fmt ) : '?',
+				$tz
+			),
+			'short'  => $go_live
+				/* translators: %s: short date/time. */
+				? sprintf( __( 'opens %s', 'pwc' ), $go_live->format( $short_fmt ) )
+				: __( 'not yet open', 'pwc' ),
+			'tone'   => 'scheduled',
+		);
+	}
+
+	if ( 'closed' === $effective ) {
+		// Name the rule that actually fired, in resolver priority order.
+		if ( $close && $close->getTimestamp() <= $now ) {
+			$reason = sprintf(
+				/* translators: 1: date/time, 2: timezone name. */
+				__( 'Entries closed at %1$s (%2$s). To reopen, set the Entries Close Date/Time to a moment in the future.', 'pwc' ),
+				$close->format( $fmt ),
+				$tz
+			);
+			/* translators: %s: short date/time. */
+			$short = sprintf( __( 'closed %s', 'pwc' ), $close->format( $short_fmt ) );
+		} elseif ( $left <= 0 ) {
+			$reason = __( 'Every ticket has been sold. To reopen, add stock in Product data → Inventory.', 'pwc' );
+			$short  = __( 'sold out', 'pwc' );
+		} else {
+			$reason = __( 'Closed by hand. Set Competition Status back to Live to reopen it — the dates and stock already allow entries.', 'pwc' );
+			$short  = __( 'closed by hand', 'pwc' );
+		}
+		return array( 'label' => __( 'Closed', 'pwc' ), 'reason' => $reason, 'short' => $short, 'tone' => 'closed' );
+	}
+
+	return array(
+		'label'  => __( 'Live', 'pwc' ),
+		'reason' => $close
+			? sprintf(
+				/* translators: 1: date/time, 2: timezone name. */
+				__( 'Entries close at %1$s (%2$s).', 'pwc' ),
+				$close->format( $fmt ),
+				$tz
+			)
+			: __( 'No Entries Close Date/Time set — this competition has no deadline.', 'pwc' ),
+		'short'  => $close
+			/* translators: %s: short date/time. */
+			? sprintf( __( 'closes %s', 'pwc' ), $close->format( $short_fmt ) )
+			: __( 'no deadline', 'pwc' ),
+		'tone'   => 'live',
+	);
+}
+
+/* ── Products list: "Competition" status column ─────────────────────────────
+ * So you can see at a glance which competition is actually live, without
+ * opening each one. Two products sharing a name (a new and an old "Rolex
+ * Datejust 41", say) are otherwise very easy to mix up.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+add_filter( 'manage_edit-product_columns', 'pwc_cl_add_status_column', 20 );
+function pwc_cl_add_status_column( $columns ) {
+	$out = array();
+	foreach ( $columns as $key => $label ) {
+		$out[ $key ] = $label;
+		// Sit directly after the stock column, where the eye already is.
+		if ( 'is_in_stock' === $key ) {
+			$out['pwc_lifecycle'] = __( 'Competition', 'pwc' );
+		}
+	}
+	if ( ! isset( $out['pwc_lifecycle'] ) ) {
+		$out['pwc_lifecycle'] = __( 'Competition', 'pwc' );
+	}
+	return $out;
+}
+
+add_action( 'manage_product_posts_custom_column', 'pwc_cl_render_status_column', 20, 2 );
+function pwc_cl_render_status_column( $column, $post_id ) {
+	if ( 'pwc_lifecycle' !== $column ) {
+		return;
+	}
+	if ( ! pwc_cl_is_competition( $post_id ) ) {
+		echo '<span style="color:#a7aaad">—</span>';
+		return;
+	}
+
+	$info   = pwc_cl_status_explanation( $post_id );
+	$colors = array(
+		'live'      => '#00844a',
+		'scheduled' => '#8a6d1f',
+		'closed'    => '#b32d2e',
+		'muted'     => '#787c82',
+	);
+	$color = isset( $colors[ $info['tone'] ] ) ? $colors[ $info['tone'] ] : '#787c82';
+
+	// Only a few words here — the products list already carries a lot of columns
+	// and a long sentence squeezes the whole table. The full explanation rides
+	// along as the hover title, and is spelled out on the edit screen.
+	printf(
+		'<span class="pwc-cl-cell" title="%1$s"><strong style="color:%2$s">%3$s</strong><br><span class="pwc-cl-sub">%4$s</span></span>',
+		esc_attr( $info['reason'] ),
+		esc_attr( $color ),
+		esc_html( strtoupper( $info['label'] ) ),
+		esc_html( $info['short'] )
+	);
+}
+
+/**
+ * Keep the column readable.
+ *
+ * WordPress list tables share the available width between every registered
+ * column, and this install has a lot of them (Yoast, brands, and more). Without
+ * an explicit width the Competition column collapses to roughly one character
+ * and both the heading and the cells wrap vertically, one letter per line.
+ */
+add_action( 'admin_head-edit.php', 'pwc_cl_status_column_styles' );
+function pwc_cl_status_column_styles() {
+	$screen = get_current_screen();
+	if ( ! $screen || 'product' !== $screen->post_type ) {
+		return;
+	}
+	?>
+	<style>
+	.wp-list-table .column-pwc_lifecycle {
+		width: 132px;
+		white-space: normal;
+		word-break: keep-all;
+		overflow-wrap: normal;
+	}
+	.wp-list-table .pwc-cl-cell { display: block; line-height: 1.35; }
+	.wp-list-table .pwc-cl-cell strong { font-size: 11px; letter-spacing: .04em; white-space: nowrap; }
+	.wp-list-table .pwc-cl-sub { color: #646970; font-size: 11px; white-space: nowrap; }
+	@media screen and (max-width: 1400px) {
+		/* Very cramped screens: keep the status word, drop the detail line —
+		   it is still available on hover and on the edit screen. */
+		.wp-list-table .column-pwc_lifecycle { width: 88px; }
+		.wp-list-table .pwc-cl-sub { display: none; }
+	}
+	</style>
+	<?php
+}
+
+/* ── Edit screen notices ───────────────────────────────────────────────────── */
+
 add_action( 'admin_notices', 'pwc_cl_admin_notices' );
 function pwc_cl_admin_notices() {
 	global $post;
@@ -880,19 +1158,160 @@ function pwc_cl_admin_notices() {
 		);
 	}
 
-	$effective = pwc_cl_effective_status( $post->ID );
-	$stored    = pwc_cl_normalize_status( pwc_cl_meta( $post->ID, PWC_CL_STATUS_KEY ) );
-	if ( PWC_CL_LIVE === $stored && 'live' !== $effective ) {
-		printf(
-			'<div class="notice notice-info"><p><strong>%s</strong> %s</p></div>',
-			esc_html__( 'Competition status:', 'pwc' ),
-			esc_html( sprintf(
-				/* translators: %s: effective lifecycle state. */
-				__( 'this competition is set to Live but is currently %s, because of its dates or remaining tickets. The site shows the correct state to visitors either way.', 'pwc' ),
-				$effective
-			) )
-		);
+	// Always state the effective status, and why. This is the single most useful
+	// thing on the screen when a competition is "not doing what I told it to".
+	$info   = pwc_cl_status_explanation( $post->ID );
+	$stored = pwc_cl_normalize_status( pwc_cl_meta( $post->ID, PWC_CL_STATUS_KEY ) );
+	$class  = ( 'live' === $info['tone'] ) ? 'notice-success' : 'notice-info';
+
+	$mismatch = '';
+	if ( PWC_CL_LIVE === $stored && 'live' !== $info['tone'] ) {
+		$mismatch = ' ' . __( 'The Competition Status is set to Live, but the dates and remaining tickets take priority — that is deliberate, so a finished competition can never be reopened by changing the dropdown alone.', 'pwc' );
 	}
+
+	printf(
+		'<div class="notice %1$s"><p><strong>%2$s %3$s</strong> — %4$s%5$s</p></div>',
+		esc_attr( $class ),
+		esc_html__( 'This competition is currently:', 'pwc' ),
+		esc_html( strtoupper( $info['label'] ) ),
+		esc_html( $info['reason'] ),
+		esc_html( $mismatch )
+	);
+}
+
+/* ── Timezone helper under each date field ──────────────────────────────────
+ * Every competition datetime is entered and stored in the WordPress site
+ * timezone (Europe/London — the market these competitions are sold to). An
+ * admin working from another country is otherwise silently an hour or more out
+ * on every field they fill in.
+ *
+ * This adds a live hint under each date field showing the same moment in the
+ * admin's OWN browser timezone, plus how far away it is. Display only: it never
+ * touches the stored value, the frontend, or what customers see.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+add_action( 'admin_footer-post.php',     'pwc_cl_datetime_hint_script' );
+add_action( 'admin_footer-post-new.php', 'pwc_cl_datetime_hint_script' );
+function pwc_cl_datetime_hint_script() {
+	global $post;
+	if ( ! $post || 'product' !== $post->post_type ) {
+		return;
+	}
+	$site_tz = wp_timezone_string();
+	?>
+	<script>
+	(function () {
+		'use strict';
+
+		var SITE_TZ = <?php echo wp_json_encode( $site_tz ); ?>;
+		var FIELDS  = [<?php echo wp_json_encode( PWC_CL_GO_LIVE_KEY ) . ',' . wp_json_encode( PWC_CL_CLOSE_KEY ); ?>];
+
+		/** Offset (ms) of `tz` from UTC at the given instant. */
+		function tzOffsetMs(utcMs, tz) {
+			var dtf = new Intl.DateTimeFormat('en-US', {
+				timeZone: tz, hour12: false,
+				year: 'numeric', month: '2-digit', day: '2-digit',
+				hour: '2-digit', minute: '2-digit', second: '2-digit'
+			});
+			var p = {};
+			dtf.formatToParts(new Date(utcMs)).forEach(function (x) { p[x.type] = x.value; });
+			var asUTC = Date.UTC(p.year, p.month - 1, p.day,
+				p.hour === '24' ? 0 : p.hour, p.minute, p.second);
+			return asUTC - utcMs;
+		}
+
+		/**
+		 * Turn a wall-clock string ("2026-08-30 18:59:00") READ IN `tz` into a real
+		 * instant. Iterates because the offset itself depends on the instant — which
+		 * is what makes DST boundaries work without a hardcoded +1.
+		 */
+		function wallTimeToDate(wall, tz) {
+			var naive = Date.parse(String(wall).replace(' ', 'T') + 'Z');
+			if (isNaN(naive)) return null;
+			var ms = naive;
+			for (var i = 0; i < 3; i++) {
+				var next = naive - tzOffsetMs(ms, tz);
+				if (next === ms) break;
+				ms = next;
+			}
+			return new Date(ms);
+		}
+
+		function fmt(date, tz) {
+			try {
+				return new Intl.DateTimeFormat(undefined, {
+					timeZone: tz, day: '2-digit', month: 'short', year: 'numeric',
+					hour: '2-digit', minute: '2-digit', hour12: false
+				}).format(date);
+			} catch (e) { return date.toISOString(); }
+		}
+
+		function relative(date) {
+			var diff = date.getTime() - Date.now();
+			var past = diff < 0;
+			var mins = Math.round(Math.abs(diff) / 60000);
+			var txt;
+			if (mins < 1)        txt = 'less than a minute';
+			else if (mins < 60)  txt = mins + ' min';
+			else if (mins < 1440) txt = Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
+			else                 txt = Math.floor(mins / 1440) + 'd ' + Math.floor((mins % 1440) / 60) + 'h';
+			return past ? (txt + ' ago') : ('in ' + txt);
+		}
+
+		function update(field) {
+			var hidden = field.querySelector('input[type="hidden"]');
+			var hint   = field.querySelector('.pwc-tz-hint');
+			if (!hint) return;
+
+			var raw = hidden ? hidden.value : '';
+			if (!raw) {
+				hint.innerHTML = '<em>Empty.</em> ' + (field.getAttribute('data-name') === FIELDS[0]
+					? 'This competition goes live immediately.'
+					: 'The Draw Date will be used as the deadline instead.');
+				hint.style.color = '#787c82';
+				return;
+			}
+
+			var date = wallTimeToDate(raw, SITE_TZ);
+			if (!date) { hint.textContent = ''; return; }
+
+			var localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+			var parts = [fmt(date, SITE_TZ) + ' · ' + SITE_TZ + ' (what you typed)'];
+			if (localTz && localTz !== SITE_TZ) {
+				parts.push('<strong>' + fmt(date, localTz) + ' · ' + localTz + ' (your clock)</strong>');
+			}
+			parts.push(relative(date));
+			hint.innerHTML = parts.join(' &nbsp;|&nbsp; ');
+			hint.style.color = (date.getTime() < Date.now()) ? '#b32d2e' : '#2271b1';
+		}
+
+		function init() {
+			FIELDS.forEach(function (name) {
+				var field = document.querySelector('.acf-field[data-name="' + name + '"]');
+				if (!field || field.querySelector('.pwc-tz-hint')) return;
+
+				var hint = document.createElement('p');
+				hint.className = 'pwc-tz-hint';
+				hint.style.cssText = 'margin:6px 0 0;font-size:12px;line-height:1.5;';
+				(field.querySelector('.acf-input') || field).appendChild(hint);
+
+				update(field);
+				// ACF writes the hidden input via its datepicker, so poll rather than
+				// relying on a change event it may not fire.
+				setInterval(function () { update(field); }, 1000);
+			});
+		}
+
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', init);
+		} else {
+			init();
+		}
+		// ACF can render fields late (tabs, metabox reordering).
+		setTimeout(init, 1200);
+	})();
+	</script>
+	<?php
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -928,11 +1347,15 @@ function pwc_cl_migrate_legacy_statuses( $commit = false ) {
 		$changed[] = sprintf( '#%d "%s": sold_out → %s', $id, get_the_title( $id ), PWC_CL_CLOSED );
 
 		if ( $commit ) {
+			// Renaming a legacy value is not an admin closing anything, so this
+			// must not leave a manual-close marker behind.
+			pwc_cl_syncing( true );
 			if ( function_exists( 'update_field' ) ) {
 				update_field( PWC_CL_STATUS_KEY, PWC_CL_CLOSED, $id );
 			} else {
 				update_post_meta( $id, PWC_CL_STATUS_KEY, PWC_CL_CLOSED );
 			}
+			pwc_cl_syncing( false );
 		}
 	}
 

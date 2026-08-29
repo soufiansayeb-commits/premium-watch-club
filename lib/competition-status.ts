@@ -113,7 +113,7 @@ export function isArchived(competition: Competition): boolean {
  *   1. archived      — admin moved it to Past Winners
  *   2. entries close — deadline reached (falls back to drawDate on legacy records)
  *   3. inventory     — every ticket sold
- *   4. manual close  — admin set Competition Closed (or a legacy 'sold_out' record)
+ *   4. manual close  — an admin picked Competition Closed by hand (see manualClose)
  *   5. scheduled     — Go Live is still in the future
  *   6. live
  *
@@ -130,7 +130,12 @@ export function getEffectiveStatus(
   if (stored === 'to_past_winners') return 'archived'
   if (hasEntriesClosed(competition, now)) return 'closed'
   if (isSoldOut(competition)) return 'closed'
-  if (stored === 'competition_closed') return 'closed'
+  // Only a DELIBERATE admin close counts here. The WordPress auto-sync writes
+  // the same 'competition_closed' value whenever the deadline passes or the
+  // stock runs out, so without `manualClose` an automatic close would stick even
+  // after the dates were fixed. `undefined` means the lifecycle snippet is not
+  // installed and we cannot tell them apart — assume closed, as before.
+  if (stored === 'competition_closed' && competition.manualClose !== false) return 'closed'
   if (isBeforeGoLive(competition, now)) return 'scheduled'
 
   // A legacy 'coming_soon' record with no Go Live Date has nothing left to wait

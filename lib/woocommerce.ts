@@ -21,6 +21,8 @@ export interface WooLifecycle {
   draw_display: string | null
   /** false when entries_close_date is empty and draw_date is standing in for it. */
   entries_close_is_own_field: boolean
+  /** true only when an admin picked Competition Closed by hand (not the auto-sync). */
+  manual_close: boolean
   tickets_left: number | null
   /** WordPress site timezone, e.g. 'Europe/London'. */
   timezone: string
@@ -387,7 +389,9 @@ export function getWooEffectiveStatus(
   // Inventory exhausted. stock_quantity === null means tracking is off.
   if (product.stock_quantity !== null && product.stock_quantity <= 0) return 'closed'
 
-  if (status === 'Competition Closed') return 'closed'
+  // Only a deliberate admin close outranks the dates — the auto-sync writes this
+  // same value, and that must not stick once the dates or stock are fixed.
+  if (status === 'Competition Closed' && product.pwc_lifecycle?.manual_close !== false) return 'closed'
 
   const goLiveIso =
     product.pwc_lifecycle?.go_live_utc ??
@@ -1014,6 +1018,7 @@ export function mergeWooData(
     merged.goLiveDate = dates.goLiveDate || undefined
     merged.entriesCloseDate = dates.entriesCloseDate || undefined
     merged.entriesCloseDateDisplay = dates.entriesCloseDateDisplay || undefined
+    merged.manualClose = wooProduct.pwc_lifecycle?.manual_close
   }
 
   // ── ACF product-info overrides ────────────────────────────────────────────
@@ -1184,6 +1189,7 @@ export function wooProductToCompetition(wooProduct: WooProduct): Competition {
     goLiveDate:            dates.goLiveDate || undefined,
     entriesCloseDate:      dates.entriesCloseDate || undefined,
     entriesCloseDateDisplay: dates.entriesCloseDateDisplay || undefined,
+    manualClose:           wooProduct.pwc_lifecycle?.manual_close,
     cashAlternative:       wooProduct.cash_alternative ?? 0,
     ticketOptions: [
       { qty: 1,  popular: false },

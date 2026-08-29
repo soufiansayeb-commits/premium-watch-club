@@ -50,6 +50,15 @@ export interface Competition {
   entriesCloseDate?: string;
   /** Human-readable entries-close moment in the WordPress site timezone. */
   entriesCloseDateDisplay?: string;
+  /**
+   * True when an admin picked Competition Closed by hand, false when the stored
+   * closed status was written automatically (deadline reached / all tickets sold).
+   *
+   * Only an admin's deliberate close outranks the dates. `undefined` means the
+   * WordPress lifecycle snippet is not installed, so the two cannot be told apart
+   * — treated as deliberate, which is the pre-existing behaviour.
+   */
+  manualClose?: boolean;
   cashAlternative: number;
   ticketOptions: TicketOption[];
   maxTicketsPerPurchase: number;
