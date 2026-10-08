@@ -1263,7 +1263,11 @@ function competitionDeadlineMs(product: WooProduct): number {
  */
 export async function getActiveCompetitionByType(type: string): Promise<Competition | null> {
   const { products, error } = await fetchWooProducts()
-  if (error || products.length === 0) return null
+  // Same rule as getAllActiveCompetitionsByType: an outage must not become a
+  // cached 404 for /competitions/weekly|monthly|special — throw so ISR keeps the
+  // last good page. Only a successful, genuinely empty answer returns null.
+  if (error) throw new Error(`[PWC] WooCommerce fetch failed, keeping last good page: ${error}`)
+  if (products.length === 0) return null
 
   const typed = products.filter(p => p.competition_type === type)
   if (typed.length === 0) return null

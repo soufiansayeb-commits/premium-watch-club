@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Competition } from '@/lib/competition-data'
 import { getChallenge, getOptionLabel } from '@/lib/skill-challenge-config'
@@ -35,6 +35,13 @@ export default function SkillChallenge({
 }: Props) {
   const [isValidating, setIsValidating] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const errorRef = useRef<HTMLDivElement>(null)
+
+  // On mobile the Continue button is a sticky bar far from the answers — bring
+  // the message into view so a refused answer never looks like a dead tap.
+  useEffect(() => {
+    if (validationError) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [validationError])
 
   // ── Detect ACF-driven mode ─────────────────────────────────────────────────
   // When challenge_image + answer_options are set on the WooCommerce product,
@@ -111,7 +118,7 @@ export default function SkillChallenge({
   }
 
   const errorNotice = validationError ? (
-    <div className="cart-error-notice" role="alert">{validationError}</div>
+    <div ref={errorRef} className="cart-error-notice" role="alert">{validationError}</div>
   ) : null
 
   // ── ACF-driven visual challenge ────────────────────────────────────────────

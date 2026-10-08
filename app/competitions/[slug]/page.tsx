@@ -179,8 +179,13 @@ export default async function CompetitionPage({ params }: Props) {
   }
 
   // ── Dynamic WooCommerce route (future competitions, no static template) ──
-  const { product: wooProduct } = await fetchWooProductBySlug(slug)
-  if (!wooProduct) notFound()
+  const { product: wooProduct, error: wooError } = await fetchWooProductBySlug(slug)
+  // A WooCommerce outage must not be cached as a 404 for a live competition:
+  // throw so ISR keeps serving the last good page (same as the static route).
+  if (!wooProduct) {
+    if (wooError) throw new Error(`[PWC] WooCommerce product "${slug}" unavailable: ${wooError}`)
+    notFound()
+  }
 
   const competition = await resolveCompetitionMedia(wooProductToCompetition(wooProduct), wooProduct)
   const { productSchema, breadcrumbSchema } = buildCompetitionSchemas(competition, slug, storeSettings)
