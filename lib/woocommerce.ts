@@ -178,6 +178,11 @@ function getConfig(): { storeUrl: string; key: string; secret: string } | null {
 }
 
 // ── Core fetch helper (server-side only) ─────────────────────────────────────
+// A 404 from WooCommerce means the resource genuinely does not exist (e.g. a
+// deleted product). It is reported separately so callers can treat it as
+// "not found" instead of as an outage.
+class WooNotFoundError extends Error {}
+
 // Hard cap on how long we wait for WooCommerce before treating it as a failure.
 // Without this a hanging upstream stalls the whole server render.
 const WC_FETCH_TIMEOUT_MS = 10_000
@@ -226,6 +231,9 @@ async function wcFetch(endpoint: string): Promise<unknown> {
 
   if (res.status === 401) {
     throw new Error('WooCommerce API: 401 Unauthorized — check consumer key/secret.')
+  }
+  if (res.status === 404) {
+    throw new WooNotFoundError('WooCommerce API: 404 Not Found')
   }
   if (!res.ok) {
     throw new Error(`WooCommerce API error: HTTP ${res.status}`)
@@ -948,6 +956,8 @@ export async function fetchWooProductById(id: number): Promise<{ product: WooPro
     }
     return { product: toSafeProduct(data as Record<string, unknown>) }
   } catch (err) {
+    // Deleted / non-existent product: a clean not-found, not an outage.
+    if (err instanceof WooNotFoundError) return { product: null }
     return { product: null, error: (err as Error).message }
   }
 }

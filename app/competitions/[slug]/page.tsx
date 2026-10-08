@@ -26,7 +26,8 @@ import { fetchStoreSettings, formatMoney, type StoreSettings } from '@/lib/store
 import type { Competition } from '@/lib/competition-data'
 
 interface Props {
-  params: { slug: string }
+  // Next.js 15: route params are delivered as a Promise.
+  params: Promise<{ slug: string }>
 }
 
 // /competitions/weekly, /competitions/monthly, /competitions/special
@@ -65,7 +66,7 @@ function buildCompetitionSchemas(competition: Competition, slug: string, setting
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { slug } = params
+  const { slug } = await params
   let competition: Competition | null = null
 
   if (COMP_TYPE_SLUGS.has(slug)) {
@@ -109,7 +110,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function CompetitionPage({ params }: Props) {
-  const { slug } = params
+  const { slug } = await params
   const storeSettings = await fetchStoreSettings()
 
   // ── Type-based routes: /competitions/weekly | monthly | special ──────────
