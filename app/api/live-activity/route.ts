@@ -27,8 +27,13 @@ export interface LiveActivityItem {
 
 // ── Config ───────────────────────────────────────────────────────────────────
 
-/** Only these order statuses are considered real, paid activity. */
-const TRUSTED_STATUSES = new Set(['processing', 'completed', 'on-hold'])
+/**
+ * Only these order statuses are real, PAID activity. 'on-hold' is deliberately
+ * excluded: payment providers use it for payments that are not yet confirmed
+ * (pending review / awaiting a callback), so showing those as purchases would
+ * present unconfirmed payments as completed ones.
+ */
+const TRUSTED_STATUSES = new Set(['processing', 'completed'])
 
 /** Maximum activity items returned to the frontend. */
 const MAX_ITEMS = 12
@@ -48,7 +53,9 @@ async function fetchOrders(
   secret: string,
 ): Promise<WooOrder[]> {
   const basicToken = Buffer.from(`${key}:${secret}`).toString('base64')
-  const endpoint   = `${storeUrl}/wp-json/wc/v3/orders?per_page=50&orderby=date&order=desc&status=any`
+  // Ask WooCommerce for paid statuses only; TRUSTED_STATUSES is re-checked below.
+  const query      = 'per_page=50&orderby=date&order=desc&status=processing,completed'
+  const endpoint   = `${storeUrl}/wp-json/wc/v3/orders?${query}`
 
   let res = await fetch(endpoint, {
     headers: { Authorization: `Basic ${basicToken}` },
@@ -58,7 +65,7 @@ async function fetchOrders(
 
   // Some hosts block Basic Auth — retry with query-string credentials
   if (res.status === 401) {
-    const qsUrl = `${storeUrl}/wp-json/wc/v3/orders?consumer_key=${encodeURIComponent(key)}&consumer_secret=${encodeURIComponent(secret)}&per_page=50&orderby=date&order=desc&status=any`
+    const qsUrl = `${storeUrl}/wp-json/wc/v3/orders?consumer_key=${encodeURIComponent(key)}&consumer_secret=${encodeURIComponent(secret)}&${query}`
     res = await fetch(qsUrl, {
       next: { revalidate: process.env.NODE_ENV === 'development' ? 0 : 45 },
     })
@@ -96,11 +103,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ items: [] })
   }
 
-  console.log(`[PWC live-activity] Requested productId=${productId}`)
-
   try {
     const orders = await fetchOrders(storeUrl, key, secret)
-    console.log(`[PWC live-activity] Fetched ${orders.length} orders from WooCommerce`)
 
     // ── Filter + anonymise ──────────────────────────────────────────────────
     const items: LiveActivityItem[] = []
@@ -128,9 +132,6 @@ export async function GET(req: NextRequest) {
       if (items.length >= MAX_ITEMS) break
     }
 
-    console.log(
-      `[PWC live-activity] productId=${productId} matched ${items.length} activity item(s)`,
-    )
 
     return NextResponse.json(
       { items },

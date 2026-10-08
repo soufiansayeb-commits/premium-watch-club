@@ -8,43 +8,43 @@
  *   Option B:               Copy this into your child theme's functions.php
  *
  * WHAT THIS DOES:
- *   1. Enables CORS so the Next.js frontend can call the WooCommerce Store API
- *      (required for cart sync — clears old cart, adds exact quantity before checkout)
+ *   1. Lets the Next.js frontend READ the WooCommerce cart through the Store API
+ *      from the customer's browser (cart drawer quantities, and clearing the
+ *      local basket after a completed order). The frontend never writes to the
+ *      cart cross-site — checkout uses the signed handoff (pwc-cart-handoff.php).
  *   2. Adds quantity +/− controls to the checkout order summary
  *      (matches the frontend cart drawer style)
  *   3. Defaults NEW guest customers to United States (US) as their billing
  *      country, without overriding a returning customer's saved choice.
+ *
+ * SECURITY NOTES
+ *   • CORS is granted through WordPress' own `allowed_http_origins` list, which
+ *     both the WP REST API and the WooCommerce Store API honour. The previous
+ *     raw header() approach was overridden by the Store API (no origin was
+ *     actually allowed) and answered EVERY OPTIONS request site-wide.
+ *   • The Store API nonce (CSRF) check is ON. It used to be disabled on the
+ *     assumption that CORS restricts the origin — it does not: CORS controls
+ *     who may READ a response, not who may SEND a cross-site form POST.
  */
 
-// ── 1. CORS for WooCommerce Store API ────────────────────────────────────────
-// Replace the URL below with your actual Next.js frontend domain.
-// Add multiple allowed origins to the array if needed (e.g. localhost for dev).
-
-add_action( 'init', function () {
-    $allowed_origins = [
+// ── 1. CORS for the WooCommerce Store API ────────────────────────────────────
+// Exact origins of the Next.js storefront. Both the apex and www host are
+// listed because the site is reachable on both.
+function pwc_cors_frontend_origins() {
+    $origins = array(
         'https://premiumwatchclub.com',
-        'http://localhost:3000',  // local development only — ignored in production by CORS rules
-    ];
-
-    $origin = isset( $_SERVER['HTTP_ORIGIN'] ) ? $_SERVER['HTTP_ORIGIN'] : '';
-
-    if ( in_array( $origin, $allowed_origins, true ) ) {
-        header( 'Access-Control-Allow-Origin: ' . $origin );
-        header( 'Access-Control-Allow-Credentials: true' );
-        header( 'Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS' );
-        header( 'Access-Control-Allow-Headers: Content-Type, Woocommerce-Session' );
-        header( 'Access-Control-Expose-Headers: Woocommerce-Session' );
+        'https://www.premiumwatchclub.com',
+    );
+    // Local development only — never on a production WordPress.
+    if ( function_exists( 'wp_get_environment_type' ) && 'production' !== wp_get_environment_type() ) {
+        $origins[] = 'http://localhost:3000';
     }
+    return $origins;
+}
 
-    // Handle OPTIONS preflight — respond 200 immediately so the browser allows the real request
-    if ( isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS' ) {
-        status_header( 200 );
-        exit;
-    }
+add_filter( 'allowed_http_origins', function ( $origins ) {
+    return array_values( array_unique( array_merge( (array) $origins, pwc_cors_frontend_origins() ) ) );
 } );
-
-// Allow Store API requests without nonce check (safe because CORS restricts the origin)
-add_filter( 'woocommerce_store_api_disable_nonce_check', '__return_true' );
 
 
 // ── 3. Default guest billing country → United States (US) ─────────────────────
@@ -139,6 +139,10 @@ add_action( 'woocommerce_checkout_after_order_review', function () {
          * quantity text with interactive +/− steppers.
          * Safe to call multiple times — it skips rows that already have a stepper.
          */
+        // Store API CSRF nonce — returned in the "Nonce" header of every cart
+        // response and required on every write (update-item).
+        var storeApiNonce = '';
+
         function initQtyControls() {
             var placeholders = document.querySelectorAll('.pwc-qty-placeholder');
             if (!placeholders.length) return;
@@ -148,7 +152,10 @@ add_action( 'woocommerce_checkout_after_order_review', function () {
                 credentials: 'include',
                 headers: { 'Accept': 'application/json' }
             })
-            .then(function (res) { return res.ok ? res.json() : null; })
+            .then(function (res) {
+                storeApiNonce = res.headers.get('Nonce') || storeApiNonce;
+                return res.ok ? res.json() : null;
+            })
             .then(function (cart) {
                 if (!cart || !cart.items) return;
 
@@ -200,10 +207,13 @@ add_action( 'woocommerce_checkout_after_order_review', function () {
                 fetch('/wp-json/wc/store/v1/cart/update-item', {
                     method: 'POST',
                     credentials: 'include',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Nonce': storeApiNonce },
                     body: JSON.stringify({ key: itemKey, quantity: newQty })
                 })
-                .then(function (res) { return res.ok ? res.json() : Promise.reject(res.status); })
+                .then(function (res) {
+                    storeApiNonce = res.headers.get('Nonce') || storeApiNonce;
+                    return res.ok ? res.json() : Promise.reject(res.status);
+                })
                 .then(function () {
                     qty = newQty;
                     numEl.textContent = qty;

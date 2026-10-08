@@ -56,9 +56,9 @@ function pwc_get_allowed_max_qty( $product_id ) {
     $allowed = (int) min( $max_per_user, $entries_remaining );
     $result  = max( 0, $allowed ); // 0 = sold out
 
-    // Always log to PHP error log — check via WP_DEBUG_LOG or server error log.
-    // Look for lines starting with "[PWC allowedMax]" to diagnose cap decisions.
-    error_log( sprintf(
+    // Diagnostic only — this runs on every cart/checkout load, so it is limited
+    // to WP_DEBUG to keep production logs clean. Look for "[PWC allowedMax]".
+    if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) error_log( sprintf(
         '[PWC allowedMax] product #%d "%s" | sold_individually=%s | total_entries=%d | pct=%.1f | stock=%s | decision: %s → allowedMax=%d',
         $product_id,
         $product->get_name(),
@@ -198,6 +198,23 @@ function pwc_validate_checkout_quantities() {
             );
         }
     }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 3b. STORE API — the same cap for the Block cart/checkout
+//     WooCommerce uses this maximum when validating Store API add/update
+//     requests and the cart before a Block checkout order is placed, so a
+//     hand-crafted request cannot exceed the per-competition limit there either.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+add_filter( 'woocommerce_store_api_product_quantity_maximum', 'pwc_store_api_quantity_maximum', 10, 3 );
+
+function pwc_store_api_quantity_maximum( $value, $product, $cart_item = null ) {
+    if ( ! $product || ! is_object( $product ) ) return $value;
+    $product_id = $product->get_parent_id() ? $product->get_parent_id() : $product->get_id();
+    $max        = pwc_get_allowed_max_qty( $product_id );
+    return $max > 0 ? min( (int) $value, $max ) : $value;
 }
 
 

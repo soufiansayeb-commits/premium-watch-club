@@ -1,59 +1,66 @@
+// app/api/skill-challenge/validate/route.ts
+//
+// Confirms that a submitted skill answer can be recorded for a competition:
+// the competition exists, is open for entries, has a complete skill question,
+// and the answer is one of its options.
+//
+// It intentionally does NOT say whether the answer is correct. Returning
+// correctness here made this endpoint an answer oracle. Correctness is decided
+// in WordPress when the order is created and is never shown to the customer —
+// exactly what the entry flow already promises ("your answer will be recorded").
+//
+// Fail closed: any lookup failure or incomplete configuration rejects the answer.
+
 import { NextRequest, NextResponse } from 'next/server'
-import { CHALLENGE_CORRECT_OPTIONS } from '@/lib/skill-challenge-answers'
-import { fetchWooProductById } from '@/lib/woocommerce'
+import { fetchWooProductById, isWooEntryClosed } from '@/lib/woocommerce'
+import { getSkillConfigProblem, matchAnswerOption } from '@/lib/skill-check'
 
 export async function POST(req: NextRequest) {
-  let body: { challengeId?: unknown; optionId?: unknown; productId?: unknown; selectedAnswer?: unknown }
+  let body: { productId?: unknown; selectedAnswer?: unknown }
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 })
   }
 
-  // ── ACF-driven mode: productId + selectedAnswer ──────────────────────────────
-  // The correct answer is fetched server-side from WooCommerce — never exposed to client.
-  if (body.productId !== undefined || body.selectedAnswer !== undefined) {
-    const productId     = body.productId
-    const selectedAnswer = body.selectedAnswer
-
-    if (typeof productId !== 'number' || typeof selectedAnswer !== 'string') {
-      return NextResponse.json(
-        { error: 'productId (number) and selectedAnswer (string) are required for ACF validation.' },
-        { status: 400 }
-      )
-    }
-
-    const { product, error } = await fetchWooProductById(productId)
-    if (error || !product) {
-      return NextResponse.json({ error: 'Unknown challenge.' }, { status: 404 })
-    }
-
-    const correctAnswer = product.correct_answer
-    if (!correctAnswer) {
-      // Product exists but no correct_answer ACF field set — treat as correct to not block entry
-      return NextResponse.json({ isCorrect: true })
-    }
-
-    const isCorrect =
-      selectedAnswer.trim().toLowerCase() === correctAnswer.trim().toLowerCase()
-
-    return NextResponse.json({ isCorrect })
+  const { productId, selectedAnswer } = body
+  if (
+    typeof productId !== 'number' || !Number.isInteger(productId) || productId <= 0 ||
+    typeof selectedAnswer !== 'string' || !selectedAnswer.trim()
+  ) {
+    return NextResponse.json({ error: 'productId and selectedAnswer are required.' }, { status: 400 })
   }
 
-  // ── Hardcoded mode: challengeId + optionId ───────────────────────────────────
-  const { challengeId, optionId } = body
-
-  if (typeof challengeId !== 'string' || typeof optionId !== 'string') {
+  const { product, error } = await fetchWooProductById(productId)
+  if (error) {
+    console.error('[PWC skill-validate] WooCommerce lookup failed')
     return NextResponse.json(
-      { error: 'challengeId and optionId must be strings.' },
-      { status: 400 }
+      { error: 'We could not confirm your answer right now. Please try again in a moment.' },
+      { status: 503 },
+    )
+  }
+  if (!product) {
+    return NextResponse.json({ error: 'Unknown competition.' }, { status: 404 })
+  }
+  if (isWooEntryClosed(product)) {
+    return NextResponse.json(
+      { error: 'This competition is closed and no longer accepting entries.' },
+      { status: 409 },
     )
   }
 
-  const correctOption = CHALLENGE_CORRECT_OPTIONS[challengeId]
-  if (correctOption === undefined) {
-    return NextResponse.json({ error: 'Unknown challenge.' }, { status: 404 })
+  const problem = getSkillConfigProblem(product)
+  if (problem) {
+    console.error(`[PWC skill-validate] product #${productId} skill question not configured (${problem})`)
+    return NextResponse.json(
+      { error: 'Entries for this competition are temporarily unavailable. Please try again later.' },
+      { status: 503 },
+    )
   }
 
-  return NextResponse.json({ isCorrect: optionId === correctOption })
+  if (!matchAnswerOption(product, selectedAnswer)) {
+    return NextResponse.json({ error: 'Please select one of the listed answers.' }, { status: 422 })
+  }
+
+  return NextResponse.json({ accepted: true })
 }

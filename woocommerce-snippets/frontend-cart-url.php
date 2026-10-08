@@ -2,6 +2,9 @@
 /**
  * PWC — Frontend Cart URL + Checkout Notice Cleanup
  *
+ * ⚠ SUPERSEDED by checkout-return-to-cart-url.php, which does the same plus hides
+ *   the Return-to-Cart button. Keep only ONE of the two active in Code Snippets.
+ *
  * HOW TO INSTALL:
  *   Option A (recommended): Install "Code Snippets" plugin → Snippets → Add New
  *                           Paste this entire file content, enable it, save.
@@ -22,7 +25,7 @@
 
 // Local dev:  http://localhost:3000/cart
 // Production: https://your-vercel-domain.com/cart  ← CHANGE THIS before deploying
-define( 'PWC_FRONTEND_CART_URL', 'https://premiumwatchclub.com/cart' );
+defined( 'PWC_FRONTEND_CART_URL' ) || define( 'PWC_FRONTEND_CART_URL', 'https://premiumwatchclub.com/cart' );
 
 // woocommerce_cart_url is the real filter used by wc_get_cart_url().
 // WooCommerce Blocks checkout reads this value for the "Return to Cart" link.

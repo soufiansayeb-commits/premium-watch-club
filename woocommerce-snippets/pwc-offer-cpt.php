@@ -176,10 +176,14 @@ add_action( 'rest_api_init', function () {
         'permission_callback' => '__return_true',
     ] );
 
+    // Diagnostics only — exposes draft/inactive offers and internal field names,
+    // so it is restricted to logged-in shop managers / admins.
     register_rest_route( 'pwc/v1', '/active-offer-debug', [
         'methods'             => WP_REST_Server::READABLE,
         'callback'            => 'pwc_rest_active_offer_debug',
-        'permission_callback' => '__return_true',
+        'permission_callback' => function () {
+            return current_user_can( 'manage_woocommerce' );
+        },
     ] );
 } );
 
@@ -204,11 +208,10 @@ function pwc_offer_register_fatal_guard( $flag ) {
             status_header( 200 );
             header( 'Content-Type: application/json; charset=UTF-8' );
         }
-        echo wp_json_encode( [
-            'error'   => 'fatal_shutdown',
-            'message' => $err['message'],
-            'line'    => isset( $err['line'] ) ? $err['line'] : null,
-        ] );
+        // Details (file paths, line numbers) go to the error log, never to the
+        // public response.
+        error_log( '[PWC Offer] fatal shutdown: ' . $err['message'] . ' @ line ' . ( isset( $err['line'] ) ? $err['line'] : '?' ) );
+        echo wp_json_encode( [ 'error' => 'fatal_shutdown' ] );
     } );
 }
 }

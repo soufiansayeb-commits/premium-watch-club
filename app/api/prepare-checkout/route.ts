@@ -1,84 +1,117 @@
 // app/api/prepare-checkout/route.ts
+//
+// Builds the HMAC-signed handoff URL that moves the customer's basket into the
+// WooCommerce checkout (woocommerce-snippets/pwc-cart-handoff.php).
+//
+// WooCommerce stays the source of truth: it sets the price, applies bundle
+// discounts, caps quantities, checks stock and the competition lifecycle, and
+// decides whether each skill answer is correct. Nothing here is a price or a
+// result — only product IDs, quantities and the answer the customer picked.
+//
+// This route re-checks every item server-side before signing anything, and
+// fails closed: if a competition cannot be confirmed open with a complete skill
+// question, no checkout link is issued.
+//
+// The signed payload carries a random nonce so WordPress can accept each link
+// once (replay protection) on top of the 5-minute expiry.
+
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { fetchWooProductById, isWooEntryClosed } from '@/lib/woocommerce'
+import { getSkillConfigProblem, matchAnswerOption } from '@/lib/skill-check'
+
+/** Upper bounds on a single request — far above any real basket. */
+const MAX_ITEMS = 20
+const MAX_QTY_PER_ITEM = 1000
+
+interface RequestItem {
+  id: number
+  qty: number
+  skillAnswer: unknown
+}
+
+function fail(error: string, status: number) {
+  return NextResponse.json({ error }, { status })
+}
 
 export async function POST(req: NextRequest) {
   const secret = process.env.PWC_CART_HANDOFF_SECRET
-  if (!secret) {
-    console.error('[PWC prepare-checkout] PWC_CART_HANDOFF_SECRET not set in env')
-    return NextResponse.json({ error: 'Checkout not configured on server' }, { status: 503 })
-  }
-
   const storeUrl = process.env.WOOCOMMERCE_STORE_URL
-  if (!storeUrl) {
-    return NextResponse.json({ error: 'WOOCOMMERCE_STORE_URL not configured' }, { status: 503 })
+  if (!secret || !storeUrl) {
+    console.error('[PWC prepare-checkout] checkout handoff is not configured (missing env vars)')
+    return fail('Checkout is temporarily unavailable. Please try again later.', 503)
   }
 
-  let items: Array<{ id: number; qty: number; skillAnswer?: string; skillResult?: string }>
+  let rawItems: unknown
   try {
-    const body = await req.json()
-    items = body.items
-    if (!Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: 'No items provided' }, { status: 400 })
-    }
+    rawItems = (await req.json())?.items
   } catch {
-    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+    return fail('Invalid request.', 400)
+  }
+  if (!Array.isArray(rawItems) || rawItems.length === 0) {
+    return fail('Your basket is empty.', 400)
+  }
+  if (rawItems.length > MAX_ITEMS) {
+    return fail('Too many competitions in one basket.', 400)
   }
 
-  // Validate: only positive integer product IDs and quantities ≥ 1
-  const validItems = items
-    .filter((i) => Number.isInteger(i.id) && i.id > 0 && Number.isInteger(i.qty) && i.qty >= 1)
-    .map(i => ({
-      id:  i.id,
-      qty: i.qty,
-      // Sanitise skill fields: strings only, capped at 200 chars, no HTML
-      ...(typeof i.skillAnswer === 'string' && i.skillAnswer.trim()
-        ? { skillAnswer: i.skillAnswer.trim().slice(0, 200) }
-        : {}),
-      ...(i.skillResult === 'Correct' || i.skillResult === 'Incorrect'
-        ? { skillResult: i.skillResult }
-        : {}),
-    }))
-
-  if (validItems.length === 0) {
-    return NextResponse.json({ error: 'No valid items' }, { status: 400 })
-  }
-
-  // Server-side entry gate — the checkout handoff must never sign a payload for a
-  // competition that is not effectively Live (entries deadline reached, every
-  // ticket sold, manually closed, archived, or not yet open), even if the
-  // frontend UI is bypassed. Mirrors getEffectiveStatus() on the client. Products
-  // are looked up in parallel; if any is closed the whole checkout is rejected.
-  //
-  // This closes the "cart built at 17:59, checkout at 18:01" window at the
-  // handoff; WordPress closes it again at add-to-cart, cart re-validation,
-  // checkout and — finally — order creation, which is the guarantee.
-  try {
-    const products = await Promise.all(
-      validItems.map(i => fetchWooProductById(i.id).then(r => r.product).catch(() => null))
-    )
-    const closed = products.some(p => p != null && isWooEntryClosed(p))
-    if (closed) {
-      return NextResponse.json(
-        { error: 'One or more competitions in your basket are closed and no longer accepting entries.' },
-        { status: 409 }
-      )
+  // ── Shape validation ──────────────────────────────────────────────────────
+  const items: RequestItem[] = []
+  const seen = new Set<number>()
+  for (const raw of rawItems) {
+    const i = raw as Partial<RequestItem> | null
+    if (
+      !i || !Number.isInteger(i.id) || (i.id as number) <= 0 ||
+      !Number.isInteger(i.qty) || (i.qty as number) < 1 || (i.qty as number) > MAX_QTY_PER_ITEM
+    ) {
+      return fail('Your basket contains an invalid item. Please refresh and try again.', 400)
     }
-  } catch {
-    // A transient WooCommerce failure must not brick checkout; the signed payload
-    // still carries a 5-minute expiry enforced server-side in WordPress.
+    if (seen.has(i.id as number)) {
+      return fail('Your basket contains the same competition twice. Please refresh and try again.', 400)
+    }
+    seen.add(i.id as number)
+    items.push({ id: i.id as number, qty: i.qty as number, skillAnswer: i.skillAnswer })
   }
 
-  // Build signed payload with timestamp (5-minute expiry enforced server-side in WordPress)
+  // ── Server-side entry gate (fail closed) ──────────────────────────────────
+  const lookups = await Promise.all(items.map(i => fetchWooProductById(i.id)))
+
+  const signedItems: Array<{ id: number; qty: number; skillAnswer: string }> = []
+  for (let n = 0; n < items.length; n++) {
+    const { product, error } = lookups[n]
+    if (error) {
+      console.error('[PWC prepare-checkout] WooCommerce lookup failed')
+      return fail('We could not confirm your entries right now. Please try again in a moment.', 503)
+    }
+    if (!product) {
+      return fail('A competition in your basket is no longer available. Please remove it and try again.', 409)
+    }
+    const name = product.name || 'A competition in your basket'
+    if (isWooEntryClosed(product)) {
+      return fail(`${name} is closed and no longer accepting entries. Please remove it from your basket.`, 409)
+    }
+    const problem = getSkillConfigProblem(product)
+    if (problem) {
+      console.error(`[PWC prepare-checkout] product #${product.id} skill question not configured (${problem})`)
+      return fail(`Entries for ${name} are temporarily unavailable. Please try again later.`, 503)
+    }
+    const answer = matchAnswerOption(product, items[n].skillAnswer)
+    if (!answer) {
+      return fail(`Please answer the skill question for ${name} again before checking out.`, 400)
+    }
+    signedItems.push({ id: items[n].id, qty: items[n].qty, skillAnswer: answer })
+  }
+
+  // ── Sign ──────────────────────────────────────────────────────────────────
   const payload = {
-    items: validItems,
+    v: 2,
+    items: signedItems,
     ts: Math.floor(Date.now() / 1000),
+    nonce: crypto.randomBytes(16).toString('hex'),
   }
 
-  const json = JSON.stringify(payload)
   // URL-safe base64 (no padding)
-  const encoded = Buffer.from(json)
+  const encoded = Buffer.from(JSON.stringify(payload))
     .toString('base64')
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
@@ -86,19 +119,10 @@ export async function POST(req: NextRequest) {
 
   const signature = crypto.createHmac('sha256', secret).update(encoded).digest('hex')
 
-  // WordPress handoff URL — works on any page (init hook intercepts it)
+  // WordPress handoff URL — any page works (the wp_loaded hook intercepts it).
+  // Deliberately not logged: it is a bearer link for this basket.
   const storeOrigin = new URL(storeUrl).origin
-  const handoffUrl = `${storeOrigin}/?pwc_cart=${encodeURIComponent(encoded)}&pwc_sig=${encodeURIComponent(signature)}`
+  const url = `${storeOrigin}/?pwc_cart=${encodeURIComponent(encoded)}&pwc_sig=${encodeURIComponent(signature)}`
 
-  // ── DEBUG: log every item as it will appear in the signed payload ────────────
-  console.log('[PWC HANDOFF PAYLOAD DEBUG]', JSON.stringify(payload, null, 2))
-  validItems.forEach((item) => {
-    console.log('[PWC HANDOFF ITEM DEBUG]', {
-      id:  item.id,
-      qty: item.qty,
-    })
-  })
-  console.log('[PWC prepare-checkout] Handoff URL →', handoffUrl)
-
-  return NextResponse.json({ url: handoffUrl })
+  return NextResponse.json({ url }, { headers: { 'Cache-Control': 'no-store' } })
 }

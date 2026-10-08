@@ -31,7 +31,7 @@ export default function FreeCompetitionEntryFlow({ competition }: Props) {
     scrollToEntry()
   }
 
-  function handleSkillContinue(isCorrect: boolean) {
+  function handleSkillContinue() {
     const isAcfMode = !!competition.challengeImage && (competition.answerOptions?.length ?? 0) > 0
     const challengeId = competition.skillChallengeId ?? ''
     const answerLabel = selectedOptionId
@@ -51,7 +51,6 @@ export default function FreeCompetitionEntryFlow({ competition }: Props) {
       skillQuestion: competition.skillQuestion,
       skillChallengeId: challengeId,
       skillOptionId: selectedOptionId ?? '',
-      isCorrectSkillAnswer: isCorrect,
       timestampAdded: Date.now(),
       image: competition.heroImage,
       isFreeCompetition: true,

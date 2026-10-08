@@ -1,5 +1,26 @@
+// Baseline security headers for every page and API response.
+// Deliberately no full Content-Security-Policy yet: the site loads third-party
+// widgets (reviews, video, analytics) whose script/frame origins would all need
+// listing, and a wrong CSP silently breaks them. The directives below cannot
+// affect those widgets. HSTS is already sent by Vercel.
+const securityHeaders = [
+  // Nobody may frame the storefront (clickjacking).
+  { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+  { key: 'Content-Security-Policy', value: "frame-ancestors 'self'; base-uri 'self'; object-src 'none'" },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+]
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Don't advertise the framework/version.
+  poweredByHeader: false,
+
+  async headers() {
+    return [{ source: '/:path*', headers: securityHeaders }]
+  },
+
   images: {
     // Serve images directly from source instead of through Next.js' image
     // optimizer. The Vercel Image Optimization quota is exhausted, so every

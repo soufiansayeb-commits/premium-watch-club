@@ -10,11 +10,13 @@
  *   1. Hides the "Return to Cart" button on checkout (Blocks + classic).
  *      Customers use the browser back button instead. Place Order is unaffected.
  *   2. Hides success/info notice banners on cart and checkout pages.
+ *
+ * Replaces frontend-cart-url.php — keep only ONE of the two active.
  *      Payment errors (.is-error) and validation messages are NOT hidden.
  */
 
 // Constant kept for woocommerce_cart_url filter below.
-define( 'PWC_RETURN_TO_CART_URL', 'https://premiumwatchclub.com/cart' );
+defined( 'PWC_RETURN_TO_CART_URL' ) || define( 'PWC_RETURN_TO_CART_URL', 'https://premiumwatchclub.com/cart' );
 
 // Keep the WooCommerce cart URL pointing to the frontend (used internally by Woo).
 add_filter( 'woocommerce_cart_url', function () {

@@ -174,7 +174,7 @@ function EntryFlowOpen({ competition }: Props) {
     setCurrentStep(n)
   }
 
-  function handleSkillContinue(isCorrect: boolean) {
+  function handleSkillContinue() {
     // Guard: Step 2 is only reachable after a ticket package was explicitly
     // selected in Step 1 (Continue is disabled otherwise), so this never fires
     // without a quantity — but keep the flow honest and never default to 1.
@@ -208,8 +208,7 @@ function EntryFlowOpen({ competition }: Props) {
       selectedSkillAnswer: answerLabel,
       skillQuestion: competition.skillQuestion,
       skillChallengeId: challengeId,
-      skillOptionId: selectedOptionId ?? '',
-      isCorrectSkillAnswer: isCorrect,
+      skillOptionId: selectedOptionId ?? '',
       timestampAdded: Date.now(),
       image: competition.heroImage,
       isFreeCompetition: isFree,

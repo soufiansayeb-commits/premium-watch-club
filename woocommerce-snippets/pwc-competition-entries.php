@@ -35,9 +35,13 @@
  *
  * ELIGIBILITY
  *   status ∈ selected statuses  AND  $order->is_paid()  AND
- *   $order->get_date_paid() is set  AND  date_paid ≤ cutoff.
+ *   $order->get_date_paid() is set  AND  date_paid ≤ cutoff  AND
+ *   the line's stored skill answer equals the correct answer stored with it at
+ *   order time (pwc-skill-challenge-order-meta.php). Refunded tickets are
+ *   subtracted from the line quantity.
  *   Orders that are an eligible status but unpaid, or paid with no timestamp,
- *   are EXCLUDED and surfaced in the preview counts.
+ *   are EXCLUDED and surfaced in the preview counts, as are tickets with an
+ *   incorrect or unverifiable skill answer (fail closed).
  *
  * SAFETY
  *   100% read-only. Never writes to orders, order items, products, ACF values,
@@ -152,7 +156,7 @@ function pwc_ce_get_competitions() {
 	$competitions = array();
 	foreach ( $ids as $id ) {
 		$type = strtolower( trim( (string) pwc_ce_meta( $id, 'competition_type' ) ) );
-		if ( ! in_array( $type, array( 'weekly', 'monthly', 'special', 'free' ), true ) ) {
+		if ( ! in_array( $type, array( 'weekly', 'monthly', 'special', 'free', 'starter' ), true ) ) {
 			continue;
 		}
 		$product = wc_get_product( $id );
@@ -181,7 +185,7 @@ function pwc_ce_parse_request() {
 	$is_comp    = false;
 	if ( $product_id > 0 ) {
 		$type    = strtolower( trim( (string) pwc_ce_meta( $product_id, 'competition_type' ) ) );
-		$is_comp = in_array( $type, array( 'weekly', 'monthly', 'special', 'free' ), true );
+		$is_comp = in_array( $type, array( 'weekly', 'monthly', 'special', 'free', 'starter' ), true );
 	}
 	if ( ! $is_comp ) {
 		$errors[] = __( 'Please select a valid competition product.', 'pwc' );
@@ -226,6 +230,27 @@ function pwc_ce_parse_request() {
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
+ * Skill answer of one order line: 'correct' | 'incorrect' | 'unverified'.
+ *
+ * Decided from what was stored SERVER-SIDE at order time — the customer's
+ * answer and the ACF correct answer of that moment — never from a result a
+ * browser reported. Fail closed: a missing answer or a missing correct answer is
+ * 'unverified' and never enters the draw.
+ * ─────────────────────────────────────────────────────────────────────────── */
+function pwc_ce_skill_status( $item ) {
+	$norm = function ( $v ) {
+		$v = preg_replace( '/\s+/u', ' ', trim( (string) $v ) );
+		return function_exists( 'mb_strtolower' ) ? mb_strtolower( $v ) : strtolower( $v );
+	};
+	$answer  = $norm( $item->get_meta( '_pwc_skill_answer' ) );
+	$correct = $norm( $item->get_meta( '_pwc_correct_answer' ) );
+	if ( '' === $answer || '' === $correct ) {
+		return 'unverified';
+	}
+	return $answer === $correct ? 'correct' : 'incorrect';
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
  * Core engine — read-only. Scans eligible orders in paginated batches, matches
  * the selected competition at LINE-ITEM level only, and returns counts (and the
  * CSV rows when $want_rows is true).
@@ -243,7 +268,9 @@ function pwc_ce_collect( $product_id, $statuses, $cutoff_ts, $want_rows = false 
 		'total_valid_entries'    => 0,
 		'unpaid_unconfirmed'     => 0, // eligible status but ! is_paid()
 		'missing_paid_timestamp' => 0, // is_paid() but no date_paid
-		'zero_invalid_items'     => 0, // matched line item with qty < 1
+		'zero_invalid_items'     => 0, // matched line item with qty < 1 (after refunds)
+		'excluded_incorrect_tickets'  => 0, // paid tickets with a wrong skill answer
+		'excluded_unverified_tickets' => 0, // paid tickets with no verifiable answer
 		'rows'                   => array(),
 	);
 	$participants = array();
@@ -266,9 +293,14 @@ function pwc_ce_collect( $product_id, $statuses, $cutoff_ts, $want_rows = false 
 
 			// 1) Does this order contain the SELECTED competition? Read only the
 			//    matching line item(s)' quantities — never the whole order.
-			$order_valid_qty = 0;
-			$has_match       = false;
-			foreach ( $order->get_items( 'line_item' ) as $item ) {
+			//    Refunded tickets are subtracted; an item whose skill answer is not
+			//    verifiably correct contributes no entries (T&C: "Entries with an
+			//    incorrect answer are not entered into the draw").
+			$order_valid_qty   = 0;
+			$order_incorrect   = 0;
+			$order_unverified  = 0;
+			$has_match         = false;
+			foreach ( $order->get_items( 'line_item' ) as $item_id => $item ) {
 				if ( ! $item instanceof WC_Order_Item_Product ) {
 					continue;
 				}
@@ -279,15 +311,23 @@ function pwc_ce_collect( $product_id, $statuses, $cutoff_ts, $want_rows = false 
 					continue; // ignore all unrelated products (e.g. the other competition)
 				}
 				$has_match = true;
-				$qty       = max( 0, (int) $item->get_quantity() ); // no partial-refund math in Phase 1
+				// get_qty_refunded_for_item() is zero or negative.
+				$qty = max( 0, (int) $item->get_quantity() + (int) $order->get_qty_refunded_for_item( $item_id ) );
 				if ( $qty < 1 ) {
 					$stats['zero_invalid_items']++;
 					continue;
 				}
-				$order_valid_qty += $qty;
+				$skill = pwc_ce_skill_status( $item );
+				if ( 'correct' === $skill ) {
+					$order_valid_qty += $qty;
+				} elseif ( 'incorrect' === $skill ) {
+					$order_incorrect += $qty;
+				} else {
+					$order_unverified += $qty;
+				}
 			}
 
-			if ( ! $has_match || $order_valid_qty < 1 ) {
+			if ( ! $has_match || ( $order_valid_qty + $order_incorrect + $order_unverified ) < 1 ) {
 				continue; // order has nothing valid for the selected competition
 			}
 
@@ -303,6 +343,13 @@ function pwc_ce_collect( $product_id, $statuses, $cutoff_ts, $want_rows = false 
 			}
 			if ( $date_paid->getTimestamp() > $cutoff_ts ) {
 				continue; // paid after the cutoff → outside the draw window
+			}
+
+			// 3) Skill answer — paid, in-window tickets that cannot enter the draw.
+			$stats['excluded_incorrect_tickets']  += $order_incorrect;
+			$stats['excluded_unverified_tickets'] += $order_unverified;
+			if ( $order_valid_qty < 1 ) {
+				continue;
 			}
 
 			// 3) Eligible entry.
@@ -486,7 +533,9 @@ function pwc_ce_render_page() {
 					<tr><td><strong><?php esc_html_e( 'Total valid entries', 'pwc' ); ?></strong></td><td><strong><?php echo esc_html( number_format_i18n( $preview['total_valid_entries'] ) ); ?></strong></td></tr>
 					<tr><td><?php esc_html_e( 'Unpaid / unconfirmed orders excluded', 'pwc' ); ?></td><td><?php echo esc_html( number_format_i18n( $preview['unpaid_unconfirmed'] ) ); ?></td></tr>
 					<tr><td><?php esc_html_e( 'Orders missing a paid timestamp', 'pwc' ); ?></td><td><?php echo esc_html( number_format_i18n( $preview['missing_paid_timestamp'] ) ); ?></td></tr>
-					<tr><td><?php esc_html_e( 'Zero / invalid line items', 'pwc' ); ?></td><td><?php echo esc_html( number_format_i18n( $preview['zero_invalid_items'] ) ); ?></td></tr>
+					<tr><td><?php esc_html_e( 'Zero / invalid line items (incl. fully refunded)', 'pwc' ); ?></td><td><?php echo esc_html( number_format_i18n( $preview['zero_invalid_items'] ) ); ?></td></tr>
+					<tr><td><?php esc_html_e( 'Paid tickets excluded — incorrect skill answer', 'pwc' ); ?></td><td><?php echo esc_html( number_format_i18n( $preview['excluded_incorrect_tickets'] ) ); ?></td></tr>
+					<tr><td><?php esc_html_e( 'Paid tickets excluded — no verifiable skill answer', 'pwc' ); ?></td><td><?php echo esc_html( number_format_i18n( $preview['excluded_unverified_tickets'] ) ); ?></td></tr>
 					<tr><td><strong><?php esc_html_e( 'Expected CSV row count', 'pwc' ); ?></strong></td><td><strong><?php echo esc_html( number_format_i18n( $preview['expected_rows'] ) ); ?></strong></td></tr>
 				</tbody>
 			</table>

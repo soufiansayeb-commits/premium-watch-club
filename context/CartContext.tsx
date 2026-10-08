@@ -8,13 +8,8 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { CartItem, CART_STORAGE_KEY, buildCheckoutUrl } from '@/lib/cartStore'
-import {
-  removeFromWooCart,
-  updateWooCartItem,
-  getWooCartQuantityMap,
-  getWooCart,
-} from '@/lib/woocommerce-cart'
+import { CartItem, CART_STORAGE_KEY } from '@/lib/cartStore'
+import { getWooCartQuantityMap, getWooCart } from '@/lib/woocommerce-cart'
 import { trackEvent } from '@/lib/analytics'
 import { bundleLineTotal, getEligibleTiers } from '@/lib/bundle-discounts'
 import { useBundleConfig } from '@/context/BundleConfigContext'
@@ -33,8 +28,11 @@ interface CartContextValue {
   clearCart: () => void
   openDrawer: () => void
   closeDrawer: () => void
-  prepareCheckout: () => Promise<string | null>
+  prepareCheckout: () => Promise<PrepareCheckoutResult>
 }
+
+/** Either the signed checkout URL, or a customer-facing reason it could not be made. */
+export type PrepareCheckoutResult = { url: string; error?: undefined } | { url: null; error: string }
 
 const CartContext = createContext<CartContextValue | null>(null)
 
@@ -156,14 +154,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   // ── removeItem ────────────────────────────────────────────────────────────────
   const removeItem = useCallback((competitionId: string) => {
-    setItems((prev) => {
-      const item = prev.find((i) => i.competitionId === competitionId)
-      // Best-effort: remove from WooCommerce if we have a cart item key
-      if (item?.wooCartItemKey) {
-        removeFromWooCart(item.wooCartItemKey).catch(() => {})
-      }
-      return prev.filter((i) => i.competitionId !== competitionId)
-    })
+    // Local only. The WooCommerce cart is replaced wholesale by the signed
+    // handoff at checkout, so it never needs a separate cross-site write here.
+    setItems((prev) => prev.filter((i) => i.competitionId !== competitionId))
     trackEvent('cart_item_removed', { competitionId })
   }, [])
 
@@ -180,17 +173,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setItems((prev) =>
         prev.map((item) => {
           if (item.competitionId !== competitionId) return item
-          const updated: CartItem = {
+          // Local only — see removeItem. WooCommerce re-applies its own caps
+          // when the handoff rebuilds the cart.
+          return {
             ...item,
             quantity: qty,
             // Derive total from live price + live bundle config (0 for free comps).
             total: lineTotalFor(item, qty),
           }
-          // Best-effort: update WooCommerce if we already have the cart item key
-          if (item.wooCartItemKey) {
-            updateWooCartItem(item.wooCartItemKey, qty).catch(() => {})
-          }
-          return updated
         })
       )
 
@@ -216,30 +206,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // ── prepareCheckout ───────────────────────────────────────────────────────────
-  // Primary path: calls /api/prepare-checkout to generate an HMAC-signed
-  // WordPress handoff URL. WordPress validates the signature, clears the Woo
-  // cart, adds all items server-side, then redirects to /checkout/.
+  // Calls /api/prepare-checkout, which re-checks every competition server-side
+  // (open for entries, skill question configured, answer is a valid option) and
+  // returns an HMAC-signed WordPress handoff URL. WordPress validates the
+  // signature, replaces the Woo cart with exactly these items, records each skill
+  // answer, then redirects to /checkout/.
   //
-  // Fallback path (single item only): ?add-to-cart= redirect if the API fails.
-  // Multi-item fallback is intentionally disabled — it would silently send the
-  // wrong cart to checkout.
-  const prepareCheckout = useCallback(async (): Promise<string | null> => {
+  // Fail closed: there is no ?add-to-cart= fallback. That path skipped the skill
+  // answer and the closed-competition check, so a failed handoff now shows the
+  // server's reason instead of sending the customer to checkout without them.
+  const prepareCheckout = useCallback(async (): Promise<PrepareCheckoutResult> => {
     const validItems = items.filter(
       (i) => i.wooProductId > 0 && Number.isInteger(i.wooProductId)
     )
     if (validItems.length === 0) {
-      console.warn('[PWC prepareCheckout] No valid items in cart.')
-      return null
+      return { url: null, error: 'Your basket is empty.' }
     }
 
-    console.log(
-      '[PWC prepareCheckout] Preparing checkout for:',
-      validItems.map(i => `"${i.title}" id=${i.wooProductId} ×${i.quantity} ${i.price > 0 ? `£${i.price}` : 'FREE'}`)
-    )
-
-    // ── Primary: server-side cart handoff (no CORS required) ──────────────────
-    // Next.js API route generates an HMAC-signed URL. WordPress validates it,
-    // clears the Woo cart, adds all items server-side, then redirects to /checkout/.
     try {
       const apiRes = await fetch('/api/prepare-checkout', {
         method: 'POST',
@@ -248,55 +231,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
           items: validItems.map(i => ({
             id:          i.wooProductId,
             qty:         i.quantity,
-            // Skill challenge data — saved as WooCommerce order item meta by WordPress
-            skillAnswer: i.selectedSkillAnswer  || undefined,
-            skillResult: i.isCorrectSkillAnswer != null
-              ? (i.isCorrectSkillAnswer ? 'Correct' : 'Incorrect')
-              : undefined,
+            // Recorded with the entry; correctness is decided by WordPress.
+            skillAnswer: i.selectedSkillAnswer || undefined,
           })),
         }),
       })
 
-      if (apiRes.ok) {
-        const data = await apiRes.json() as { url?: string; error?: string }
-        if (data.url) {
-          localStorage.setItem(CHECKOUT_FLAG_KEY, 'true')
-          console.log('[PWC prepareCheckout] ✓ Handoff URL generated →', data.url)
-          return data.url
-        }
-        console.error('[PWC prepareCheckout] ✗ API returned ok but no url:', data)
-      } else {
-        const errorText = await apiRes.text().catch(() => '')
-        console.error(
-          `[PWC prepareCheckout] ✗ /api/prepare-checkout returned HTTP ${apiRes.status}:`,
-          errorText.slice(0, 300)
-        )
-      }
-    } catch (err) {
-      console.error('[PWC prepareCheckout] ✗ Network error calling /api/prepare-checkout:', err)
-    }
-
-    // ── Fallback: ?add-to-cart= (single item only — stacks on existing Woo cart) ──
-    // Only safe for single-item carts. For multi-item carts, show an error instead of
-    // silently going to checkout with the wrong items.
-    if (validItems.length === 1) {
-      const fallbackUrl = buildCheckoutUrl(validItems)
-      if (fallbackUrl) {
-        console.warn(
-          '[PWC prepareCheckout] ⚠ Handoff failed — using ?add-to-cart= fallback for single item.',
-          'Fix: ensure PWC_CART_HANDOFF_SECRET is set in .env.local and wp-config.php.'
-        )
+      const data = await apiRes.json().catch(() => ({})) as { url?: string; error?: string }
+      if (apiRes.ok && data.url) {
         localStorage.setItem(CHECKOUT_FLAG_KEY, 'true')
-        return fallbackUrl
+        return { url: data.url }
+      }
+      return {
+        url: null,
+        error: data.error || 'Could not connect to checkout. Please try again or contact support.',
+      }
+    } catch {
+      return {
+        url: null,
+        error: 'Could not connect to checkout. Please check your connection and try again.',
       }
     }
-
-    console.error(
-      '[PWC prepareCheckout] ✗ Checkout unavailable.',
-      'Handoff API failed and multi-item fallback is not safe.',
-      'Action required: set PWC_CART_HANDOFF_SECRET in Next.js .env.local and WordPress wp-config.php.'
-    )
-    return null
   }, [items])
 
   // checkoutUrl is intentionally null — always use prepareCheckout() which syncs the

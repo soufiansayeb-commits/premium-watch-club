@@ -32,8 +32,8 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'PWC_BUNDLE_OPTION', 'pwc_bundle_discounts' );
-define( 'PWC_BUNDLE_TIER_SLOTS', 6 ); // fixed number of configurable tier rows
+defined( 'PWC_BUNDLE_OPTION' ) || define( 'PWC_BUNDLE_OPTION', 'pwc_bundle_discounts' );
+defined( 'PWC_BUNDLE_TIER_SLOTS' ) || define( 'PWC_BUNDLE_TIER_SLOTS', 6 ); // fixed number of configurable tier rows
 
 /**
  * Default settings — used the first time the option is saved and as a safe
@@ -182,11 +182,15 @@ function pwc_bundle_apply_discounts( $cart ) {
     if ( empty( $settings['enabled'] ) ) return;
 
     // Safest default: never stack with coupons. If a coupon is present and
-    // stacking is off, leave the catalogue price untouched so the coupon is the
-    // only discount applied — the customer is never double-discounted.
+    // stacking is off, the coupon is the only discount — every eligible item is
+    // explicitly RESET to its catalogue price. (Returning early instead would
+    // keep a bundle price already set earlier in the same request, e.g. when a
+    // coupon is applied right after the totals were first calculated, and the
+    // customer would be double-discounted.)
+    $bundle_allowed = true;
     if ( empty( $settings['allow_coupon_stacking'] ) ) {
         $applied = $cart->get_applied_coupons();
-        if ( ! empty( $applied ) ) return;
+        if ( ! empty( $applied ) ) $bundle_allowed = false;
     }
 
     foreach ( $cart->get_cart() as $cart_item ) {
@@ -202,7 +206,7 @@ function pwc_bundle_apply_discounts( $cart ) {
         if ( $base <= 0 ) continue;
 
         $qty      = (int) $cart_item['quantity'];
-        $discount = pwc_bundle_discount_for_qty( $qty );
+        $discount = $bundle_allowed ? pwc_bundle_discount_for_qty( $qty ) : 0.0;
 
         if ( $discount <= 0 ) {
             // No tier reached — always reset to the clean base (never compound).
@@ -222,6 +226,12 @@ function pwc_bundle_apply_discounts( $cart ) {
 add_filter( 'woocommerce_cart_item_price', 'pwc_bundle_cart_item_price_html', 10, 3 );
 function pwc_bundle_cart_item_price_html( $price_html, $cart_item, $cart_item_key ) {
     if ( empty( $cart_item['data'] ) || ! pwc_bundle_is_eligible( $cart_item['data'] ) ) {
+        return $price_html;
+    }
+    // Mirror pwc_bundle_apply_discounts(): no bundle saving is shown when a
+    // coupon has switched the bundle discount off.
+    $settings = pwc_bundle_settings();
+    if ( empty( $settings['allow_coupon_stacking'] ) && function_exists( 'WC' ) && WC()->cart && WC()->cart->get_applied_coupons() ) {
         return $price_html;
     }
     $qty      = (int) $cart_item['quantity'];

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { Competition } from '@/lib/competition-data'
 import { useCart } from '@/context/CartContext'
@@ -54,53 +54,6 @@ export default function CheckoutStep({
   const [isSyncing,  setIsSyncing]  = useState(false)
   const [syncError,  setSyncError]  = useState<string | null>(null)
 
-  // ── Debug logging — runs whenever cart items change ─────────────────────────
-  useEffect(() => {
-    // URL inspection
-    const url        = typeof window !== 'undefined' ? window.location.href : ''
-    let addToCartParam: string | null = null
-    let quantityParam: string | null  = null
-
-    try {
-      const urlObj    = new URL(url)
-      addToCartParam  = urlObj.searchParams.get('add-to-cart')
-      quantityParam   = urlObj.searchParams.get('quantity')
-    } catch { /* non-browser env */ }
-
-    console.log('[PWC Checkout] === CHECKOUT STEP ===')
-    console.log('[PWC Checkout] URL:', url)
-
-    if (addToCartParam) {
-      console.warn(
-        `[PWC Checkout] ⚠️  add-to-cart param found in URL (product ${addToCartParam}).` +
-        ` This may auto-add that product to the WooCommerce cart when checkout opens!` +
-        ` This should not happen — check buildCheckoutUrl() / prepareCheckout().`
-      )
-    } else {
-      console.log('[PWC Checkout] add-to-cart param: none ✓')
-    }
-    console.log('[PWC Checkout] quantity param:', quantityParam ?? 'none')
-
-    console.log(`[PWC Checkout] Cart items (${items.length}):`)
-    items.forEach((item, idx) => {
-      console.log(
-        `  [${idx + 1}] ` +
-        `key=${item.wooCartItemKey ?? '(no key)'} | ` +
-        `id=${item.wooProductId} | ` +
-        `name="${item.title}" | ` +
-        `qty=${item.quantity} | ` +
-        `price=${item.price} | ` +
-        `lineTotal=${item.total} | ` +
-        `${item.isFreeCompetition ? 'FREE' : 'PAID'}`
-      )
-    })
-
-    console.log('[PWC Checkout] Rendered order summary items (in order):',
-      items.map(i => `"${i.title}" ×${i.quantity} (${i.isFreeCompetition ? 'FREE' : `${i.currency}${i.total.toFixed(2)}`})`)
-    )
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length, items.map(i => i.competitionId + i.quantity).join(',')])
-
   // ── Derived totals from ALL cart items ─────────────────────────────────────
   // Quantities are whatever the cart holds (edited in the cart drawer). Each
   // item.total is kept in lock-step with the live bundle config by CartContext,
@@ -116,14 +69,12 @@ export default function CheckoutStep({
     setSyncError(null)
     setIsSyncing(true)
 
-    const url = await prepareCheckout()
+    const { url, error } = await prepareCheckout()
     setIsSyncing(false)
 
     if (!url) {
-      setSyncError(
-        'Could not sync your cart with checkout. Please try again. ' +
-        'If this keeps happening, contact support.'
-      )
+      // The server's reason (closed competition, skill question unavailable, …).
+      setSyncError(error ?? 'Could not connect to checkout. Please try again.')
       return
     }
 
@@ -276,7 +227,7 @@ export default function CheckoutStep({
                 </svg>
               </div>
               <div className="cs-text">
-                Payments are processed securely via Stripe. Your card details are never stored on our servers. All entries are recorded and timestamped.
+                Payments are processed securely by our payment provider on our encrypted checkout. Your card details are never stored on our servers. All entries are recorded and timestamped.
               </div>
             </div>
 

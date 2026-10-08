@@ -91,14 +91,12 @@ export default function CartPage() {
     setSyncError(null)
     setIsSyncing(true)
 
-    const url = await prepareCheckout()
+    const { url, error } = await prepareCheckout()
     setIsSyncing(false)
 
     if (!url) {
-      setSyncError(
-        'Could not sync your cart with checkout — please try again. ' +
-        'If this keeps happening, check your browser console for the exact error.'
-      )
+      // The server's reason (closed competition, skill question unavailable, …).
+      setSyncError(error ?? 'Could not connect to checkout. Please try again.')
       return
     }
 

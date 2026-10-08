@@ -618,7 +618,7 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
       `  meta_data keys   : ${metaKeys.length ? metaKeys.join(', ') : '(empty)'}\n` +
       `  acf.challenge_image  = ${JSON.stringify(acf.challenge_image)?.slice(0,120) ?? '(missing)'}\n` +
       `  acf.answer_options   = ${JSON.stringify(acf.answer_options)?.slice(0,120) ?? '(missing)'}\n` +
-      `  acf.correct_answer   = ${JSON.stringify(acf.correct_answer)?.slice(0,80) ?? '(missing)'}\n` +
+      `  acf.correct_answer   = ${acf.correct_answer ? '(set — value hidden)' : '(missing)'}\n` +
       `  meta challenge_image = ${JSON.stringify((raw.meta_data as Record<string,unknown>[]|undefined)?.find(m=>(m as Record<string,unknown>).key==='challenge_image'))?.slice(0,120) ?? '(not in meta_data)'}\n` +
       `  meta answer_options  = ${JSON.stringify((raw.meta_data as Record<string,unknown>[]|undefined)?.find(m=>(m as Record<string,unknown>).key==='answer_options'))?.slice(0,120) ?? '(not in meta_data)'}`
     )
@@ -735,7 +735,7 @@ function toSafeProduct(raw: Record<string, unknown>): WooProduct {
       `  challenge_image  id  : ${challengeImgExtracted.id ?? '(none)'}\n` +
       `  answer_options   raw : ${JSON.stringify(rawAnswerOptions)?.slice(0, 200)}\n` +
       `  answer_options parsed: ${JSON.stringify(answerOptions)}\n` +
-      `  correct_answer       : ${correctAnswer ? '[SET — ' + correctAnswer.slice(0, 40) + ']' : '(not set)'}`
+      `  correct_answer       : ${correctAnswer ? '(set — value hidden)' : '(not set)'}`
     )
   }
 
@@ -1498,28 +1498,4 @@ export async function getAllActiveCompetitionsByType(): Promise<CompetitionsByTy
   result.starter = null   // starter is no longer shown as a separate card
 
   return result
-}
-
-// ── Legacy helpers (still used by existing pages — keep unchanged) ────────────
-
-export async function fetchCompetitions() {
-  return competitions
-}
-
-export async function fetchCompetitionBySlug(slug: string) {
-  return getCompetitionBySlug(slug) ?? null
-}
-
-export function buildCheckoutUrl(productId: number, quantity: number): string {
-  const checkoutBase = process.env.NEXT_PUBLIC_WOOCOMMERCE_CHECKOUT_URL
-  const storeUrl     = process.env.WOOCOMMERCE_STORE_URL || 'https://example.com'
-  const base         = checkoutBase || `${storeUrl}/checkout/`
-  try {
-    const url = new URL(base)
-    url.searchParams.set('add-to-cart', String(productId))
-    url.searchParams.set('quantity',    String(quantity))
-    return url.toString()
-  } catch {
-    return `${base}?add-to-cart=${productId}&quantity=${quantity}`
-  }
 }

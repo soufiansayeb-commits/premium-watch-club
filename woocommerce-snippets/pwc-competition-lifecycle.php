@@ -869,6 +869,31 @@ function pwc_cl_guard_order_creation( $order, $data ) {
 	}
 }
 
+/**
+ * Block Checkout (Store API) backstop.
+ *
+ * The Store API builds its order from the cart through its own code path. The
+ * is_purchasable filter and the cart validation above already stop a closed
+ * competition there; this re-checks the order's own lines right before the
+ * order is processed, so the guarantee does not depend on which checkout the
+ * site happens to use.
+ */
+add_action( 'woocommerce_store_api_checkout_update_order_from_request', 'pwc_cl_guard_store_api_order', 5, 2 );
+function pwc_cl_guard_store_api_order( $order, $request ) {
+	if ( ! $order || ! is_object( $order ) ) {
+		return;
+	}
+	foreach ( $order->get_items() as $item ) {
+		$reason = pwc_cl_block_reason( $item->get_product_id() );
+		if ( $reason ) {
+			if ( class_exists( '\Automattic\WooCommerce\StoreApi\Exceptions\RouteException' ) ) {
+				throw new \Automattic\WooCommerce\StoreApi\Exceptions\RouteException( 'pwc_competition_closed', $reason, 409 );
+			}
+			throw new Exception( $reason );
+		}
+	}
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
  * 7. REST EXPOSURE — the timezone-safe payload the Next.js frontend reads
  * ═══════════════════════════════════════════════════════════════════════════

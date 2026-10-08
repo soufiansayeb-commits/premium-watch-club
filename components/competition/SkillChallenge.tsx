@@ -22,7 +22,8 @@ interface Props {
   selectedOptionId: string | null
   onOptionSelect: (optionId: string) => void
   onBack: () => void
-  onContinue: (isCorrect: boolean) => void
+  /** Called once the server has accepted the answer for recording. */
+  onContinue: () => void
 }
 
 export default function SkillChallenge({
@@ -33,6 +34,7 @@ export default function SkillChallenge({
   onContinue,
 }: Props) {
   const [isValidating, setIsValidating] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   // ── Detect ACF-driven mode ─────────────────────────────────────────────────
   // When challenge_image + answer_options are set on the WooCommerce product,
@@ -56,6 +58,7 @@ export default function SkillChallenge({
   const challenge = isAcfMode ? null : getChallenge(c.skillChallengeId ?? '')
 
   function handleOptionSelect(optionId: string) {
+    setValidationError(null)
     onOptionSelect(optionId)
     trackEvent('skill_answer_selected', {
       competitionId: c.id,
@@ -65,39 +68,38 @@ export default function SkillChallenge({
   }
 
   async function handleContinue() {
-    if (!selectedOptionId) return
+    if (!selectedOptionId || isValidating) return
     setIsValidating(true)
+    setValidationError(null)
 
-    let isCorrect = false
+    // The server checks that the competition is open and its skill question is
+    // complete, and that this answer is one of its options. It never reveals
+    // whether the answer is correct — WordPress decides that on the order.
+    // Fail closed: the entry only proceeds on an explicit acceptance.
+    const selectedAnswer = isAcfMode
+      ? selectedOptionId
+      : getOptionLabel(c.skillChallengeId ?? '', selectedOptionId)
+
+    let accepted = false
+    let message = 'We could not confirm your answer. Please check your connection and try again.'
     try {
-      let res: Response
-
-      if (isAcfMode) {
-        // ACF mode: validate by productId + selectedAnswer on the server.
-        // correct_answer is never sent to the client — comparison is server-side.
-        res = await fetch('/api/skill-challenge/validate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            productId:      c.wooProductId,
-            selectedAnswer: selectedOptionId,
-          }),
-        })
-      } else {
-        // Hardcoded mode: validate by challengeId + optionId
-        res = await fetch('/api/skill-challenge/validate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ challengeId: challenge?.id, optionId: selectedOptionId }),
-        })
-      }
-
-      if (res.ok) {
-        const data = await res.json()
-        isCorrect = data.isCorrect === true
-      }
+      const res = await fetch('/api/skill-challenge/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: c.wooProductId, selectedAnswer }),
+      })
+      const data = await res.json().catch(() => ({})) as { accepted?: boolean; error?: string }
+      accepted = res.ok && data.accepted === true
+      if (!accepted && typeof data.error === 'string' && data.error) message = data.error
     } catch {
-      // Network error — entry still proceeds, isCorrect stays false
+      // Network error — keep the default message; the entry does not proceed.
+    }
+
+    setIsValidating(false)
+
+    if (!accepted) {
+      setValidationError(message)
+      return
     }
 
     trackEvent('skill_answer_confirmed', {
@@ -105,10 +107,12 @@ export default function SkillChallenge({
       slug: c.slug,
       optionId: selectedOptionId,
     })
-
-    setIsValidating(false)
-    onContinue(isCorrect)
+    onContinue()
   }
+
+  const errorNotice = validationError ? (
+    <div className="cart-error-notice" role="alert">{validationError}</div>
+  ) : null
 
   // ── ACF-driven visual challenge ────────────────────────────────────────────
   if (isAcfMode) {
@@ -166,6 +170,8 @@ export default function SkillChallenge({
             <div className="skill-notice">
               Your selected answer will be recorded with your entry. Only entries with the correct answer are eligible for the final draw.
             </div>
+
+            {errorNotice}
 
             <div className="skill-actions">
               <button className="btn-back" onClick={onBack}>
@@ -274,6 +280,8 @@ export default function SkillChallenge({
               Your selected answer will be recorded with your entry. Only entries with the correct answer are eligible for the final draw.
             </div>
 
+            {errorNotice}
+
             <div className="skill-actions">
               <button className="btn-back" onClick={onBack}>
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -344,8 +352,8 @@ export default function SkillChallenge({
                 aria-checked={selectedLabel === answer}
                 tabIndex={0}
                 className={`skill-answer${selectedLabel === answer ? ' selected' : ''}`}
-                onClick={() => onOptionSelect(answer)}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onOptionSelect(answer) }}
+                onClick={() => handleOptionSelect(answer)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleOptionSelect(answer) }}
               >
                 <div className="sa-radio" />
                 <div className="sa-label">{answer}</div>
@@ -357,6 +365,8 @@ export default function SkillChallenge({
             You must select an answer to proceed. All entries are recorded, only entries with the correct answer are eligible for the prize draw.
           </div>
 
+          {errorNotice}
+
           <div className="skill-actions">
             <button className="btn-back" onClick={onBack}>
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -366,10 +376,10 @@ export default function SkillChallenge({
             </button>
             <button
               className="btn-continue"
-              disabled={!selectedOptionId}
-              onClick={() => onContinue(false)}
+              disabled={!selectedOptionId || isValidating}
+              onClick={handleContinue}
             >
-              Confirm & Add to Entry
+              {isValidating ? 'Confirming…' : 'Confirm & Add to Entry'}
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -387,9 +397,9 @@ export default function SkillChallenge({
         icon={<InspectGlyph />}
         primary={selectedOptionId ? 'Answer selected' : 'Select your answer'}
         secondary="Step 2 of 3"
-        label="Confirm"
-        onClick={() => onContinue(false)}
-        disabled={!selectedOptionId}
+        label={isValidating ? 'Confirming…' : 'Confirm'}
+        onClick={handleContinue}
+        disabled={!selectedOptionId || isValidating}
       />
     </div>
   )
