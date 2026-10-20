@@ -1299,12 +1299,15 @@ export async function getActiveCompetitionByType(type: string): Promise<Competit
 
   // Try to match the WooProduct against a static template by product ID
   const staticComp = competitions.find(c => c.wooProductId === selected!.id)
-  if (staticComp) {
-    return mergeWooData(staticComp, selected)
-  }
+  const comp = staticComp
+    ? mergeWooData(staticComp, selected)
+    // No static template — build a Competition entirely from WooCommerce data
+    : wooProductToCompetition(selected)
 
-  // No static template — build a Competition entirely from WooCommerce data
-  return wooProductToCompetition(selected)
+  // ACF returns challenge_image / hero image as an attachment ID; without this the
+  // skill step falls back to the static question while the server validates the
+  // WooCommerce one (same step the homepage and /weekly|/monthly|/special pages do).
+  return resolveCompetitionMedia(comp, selected)
 }
 
 // ── Shared media resolver ─────────────────────────────────────────────────────
